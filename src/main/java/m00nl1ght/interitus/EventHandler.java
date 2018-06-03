@@ -113,6 +113,7 @@ public class EventHandler {
 			} else {
 				Toolkit.sendMessageToPlayer(event.player, "Welcome to Interitus. The structure pack <"+StructurePack.get().name+"> has been loaded successfully.");
 			}
+			Toolkit.sendMessageToPlayer(event.player, "WARNING: This is an experimental alpha version of Interitus. Important features are missing or incomplete, and a lot of things will change in future versions!");
 		}
 	}
 

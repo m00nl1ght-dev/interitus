@@ -169,6 +169,7 @@ public class CommandHandler implements ICommand {
 	private void printInstructions(ICommandSender sender) {
 		sender.sendMessage(new TextComponentString("/interitus profiler"));
 		sender.sendMessage(new TextComponentString("/interitus loot <new|export|get|add> <...>"));
+		sender.sendMessage(new TextComponentString("/interitus pack <create|save|load|reload|delete|copy> <...>"));
 	}
 
 	@Override
