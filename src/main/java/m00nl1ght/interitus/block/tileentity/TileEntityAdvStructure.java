@@ -14,8 +14,10 @@ import m00nl1ght.interitus.Main;
 import m00nl1ght.interitus.block.BlockAdvStructure;
 import m00nl1ght.interitus.item.ItemStructureDataTool;
 import m00nl1ght.interitus.item.ModItem;
+import m00nl1ght.interitus.network.SDefaultPackage;
 import m00nl1ght.interitus.structures.Structure;
 import m00nl1ght.interitus.structures.StructurePack;
+import m00nl1ght.interitus.util.Toolkit;
 import m00nl1ght.interitus.structures.BlockRegionStorage.Condition;
 import m00nl1ght.interitus.structures.Structure.StructureData;
 import m00nl1ght.interitus.world.InteritusChunkGenerator;
@@ -62,6 +64,7 @@ public class TileEntityAdvStructure extends TileEntity {
     private boolean acceptUpdates = true;
     private final ArrayList<Condition> conditions = new ArrayList<Condition>();
     private final ArrayList<LootEntryPrimer> loot = new ArrayList<LootEntryPrimer>();
+    private EntityPlayer editing = null;
     
 	public void giveDataTool(EntityPlayerMP player) {
 		player.inventory.clearMatchingItems(ModItem.STRUCTURE_TOOL, -1, -1, ItemStructureDataTool.addTagForPos(new NBTTagCompound(), pos));
@@ -108,13 +111,70 @@ public class TileEntityAdvStructure extends TileEntity {
 
 	public boolean usedBy(EntityPlayer player) {
 		if (!player.canUseCommandBlock()) {
+			if (!player.getEntityWorld().isRemote) {
+				Toolkit.sendMessageToPlayer(player, "You don't have permission to use this.");
+			}
 			return false;
 		} else {
-			if (player.getEntityWorld().isRemote) {
-				Main.proxy.displayAdvStructScreen(this);
+			if (!player.getEntityWorld().isRemote) {
+				if (editing==null || editing==player || !Toolkit.isPlayerOnServer(player)) {
+					this.editing = player;
+					SDefaultPackage.sendStructureBlockGui((EntityPlayerMP)player, this);
+				} else {
+					Toolkit.sendMessageToPlayer(player, player.getDisplayNameString()+" is currently using this.");
+					return false;
+				}
 			}
 			return true;
 		}
+	}
+	
+	public boolean editLootData(EntityPlayer player, BlockPos pos) {
+		if (!player.canUseCommandBlock()) {
+			if (!player.getEntityWorld().isRemote) {
+				Toolkit.sendMessageToPlayer(player, "You don't have permission to use this.");
+			}
+			return false;
+		} else {
+			if (!player.getEntityWorld().isRemote) {
+				if (editing==null || editing==player || !Toolkit.isPlayerOnServer(player)) {
+					this.editing = player;
+					SDefaultPackage.sendStructureLootGui((EntityPlayerMP)player, this, pos);
+				} else {
+					Toolkit.sendMessageToPlayer(player, player.getDisplayNameString()+" is currently editing this structure block.");
+					return false;
+				}
+			}
+			return true;
+		}
+	}
+
+	public boolean editData(EntityPlayer player) {
+		if (!player.canUseCommandBlock()) {
+			if (!player.getEntityWorld().isRemote) {
+				Toolkit.sendMessageToPlayer(player, "You don't have permission to use this.");
+			}
+			return false;
+		} else {
+			if (!player.getEntityWorld().isRemote) {
+				if (editing==null || editing==player || !Toolkit.isPlayerOnServer(player)) {
+					this.editing = player;
+					SDefaultPackage.sendStructureDataGui((EntityPlayerMP)player, this);
+				} else {
+					Toolkit.sendMessageToPlayer(player, player.getDisplayNameString()+" is currently editing this structure block.");
+					return false;
+				}
+			}
+			return true;
+		}
+	}
+	
+	public void setEditingPlayer(EntityPlayer player) {
+		this.editing = player;
+	}
+	
+	public void resetEditingPlayer() {
+		this.editing = null;
 	}
 	
 	@Override

@@ -42,6 +42,10 @@ public final class Toolkit {
 
 	}
 	
+	public static boolean isPlayerOnServer(EntityPlayer player) {
+		return FMLCommonHandler.instance().getMinecraftServerInstance().getPlayerList().getPlayers().contains(player);
+	}
+	
 	public static RayTraceResult rayTrace(EntityPlayer player, double blockReachDistance, float partialTicks) {
         Vec3d vec3d = player.getPositionEyes(partialTicks);
         Vec3d vec3d1 = player.getLook(partialTicks);

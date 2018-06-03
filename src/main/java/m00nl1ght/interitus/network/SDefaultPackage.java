@@ -4,10 +4,8 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import m00nl1ght.interitus.Main;
 import m00nl1ght.interitus.block.tileentity.TileEntityAdvStructure;
-import m00nl1ght.interitus.item.ItemStructureDataTool;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.item.ItemStack;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.BlockPos;
@@ -61,20 +59,31 @@ public class SDefaultPackage implements IMessage {
         return this.data;
     }
     
-    public static void sendStructureDataGui(EntityPlayerMP player, ItemStack stack) {
+    public static void sendStructureBlockGui(EntityPlayerMP player, TileEntityAdvStructure te) {
     	try {
 			PacketBuffer packetbuffer = new PacketBuffer(Unpooled.buffer());
-			ItemStructureDataTool.writePosToBuffer(stack, packetbuffer);
+			te.writeCoordinates(packetbuffer);
+			//TODO add pack info
+			ModNetwork.INSTANCE.sendTo(new SDefaultPackage("StructBlockGui", packetbuffer), player);
+		} catch (Exception exception) {
+			Main.logger.warn("Could not send structure block gui packet", exception);
+		}
+    }
+    
+    public static void sendStructureDataGui(EntityPlayerMP player, TileEntityAdvStructure te) {
+    	try {
+			PacketBuffer packetbuffer = new PacketBuffer(Unpooled.buffer());
+			te.writeCoordinates(packetbuffer);
 			ModNetwork.INSTANCE.sendTo(new SDefaultPackage("StructDataGui", packetbuffer), player);
 		} catch (Exception exception) {
 			Main.logger.warn("Could not send structure data gui packet", exception);
 		}
     }
     
-    public static void sendStructureLootGui(EntityPlayerMP player, ItemStack stack, BlockPos target) {
+    public static void sendStructureLootGui(EntityPlayerMP player, TileEntityAdvStructure te, BlockPos target) {
     	try {
 			PacketBuffer packetbuffer = new PacketBuffer(Unpooled.buffer());
-			ItemStructureDataTool.writePosToBuffer(stack, packetbuffer);
+			te.writeCoordinates(packetbuffer);
 			packetbuffer.writeBlockPos(target);
 			ModNetwork.INSTANCE.sendTo(new SDefaultPackage("StructLootGui", packetbuffer), player);
 		} catch (Exception exception) {
@@ -86,24 +95,41 @@ public class SDefaultPackage implements IMessage {
 
 		@Override
 		public IMessage onMessage(SDefaultPackage p, MessageContext ctx) {
-			
+
 			switch (p.getChannelName()) {
-			case "StructDataGui":
-				Minecraft.getMinecraft().addScheduledTask(() -> {
-		            this.procStructDataGui(p.getBufferData());
-				});
-				break;
-			case "StructLootGui":
-				Minecraft.getMinecraft().addScheduledTask(() -> {
-		            this.procStructLootGui(p.getBufferData());
-				});
-				break;
-			default:
-				throw new IllegalStateException("Unknown SDefaultPacket channel: "+p.getChannelName());
+				case "StructBlockGui":
+					Minecraft.getMinecraft().addScheduledTask(() -> {
+						this.procStructBlockGui(p.getBufferData());
+					});
+					break;
+				case "StructDataGui":
+					Minecraft.getMinecraft().addScheduledTask(() -> {
+						this.procStructDataGui(p.getBufferData());
+					});
+					break;
+				case "StructLootGui":
+					Minecraft.getMinecraft().addScheduledTask(() -> {
+						this.procStructLootGui(p.getBufferData());
+					});
+					break;
+				default:
+					throw new IllegalStateException("Unknown SDefaultPacket channel: "+p.getChannelName());
 			}
 			return null;
 		}
 
+		private void procStructBlockGui(PacketBuffer data) {
+			try {
+				BlockPos blockpos = new BlockPos(data.readInt(), data.readInt(), data.readInt());
+				TileEntity tileentity1 = Minecraft.getMinecraft().world.getTileEntity(blockpos);
+				if (tileentity1 instanceof TileEntityAdvStructure) {
+					Main.proxy.displayAdvStructScreen((TileEntityAdvStructure) tileentity1);
+				}
+			} catch (Exception exception1) {
+				Main.logger.error("Couldn't proc structure data gui", exception1);
+			}			
+		}
+		
 		private void procStructDataGui(PacketBuffer data) {
 			try {
 				BlockPos blockpos = new BlockPos(data.readInt(), data.readInt(), data.readInt());

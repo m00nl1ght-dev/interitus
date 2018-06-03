@@ -5,13 +5,11 @@ import java.util.List;
 import javax.annotation.Nullable;
 
 import m00nl1ght.interitus.block.tileentity.TileEntityAdvStructure;
-import m00nl1ght.interitus.network.SDefaultPackage;
 import m00nl1ght.interitus.structures.BlockRegionStorage.Condition;
 import m00nl1ght.interitus.structures.BlockRegionStorage.ConditionType;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.init.Blocks;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -47,15 +45,23 @@ public class ItemStructureDataTool extends Item {
 		IBlockState state = world.getBlockState(pos);
 		if (state.getBlock()==Blocks.CHEST) {
 			if (player.isSneaking()) {
-				SDefaultPackage.sendStructureLootGui((EntityPlayerMP)player, stack, pos);
-				return EnumActionResult.SUCCESS;
+				TileEntityAdvStructure te = getTileEntity(player, stack);
+				if (te.editLootData(player, pos)) {
+					return EnumActionResult.SUCCESS;
+				} else {
+					return EnumActionResult.FAIL;
+				}
 			} else {
 				return EnumActionResult.PASS;
 			}
 		}
 		if (player.isSneaking()) {
-			SDefaultPackage.sendStructureDataGui((EntityPlayerMP)player, stack);
-			return EnumActionResult.SUCCESS;
+			TileEntityAdvStructure te = getTileEntity(player, stack);
+			if (te.editData(player)) {
+				return EnumActionResult.SUCCESS;
+			} else {
+				return EnumActionResult.FAIL;
+			}
 		} else {
 			ConditionType mode = this.getMode(stack, ConditionType.inGround);
 			int i = mode.ordinal()+1;

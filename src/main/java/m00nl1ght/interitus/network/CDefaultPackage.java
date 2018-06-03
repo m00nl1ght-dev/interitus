@@ -188,7 +188,7 @@ public class CDefaultPackage implements IMessage {
 						}
 						break;
 					}
-					
+					tileentitystructure.resetEditingPlayer();
 					tileentitystructure.markDirty();
 					player.world.notifyBlockUpdate(blockpos, iblockstate1, iblockstate1, 3);
 				}
