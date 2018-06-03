@@ -12,8 +12,8 @@ Features:
   - structures are saved in a new, more efficient data format (bit array instead of nbt tag for every single block)
   - max strcuture size 128x128 (8x8 chunks), vanilla limit is 32x32 (2x2 chunks)
   - strcuture data tool (item):
-      set custom loot tables for containers (chests, ...) in structures
-      set conditions for structures (for generation)
+      - set custom loot tables for containers (chests, ...) in structures
+      - set conditions for structures (for generation)
       
 - Structure Packs (WIP)
   Save your structures in a structure pack (similiar to texture packs or data packs, but for structures)
