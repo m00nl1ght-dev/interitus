@@ -9,6 +9,7 @@ import m00nl1ght.interitus.client.gui.GuiEditLootEntry;
 import m00nl1ght.interitus.client.gui.GuiEditSummoner;
 import m00nl1ght.interitus.client.gui.GuiStructureData;
 import m00nl1ght.interitus.item.ModItem;
+import m00nl1ght.interitus.structures.StructurePackInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.resources.I18n;
@@ -63,8 +64,8 @@ public class ClientProxy implements IProxy {
 	}
 	
 	@Override
-	public void displayAdvStructScreen(TileEntityAdvStructure te) {
-		Minecraft.getMinecraft().displayGuiScreen(new GuiEditAdvStructure(te));
+	public void displayAdvStructScreen(TileEntityAdvStructure te, StructurePackInfo packInfo) {
+		Minecraft.getMinecraft().displayGuiScreen(new GuiEditAdvStructure(te, packInfo));
 	}
 	
 	@Override

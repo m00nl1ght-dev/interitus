@@ -4,8 +4,10 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import m00nl1ght.interitus.Main;
 import m00nl1ght.interitus.block.tileentity.TileEntityAdvStructure;
+import m00nl1ght.interitus.structures.StructurePackInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.BlockPos;
@@ -63,7 +65,7 @@ public class SDefaultPackage implements IMessage {
     	try {
 			PacketBuffer packetbuffer = new PacketBuffer(Unpooled.buffer());
 			te.writeCoordinates(packetbuffer);
-			//TODO add pack info
+			packetbuffer.writeCompoundTag(StructurePackInfo.create());
 			ModNetwork.INSTANCE.sendTo(new SDefaultPackage("StructBlockGui", packetbuffer), player);
 		} catch (Exception exception) {
 			Main.logger.warn("Could not send structure block gui packet", exception);
@@ -122,8 +124,10 @@ public class SDefaultPackage implements IMessage {
 			try {
 				BlockPos blockpos = new BlockPos(data.readInt(), data.readInt(), data.readInt());
 				TileEntity tileentity1 = Minecraft.getMinecraft().world.getTileEntity(blockpos);
+				NBTTagCompound tag = data.readCompoundTag();
+				if (tag == null) {throw new IllegalStateException("no pack info");}
 				if (tileentity1 instanceof TileEntityAdvStructure) {
-					Main.proxy.displayAdvStructScreen((TileEntityAdvStructure) tileentity1);
+					Main.proxy.displayAdvStructScreen((TileEntityAdvStructure) tileentity1, StructurePackInfo.fromNBT(tag));
 				}
 			} catch (Exception exception1) {
 				Main.logger.error("Couldn't proc structure data gui", exception1);

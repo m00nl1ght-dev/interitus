@@ -268,6 +268,18 @@ public class StructurePack {
 		return this.loaded;
 	}
 	
+	public String getTitle() {
+		return this.title;
+	}
+	
+	public String getDescription() {
+		return this.description;
+	}
+	
+	public float getVersion() {
+		return this.version;
+	}
+	
 	public boolean isVersionSupported() {
 		if (version<Main.SUPPORTED_PACK_VERSION_MIN) {return false;}
 		if (version>Main.SUPPORTED_PACK_VERSION_MAX) {return false;}

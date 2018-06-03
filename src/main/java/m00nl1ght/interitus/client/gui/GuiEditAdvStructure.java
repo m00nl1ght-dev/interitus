@@ -23,6 +23,7 @@ import m00nl1ght.interitus.Main;
 import m00nl1ght.interitus.block.tileentity.TileEntityAdvStructure;
 import m00nl1ght.interitus.block.tileentity.TileEntityAdvStructure.Mode;
 import m00nl1ght.interitus.network.CDefaultPackage;
+import m00nl1ght.interitus.structures.StructurePackInfo;
 
 public class GuiEditAdvStructure extends GuiScreen {
 	
@@ -32,9 +33,11 @@ public class GuiEditAdvStructure extends GuiScreen {
     private GuiButton doneButton,saveButton,loadButton,rotateZeroDegreesButton,rotateNinetyDegreesButton,rotate180DegreesButton,rotate270DegressButton,modeButton,detectSizeButton,showEntitiesButton,mirrorButton,showAirButton,showBoundingBoxButton,giveToolButton,emptyAirButton,voidAirButton,editDataButton,browsePacksButton;
     private final List<GuiTextField> tabOrder = Lists.<GuiTextField>newArrayList();
     private final DecimalFormat decimalFormat = new DecimalFormat("0.0###");
+    public final StructurePackInfo packInfo;
 
-    public GuiEditAdvStructure(TileEntityAdvStructure te) {
+    public GuiEditAdvStructure(TileEntityAdvStructure te, StructurePackInfo packInfo) {
         this.tileStructure = te;
+        this.packInfo = packInfo;
         this.decimalFormat.setDecimalFormatSymbols(new DecimalFormatSymbols(Locale.US));
     }
     
@@ -76,7 +79,7 @@ public class GuiEditAdvStructure extends GuiScreen {
         this.rotate270DegressButton = this.addButton(new GuiButton(14, this.width / 2 + 1 + 40 + 1 + 20, 185, 40, 20, "270"));
         this.packEdit = new GuiTextField(20, this.fontRenderer, this.width / 2 - 152, 40, 150, 20);
         this.packEdit.setMaxStringLength(32);
-        this.packEdit.setText("Default Pack");
+        this.packEdit.setText(this.packInfo.active.name);
         this.tabOrder.add(this.packEdit);
         this.nameEdit = new GuiTextField(2, this.fontRenderer, this.width / 2 + 4, 40, 150, 20);
         this.nameEdit.setMaxStringLength(32);
@@ -357,7 +360,6 @@ public class GuiEditAdvStructure extends GuiScreen {
 		this.tileStructure.setPosition(new BlockPos(Integer.parseInt(this.posXEdit.getText()), Integer.parseInt(this.posYEdit.getText()), Integer.parseInt(this.posZEdit.getText())));
 		this.tileStructure.setSize(new BlockPos(Integer.parseInt(this.sizeXEdit.getText()), Integer.parseInt(this.sizeYEdit.getText()), Integer.parseInt(this.sizeZEdit.getText())));
 		this.tileStructure.setMetadata(this.dataEdit.getText());
-		// TODO set structure pack
 		return CDefaultPackage.sendStructUpdatePacket(this.tileStructure, pendingAction);
 	}
 
