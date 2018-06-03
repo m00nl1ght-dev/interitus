@@ -182,7 +182,10 @@ public class Structure {
 			this.storage.prepare(0, 0, 0, false);
 			return;
 		}
-
+		if (size.getX()>128 || size.getY()>128 || size.getZ()>128) {
+			size = new BlockPos(Math.min(128, size.getX()), Math.min(128, size.getY()), Math.min(128, size.getZ()));
+		}
+		
 		this.storage.prepare(size.getX(), size.getY(), size.getZ(), false);
 		BlockPos endPos = startPos.add(size).add(-1, -1, -1);
 		BlockPos posXY1 = new BlockPos(Math.min(startPos.getX(), endPos.getX()), Math.min(startPos.getY(), endPos.getY()), Math.min(startPos.getZ(), endPos.getZ()));
