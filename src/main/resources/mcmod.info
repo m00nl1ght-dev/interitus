@@ -2,7 +2,7 @@
 {
   "modid": "interitus",
   "name": "Interitus",
-  "description": "This mod makes surival and exploration in minecraft more interesting.",
+  "description": "This mod adds utilities to save, load, import and export structures to structure packs.",
   "version": "${version}",
   "mcversion": "${mcversion}",
   "url": "",
