@@ -40,17 +40,18 @@ public class RegistryMappings {
 			IBlockState state = data.get(i);
 			Block block = state.getBlock();
 			int meta = block.getMetaFromState(state);
-			if (meta == 0) {
-				nbt.setInteger(block.getRegistryName().toString(), i);
+			NBTBase tag = nbt.getTag(block.getRegistryName().toString());
+			
+			if (tag instanceof NBTTagCompound) {
+				((NBTTagCompound) tag).setInteger(Integer.toString(meta), i);
+			} else if (tag instanceof NBTTagInt) {
+				NBTTagCompound tag0 = new NBTTagCompound();
+				tag0.setTag("0", tag);
+				tag0.setInteger(Integer.toString(meta), i);
+				nbt.setTag(block.getRegistryName().toString(), tag0);
 			} else {
-				NBTBase tag = nbt.getTag(block.getRegistryName().toString());
-				if (tag instanceof NBTTagCompound) {
-					((NBTTagCompound) tag).setInteger(Integer.toString(meta), i);
-				} else if (tag instanceof NBTTagInt) {
-					NBTTagCompound tag0 = new NBTTagCompound();
-					tag0.setTag("0", tag);
-					tag0.setInteger(Integer.toString(meta), i);
-					nbt.setTag(block.getRegistryName().toString(), tag0);
+				if (meta == 0) {
+					nbt.setInteger(block.getRegistryName().toString(), i);
 				} else {
 					NBTTagCompound tag0 = new NBTTagCompound();
 					tag0.setInteger(Integer.toString(meta), i);
@@ -58,7 +59,6 @@ public class RegistryMappings {
 				}
 			}
 		}
-
 		return nbt;
 	}
 	
