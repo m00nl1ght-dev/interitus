@@ -7,7 +7,7 @@ import net.minecraftforge.event.RegistryEvent;
 
 public class ModCrafting {
 	
-	public static final ModCreativeTab modTab = new ModCreativeTab("Interitus", new ItemStack(ModBlock.blockAdvStructure));
+	public static final ModCreativeTab modTab = new ModCreativeTab("Interitus", new ItemStack(ModBlock.itemAdvStructure));
 	
 	public static void init(RegistryEvent.Register<IRecipe> event) {
 		
