@@ -1,0 +1,16 @@
+[
+{
+  "modid": "interitus",
+  "name": "Interitus",
+  "description": "This mod makes surival and exploration in minecraft more interesting.",
+  "version": "${version}",
+  "mcversion": "${mcversion}",
+  "url": "",
+  "updateUrl": "",
+  "authorList": ["m00nl1ght"],
+  "credits": "",
+  "logoFile": "",
+  "screenshots": [],
+  "dependencies": []
+}
+]

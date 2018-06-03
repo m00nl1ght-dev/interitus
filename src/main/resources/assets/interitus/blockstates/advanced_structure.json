@@ -1,0 +1,8 @@
+{
+    "variants": {
+        "mode=save": { "model": "interitus:advanced_structure_save" },
+        "mode=load": { "model": "interitus:advanced_structure_load" },
+        "mode=corner": { "model": "interitus:advanced_structure_corner" },
+        "mode=data": { "model": "interitus:advanced_structure_data" }
+    }
+}

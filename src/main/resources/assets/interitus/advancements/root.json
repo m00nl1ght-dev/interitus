@@ -1,0 +1,24 @@
+{
+    "display": {
+        "icon": {
+            "item": "interitus:advanced_structure"
+        },
+        "title": "Interitus",
+        "description": "Interitus",
+        "background": "minecraft:textures/blocks/obsidian.png",
+        "show_toast": false,
+        "announce_to_chat": false
+    },
+    "criteria": {
+        "crafting_table": {
+            "trigger": "minecraft:inventory_changed",
+            "conditions": {
+                "items": [
+                    {
+                        "item": "interitus:advanced_structure"
+                    }
+                ]
+            }
+        }
+    }
+}
