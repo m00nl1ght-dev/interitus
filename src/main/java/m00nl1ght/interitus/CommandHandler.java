@@ -5,8 +5,10 @@ import java.util.List;
 
 import com.google.common.collect.Lists;
 
+import m00nl1ght.interitus.block.BlockAdvStructure;
 import m00nl1ght.interitus.structures.LootList;
 import m00nl1ght.interitus.structures.StructurePack;
+import m00nl1ght.interitus.util.Toolkit;
 import m00nl1ght.interitus.world.capabilities.WorldDataStorageProvider;
 import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommand;
@@ -59,6 +61,16 @@ public class CommandHandler implements ICommand {
 		if (args[0].equals("profiler")) {
 			sender.sendMessage(new TextComponentString("Generator info: "+((ChunkProviderServer)world.getChunkProvider()).chunkGenerator.toString()));
 			Interitus.profiler.printToChat(sender);
+			return;
+		}
+		
+		if (args[0].equals("transform_vanilla")) {
+			BlockPos pos = Toolkit.rayTrace(player, 5D, 1.0F).getBlockPos();
+			if (pos==null) {
+				sender.sendMessage(new TextComponentString("No block in your view found."));
+				return; 
+			}
+			BlockAdvStructure.transformVanilla(world, pos, player);
 			return;
 		}
 		

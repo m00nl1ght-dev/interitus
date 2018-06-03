@@ -4,6 +4,7 @@ import java.util.Random;
 
 import m00nl1ght.interitus.block.tileentity.TileEntityAdvStructure;
 import m00nl1ght.interitus.crafting.ModCrafting;
+import m00nl1ght.interitus.util.Toolkit;
 import net.minecraft.block.Block;
 import net.minecraft.block.SoundType;
 import net.minecraft.block.material.MapColor;
@@ -15,7 +16,9 @@ import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.tileentity.TileEntityStructure;
 import net.minecraft.util.EnumBlockRenderType;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
@@ -34,6 +37,19 @@ public class BlockAdvStructure extends Block {
         this.setHardness(2.0F);
         this.setSoundType(SoundType.STONE);
 		this.setDefaultState(this.blockState.getBaseState());
+	}
+	
+	public static void transformVanilla(World world, BlockPos pos, EntityPlayer player) {
+		TileEntity te = world.getTileEntity(pos);
+		if (!(te instanceof TileEntityStructure)) {
+			Toolkit.sendMessageToPlayer(player, "You are not looking at a vanilla structure block.");
+			return;
+		}
+		TileEntityStructure tes = (TileEntityStructure) te;
+		TileEntityAdvStructure ter = new TileEntityAdvStructure();
+		ter.readFromNBT(tes.writeToNBT(new NBTTagCompound()));
+		world.setBlockState(pos, ModBlock.blockAdvStructure.getDefaultState());
+		world.setTileEntity(pos, ter);
 	}
 
 	@Override
@@ -84,12 +100,41 @@ public class BlockAdvStructure extends Block {
 
 	@Override
     public int getMetaFromState(IBlockState state) {
-        return ((TileEntityAdvStructure.Mode)state.getValue(MODE)).getModeId();
+        return state.getValue(MODE).getModeId();
     }
 
 	@Override
     protected BlockStateContainer createBlockState() {
         return new BlockStateContainer(this, new IProperty[] {MODE});
     }
+	
+	@Override
+	public void neighborChanged(IBlockState state, World worldIn, BlockPos pos, Block blockIn, BlockPos fromPos) {
+		if (!worldIn.isRemote) {
+			TileEntity tileentity = worldIn.getTileEntity(pos);
+
+			if (tileentity instanceof TileEntityAdvStructure) {
+				TileEntityAdvStructure tileentitystructure = (TileEntityAdvStructure) tileentity;
+				boolean flag = worldIn.isBlockPowered(pos);
+				boolean flag1 = tileentitystructure.isPowered();
+
+				if (flag && !flag1) {
+					tileentitystructure.setPowered(true);
+					switch (tileentitystructure.getMode()) {
+						case SAVE:
+							tileentitystructure.save();
+							break;
+						case LOAD:
+							tileentitystructure.load();
+							break;
+						case CORNER:
+						case DATA:
+					}
+				} else if (!flag && flag1) {
+					tileentitystructure.setPowered(false);
+				}
+			}
+		}
+	}
 
 }
