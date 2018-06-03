@@ -2,7 +2,6 @@ package m00nl1ght.interitus.structures;
 
 import java.util.ArrayList;
 
-import m00nl1ght.interitus.Main;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.nbt.NBTBase;
@@ -67,7 +66,6 @@ public class RegistryMappings {
 		
 		for (String key : nbt.getKeySet()) {
 			ResourceLocation name = new ResourceLocation(key);
-			Main.logger.info(name.toString());
 			if (Block.REGISTRY.containsKey(name)) {
 				Block block = Block.REGISTRY.getObject(name);
 				NBTBase tag = nbt.getTag(key);
@@ -91,7 +89,6 @@ public class RegistryMappings {
 				missing.add(name);
 			}
 		}
-		Main.logger.info(data.toString());
 	}
 	
 	private void resizeMap(int idx) {
