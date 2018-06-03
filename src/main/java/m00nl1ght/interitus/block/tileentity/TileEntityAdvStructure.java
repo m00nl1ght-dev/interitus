@@ -10,7 +10,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 
 import io.netty.buffer.ByteBuf;
-import m00nl1ght.interitus.Main;
+import m00nl1ght.interitus.Interitus;
 import m00nl1ght.interitus.block.BlockAdvStructure;
 import m00nl1ght.interitus.item.ItemStructureDataTool;
 import m00nl1ght.interitus.item.ModItem;
@@ -440,7 +440,7 @@ public class TileEntityAdvStructure extends TileEntity {
 					template.getLoot(this.loot, this.pos.add(this.position));
 					InteritusChunkGenerator gen = InteritusChunkGenerator.get(world);
 					if (gen==null) {
-						Main.logger.error("Placing structures in the world is only possible in Interitus worlds!"); return false;
+						Interitus.logger.error("Placing structures in the world is only possible in Interitus worlds!"); return false;
 					}
 					return gen.getStructurePositionMap().create(new StructureData(template, pos, mirror, rotation), true, true);
 				}

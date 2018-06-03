@@ -6,7 +6,7 @@ import java.util.Stack;
 
 import javax.annotation.Nullable;
 
-import m00nl1ght.interitus.Main;
+import m00nl1ght.interitus.Interitus;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.text.TextComponentString;
@@ -56,11 +56,11 @@ public class ChunkProfiler {
 				s[i]+="G";
 			}
 		}
-		Main.logger.info("CHUNK PROFILER FOR ("+x+"/"+z+"_"+w+"/"+h+")");
+		Interitus.logger.info("CHUNK PROFILER FOR ("+x+"/"+z+"_"+w+"/"+h+")");
 		for (int k=0; k<h; k++) {
-			Main.logger.info(s[k]);
+			Interitus.logger.info(s[k]);
 		}
-		Main.logger.info("#################################################");
+		Interitus.logger.info("#################################################");
 	}
 
 	protected static class Data {

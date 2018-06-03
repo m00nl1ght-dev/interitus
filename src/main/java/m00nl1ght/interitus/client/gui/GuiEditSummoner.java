@@ -1,7 +1,7 @@
 package m00nl1ght.interitus.client.gui;
 
 import io.netty.buffer.Unpooled;
-import m00nl1ght.interitus.Main;
+import m00nl1ght.interitus.Interitus;
 import m00nl1ght.interitus.block.tileentity.TileEntitySummoner;
 import m00nl1ght.interitus.network.CDefaultPackage;
 import m00nl1ght.interitus.network.ModNetwork;
@@ -126,7 +126,7 @@ public class GuiEditSummoner extends GuiScreen {
 			ModNetwork.INSTANCE.sendToServer(new CDefaultPackage("Summoner", packetbuffer));
 			return true;
 		} catch (Exception exception) {
-			Main.logger.warn("Could not send summoner block info", (Throwable) exception);
+			Interitus.logger.warn("Could not send summoner block info", (Throwable) exception);
 			return false;
 		}
 	}

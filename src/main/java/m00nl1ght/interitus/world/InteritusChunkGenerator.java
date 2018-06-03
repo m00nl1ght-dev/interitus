@@ -3,7 +3,7 @@ package m00nl1ght.interitus.world;
 import java.util.List;
 
 import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
-import m00nl1ght.interitus.Main;
+import m00nl1ght.interitus.Interitus;
 import m00nl1ght.interitus.structures.StructurePositionMap;
 import m00nl1ght.interitus.util.Toolkit;
 import net.minecraft.block.state.IBlockState;
@@ -45,8 +45,8 @@ public abstract class InteritusChunkGenerator implements IChunkGenerator {
 	protected Chunk preGenerate(int x, int z) { // thats could mess up vanilla structures though
 		Chunk chunk = generateChunk(x, z, true);
 		chunkCache.put(ChunkPos.asLong(x, z), chunk);
-		if (chunkCache.size()>Main.config.chunkCacheMaxSize) {
-			this.gcCache(Main.config.chunkCacheShrink);
+		if (chunkCache.size()>Interitus.config.chunkCacheMaxSize) {
+			this.gcCache(Interitus.config.chunkCacheShrink);
 		}
 		return chunk;
 	}

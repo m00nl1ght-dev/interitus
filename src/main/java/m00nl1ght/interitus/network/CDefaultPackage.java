@@ -2,7 +2,7 @@ package m00nl1ght.interitus.network;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import m00nl1ght.interitus.Main;
+import m00nl1ght.interitus.Interitus;
 import m00nl1ght.interitus.block.tileentity.TileEntityAdvStructure;
 import m00nl1ght.interitus.block.tileentity.TileEntitySummoner;
 import net.minecraft.block.state.IBlockState;
@@ -74,7 +74,7 @@ public class CDefaultPackage implements IMessage {
 			ModNetwork.INSTANCE.sendToServer(new CDefaultPackage("StructAction", packetbuffer));
 			return true;
 		} catch (Exception exception) {
-			Main.logger.warn("Could not request structure action "+id, exception);
+			Interitus.logger.warn("Could not request structure action "+id, exception);
 			return false;
 		}
     }
@@ -88,7 +88,7 @@ public class CDefaultPackage implements IMessage {
 			ModNetwork.INSTANCE.sendToServer(new CDefaultPackage("StructUpdate", packetbuffer));
 			return true;
 		} catch (Exception exception) {
-			Main.logger.warn("Could not request structure update with pendingAction "+pendingAction, exception);
+			Interitus.logger.warn("Could not request structure update with pendingAction "+pendingAction, exception);
 			return false;
 		}
 	}
@@ -144,7 +144,7 @@ public class CDefaultPackage implements IMessage {
 					player.world.notifyBlockUpdate(blockpos, iblockstate1, iblockstate1, 3);
 				}
 			} catch (Exception exception1) {
-				Main.logger.error("Couldn't set summoner block", exception1);
+				Interitus.logger.error("Couldn't set summoner block", exception1);
 			}
 		}
 
@@ -193,7 +193,7 @@ public class CDefaultPackage implements IMessage {
 					player.world.notifyBlockUpdate(blockpos, iblockstate1, iblockstate1, 3);
 				}
 			} catch (Exception exception1) {
-				Main.logger.error("Couldn't set structure block", exception1);
+				Interitus.logger.error("Couldn't set structure block", exception1);
 			}
 		}
 		
@@ -225,7 +225,7 @@ public class CDefaultPackage implements IMessage {
 					}
 				}
 			} catch (Exception exception1) {
-				Main.logger.error("Couldn't proc structure tool request", exception1);
+				Interitus.logger.error("Couldn't proc structure tool request", exception1);
 			}
 		}
 		

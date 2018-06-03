@@ -64,9 +64,9 @@ public class EventHandler {
 				IChunkGenerator gen = new InteritusChunkGenWrapper(event.getObject(), prov.chunkGenerator);
 				ReflectionHelper.setPrivateValue(ChunkProviderServer.class, prov, gen, "chunkGenerator", "field_186029_c", "c");
 				event.addCapability(WorldDataStorage.NAME, new WorldDataStorageProvider((WorldServer)event.getObject()));
-				Main.logger.info("Replaced chunk provider for dimension "+event.getObject().provider.getDimension()+".");
+				Interitus.logger.info("Replaced chunk provider for dimension "+event.getObject().provider.getDimension()+".");
 			} catch (Exception e) {
-				Main.logger.error("Failed to replace chunk generator for dimension "+event.getObject().provider.getDimension()+" using reflection: ", e);
+				Interitus.logger.error("Failed to replace chunk generator for dimension "+event.getObject().provider.getDimension()+" using reflection: ", e);
 				return;
 			}
 		}
@@ -80,21 +80,21 @@ public class EventHandler {
 				ICapabilityWorldDataStorage data = world.getCapability(WorldDataStorageProvider.INTERITUS_WORLD, null);
 				String name = data!=null?data.getActivePack():"";
 				if (name.isEmpty()) {
-					Main.logger.info("This world save does not contain valid interitus data, the default structure pack will be loaded.");
+					Interitus.logger.info("This world save does not contain valid interitus data, the default structure pack will be loaded.");
 					StructurePack.loadDefault();
 					if (data!=null) {data.setActivePack("Default");}
 				} else {
 					StructurePack.updateAvailbalePacks();
 					StructurePack pack = StructurePack.getPack(name);
 					if (pack==null) {
-						Main.logger.error("Structure pack <"+name+"> not found. Loading the default pack instead...");
+						Interitus.logger.error("Structure pack <"+name+"> not found. Loading the default pack instead...");
 						StructurePack.loadDefault();
 						return;
 					}
 					if (StructurePack.load(pack)) {
-						Main.logger.info("Structure pack <"+name+"> loaded successfully.");
+						Interitus.logger.info("Structure pack <"+name+"> loaded successfully.");
 					} else {
-						Main.logger.error("Loading the default pack instead.");
+						Interitus.logger.error("Loading the default pack instead.");
 						StructurePack.loadDefault();
 					}
 				}

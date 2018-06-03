@@ -3,7 +3,7 @@ package m00nl1ght.interitus.item;
 import java.util.ArrayList;
 import java.util.List;
 
-import m00nl1ght.interitus.Main;
+import m00nl1ght.interitus.Interitus;
 import m00nl1ght.interitus.crafting.ModCrafting;
 import net.minecraft.client.renderer.block.model.ModelResourceLocation;
 import net.minecraft.item.Item;
@@ -21,7 +21,7 @@ public final class ModItem {
 	public static ItemStructureDataTool STRUCTURE_TOOL;
 		
 	public static final <T extends Item> T create(T item, String name) {
-		item.setUnlocalizedName(name).setRegistryName(Main.MODID, name);
+		item.setUnlocalizedName(name).setRegistryName(Interitus.MODID, name);
 		items.add(item); return item;
 	}
 	

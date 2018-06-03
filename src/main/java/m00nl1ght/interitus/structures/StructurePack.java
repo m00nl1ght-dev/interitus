@@ -19,7 +19,7 @@ import java.util.zip.ZipOutputStream;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
-import m00nl1ght.interitus.Main;
+import m00nl1ght.interitus.Interitus;
 import m00nl1ght.interitus.world.capabilities.ICapabilityWorldDataStorage;
 import m00nl1ght.interitus.world.capabilities.WorldDataStorageProvider;
 import net.minecraft.nbt.CompressedStreamTools;
@@ -31,7 +31,7 @@ import net.minecraftforge.common.DimensionManager;
 
 public class StructurePack {
 	
-	public static final File basePath = new File(Main.MODID+"/structurepacks/");
+	public static final File basePath = new File(Interitus.MODID+"/structurepacks/");
 	private static final ArrayList<StructureConfig> UNKNOWN_BIOME = Lists.newArrayList();
 	static final StructurePack emptyPack = createDefaultPack();
 	static StructurePack current = emptyPack; // @Nonnull
@@ -46,7 +46,7 @@ public class StructurePack {
 	private boolean read_only;
 	private String title = "Interitus Structure Pack";
 	private String description = "";
-	private float version = Main.SUPPORTED_PACK_VERSION_MAX;
+	private float version = Interitus.SUPPORTED_PACK_VERSION_MAX;
 	private boolean loaded = false;
 	
 	public StructurePack(String name) {
@@ -100,7 +100,7 @@ public class StructurePack {
             } else if (entry.startsWith("loot/")) {
             	loot.put(entry.substring(5), CompressedStreamTools.read(data));
             } else {
-            	Main.logger.warn("Found unknown file in structure pack: "+entry);
+            	Interitus.logger.warn("Found unknown file in structure pack: "+entry);
             }
             zipEntry = zip.getNextEntry();
         }
@@ -114,11 +114,11 @@ public class StructurePack {
 		if (nbtMappings==null) {throw new IOException("Missing block mappings");}
 		this.mappings.build(nbtMappings);
 		if (!mappings.getMissingBlocks().isEmpty()) {
-			Main.logger.error("Problems occured while loading the structure pack:");
+			Interitus.logger.error("Problems occured while loading the structure pack:");
 			for (ResourceLocation loc : mappings.getMissingBlocks()) {
-				Main.logger.error("The block "+loc+" could not be found in your minecraft installation! (missing mod?)");
+				Interitus.logger.error("The block "+loc+" could not be found in your minecraft installation! (missing mod?)");
 			}
-			Main.logger.error("The structures will still work, but the missing blocks will be replaced with air.");
+			Interitus.logger.error("The structures will still work, but the missing blocks will be replaced with air.");
 		}
 		
 		this.structures.clear();
@@ -220,7 +220,7 @@ public class StructurePack {
 		try {
 			this.save(file);
 		} catch (IOException e) {
-			Main.logger.error("Failed to copy structure pack "+this.name+" to "+dest+": ", e);
+			Interitus.logger.error("Failed to copy structure pack "+this.name+" to "+dest+": ", e);
 			return false;
 		}
 		return true;
@@ -281,8 +281,8 @@ public class StructurePack {
 	}
 	
 	public boolean isVersionSupported() {
-		if (version<Main.SUPPORTED_PACK_VERSION_MIN) {return false;}
-		if (version>Main.SUPPORTED_PACK_VERSION_MAX) {return false;}
+		if (version<Interitus.SUPPORTED_PACK_VERSION_MIN) {return false;}
+		if (version>Interitus.SUPPORTED_PACK_VERSION_MAX) {return false;}
 		return true;
 	}
 	
@@ -320,7 +320,7 @@ public class StructurePack {
 				return false;
 			}
 		} catch (IOException e) {
-			Main.logger.error("Error saving new structure pack <"+pack.name+">: ", e);
+			Interitus.logger.error("Error saving new structure pack <"+pack.name+">: ", e);
 			return false;
 		}
 		packs.put(name, pack);
@@ -331,7 +331,7 @@ public class StructurePack {
 		try {
 			pack.load();
 		} catch (IOException e) {
-			Main.logger.error("Error loading structure pack <"+pack.name+">: ", e);
+			Interitus.logger.error("Error loading structure pack <"+pack.name+">: ", e);
 			pack.unload();
 			return false;
 		}
@@ -363,11 +363,11 @@ public class StructurePack {
 			try {
 				pack.preload();
 			} catch (IOException e) {
-				Main.logger.error("Error pre-loading structure pack <"+pack.name+">: ", e);
+				Interitus.logger.error("Error pre-loading structure pack <"+pack.name+">: ", e);
 				continue;
 			}
 			if (!pack.isVersionSupported()) {
-				Main.logger.error("The structure pack <"+pack.name+"> can not be loaded because pack version "+pack.version+" is not supported.");
+				Interitus.logger.error("The structure pack <"+pack.name+"> can not be loaded because pack version "+pack.version+" is not supported.");
 				return;
 			}
 			packs.put(name, pack);

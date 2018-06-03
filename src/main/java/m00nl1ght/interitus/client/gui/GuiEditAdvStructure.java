@@ -19,7 +19,7 @@ import org.lwjgl.input.Keyboard;
 
 import com.google.common.collect.Lists;
 
-import m00nl1ght.interitus.Main;
+import m00nl1ght.interitus.Interitus;
 import m00nl1ght.interitus.block.tileentity.TileEntityAdvStructure;
 import m00nl1ght.interitus.block.tileentity.TileEntityAdvStructure.Mode;
 import m00nl1ght.interitus.network.CDefaultPackage;
@@ -184,7 +184,7 @@ public class GuiEditAdvStructure extends GuiScreen {
 				CDefaultPackage.requestAction(this.tileStructure, 2, 0, 0);
 			} else if (button.id == 27) {
 				this.sendToServer(1); // untested
-				Main.proxy.displayStructureDataScreen(this.tileStructure, this);
+				Interitus.proxy.displayStructureDataScreen(this.tileStructure, this);
 			} else if (button.id == 28) {
 				this.mc.displayGuiScreen(null);
 			} else if (button.id == 21) {

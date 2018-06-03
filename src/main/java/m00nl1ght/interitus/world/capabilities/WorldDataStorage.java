@@ -1,13 +1,13 @@
 package m00nl1ght.interitus.world.capabilities;
 
-import m00nl1ght.interitus.Main;
+import m00nl1ght.interitus.Interitus;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.WorldServer;
 
 
 public class WorldDataStorage implements ICapabilityWorldDataStorage {
 	
-	public static final ResourceLocation NAME = new ResourceLocation(Main.MODID, "interitus_world");
+	public static final ResourceLocation NAME = new ResourceLocation(Interitus.MODID, "interitus_world");
 	
 	private WorldServer world;
 	private String pack = "";

@@ -5,7 +5,7 @@ import java.util.HashMap;
 import java.util.Map.Entry;
 
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
-import m00nl1ght.interitus.Main;
+import m00nl1ght.interitus.Interitus;
 import m00nl1ght.interitus.structures.Structure.StructureData;
 import m00nl1ght.interitus.world.InteritusChunkGenerator;
 import net.minecraft.nbt.NBTTagCompound;
@@ -104,7 +104,7 @@ public class StructurePositionMap {
 	public void readFromNBT(NBTTagCompound nbt) {
 		for (String key : nbt.getKeySet()) {
 			Structure struct = StructurePack.getStructure(key);
-			if (struct==null) {Main.logger.error("World data contains unknown structure data: structure <"+key+"> not found!");}
+			if (struct==null) {Interitus.logger.error("World data contains unknown structure data: structure <"+key+"> not found!");}
 			NBTTagList list = nbt.getTagList(key, 4);
 			for (int i=0; i<list.tagCount(); i++) {
 				this.create(new StructureData(struct, BlockPos.fromLong(((NBTTagLong)list.get(i)).getLong())), false);

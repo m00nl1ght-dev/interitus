@@ -21,8 +21,8 @@ import net.minecraftforge.fml.common.event.FMLServerStartedEvent;
 import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
 
 
-@Mod(modid = Main.MODID, name = Main.MODNAME, version = Main.VERSION)
-public class Main {
+@Mod(modid = Interitus.MODID, name = Interitus.MODNAME, version = Interitus.VERSION)
+public class Interitus {
 
     public static final String MODID = "interitus";
     public static final String MODNAME = "Interitus";
@@ -35,7 +35,7 @@ public class Main {
     public static Logger logger;
     
     @Instance
-    public static Main instance = new Main(); 
+    public static Interitus instance = new Interitus(); 
     
     @SidedProxy(clientSide=ClientProxy.ref, serverSide=ServerProxy.ref)
     public static IProxy proxy; 

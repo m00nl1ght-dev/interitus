@@ -1,6 +1,6 @@
 package m00nl1ght.interitus.block;
 
-import m00nl1ght.interitus.Main;
+import m00nl1ght.interitus.Interitus;
 import m00nl1ght.interitus.block.tileentity.TileEntityAdvStructure;
 import m00nl1ght.interitus.block.tileentity.TileEntitySummoner;
 import m00nl1ght.interitus.client.TESRAdvStructure;
@@ -21,8 +21,8 @@ public final class ModBlock {
 	public static Item itemAdvStructure, itemSummoner;
 
     public static void initBlocks(RegistryEvent.Register<Block> event) {
-    	blockAdvStructure = new BlockAdvStructure("advanced_structure").setRegistryName(Main.MODID,"advanced_structure");
-    	blockSummoner = new BlockSummoner("summoner").setRegistryName(Main.MODID,"summoner");
+    	blockAdvStructure = new BlockAdvStructure("advanced_structure").setRegistryName(Interitus.MODID,"advanced_structure");
+    	blockSummoner = new BlockSummoner("summoner").setRegistryName(Interitus.MODID,"summoner");
     	itemAdvStructure = ModItem.create(new ItemBlock(blockAdvStructure),"advanced_structure");
     	itemSummoner = ModItem.create(new ItemBlock(blockSummoner),"summoner");
     	event.getRegistry().register(blockAdvStructure);

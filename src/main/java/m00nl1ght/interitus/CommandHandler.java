@@ -42,7 +42,7 @@ public class CommandHandler implements ICommand {
 		EntityPlayer player = (sender instanceof EntityPlayer) ? (EntityPlayer)sender : null;
 		
 		if(args.length == 0) { 
-			sender.sendMessage(new TextComponentString(Main.MODNAME+" v"+Main.VERSION+" is active."));
+			sender.sendMessage(new TextComponentString(Interitus.MODNAME+" v"+Interitus.VERSION+" is active."));
 			if (!world.hasCapability(WorldDataStorageProvider.INTERITUS_WORLD, null)) {
 				sender.sendMessage(new TextComponentString("The current world is not an Interitus world."));
 				return;
@@ -58,7 +58,7 @@ public class CommandHandler implements ICommand {
 		
 		if (args[0].equals("profiler")) {
 			sender.sendMessage(new TextComponentString("Generator info: "+((ChunkProviderServer)world.getChunkProvider()).chunkGenerator.toString()));
-			Main.profiler.printToChat(sender);
+			Interitus.profiler.printToChat(sender);
 			return;
 		}
 		
@@ -114,7 +114,7 @@ public class CommandHandler implements ICommand {
 							sender.sendMessage(new TextComponentString("Nothing could be saved."));
 						}
 					} catch (IOException e) {
-						Main.logger.error("Failed to save structure pack: ", e);
+						Interitus.logger.error("Failed to save structure pack: ", e);
 						sender.sendMessage(new TextComponentString("Failed to save structure pack."));
 					}
 					return;
@@ -133,7 +133,7 @@ public class CommandHandler implements ICommand {
 						StructurePack.reload();
 						sender.sendMessage(new TextComponentString("Loaded structure pack."));
 					} catch (IOException e) {
-						Main.logger.error("Failed to load structure pack: ", e);
+						Interitus.logger.error("Failed to load structure pack: ", e);
 						sender.sendMessage(new TextComponentString("Failed to load structure pack."));
 					}
 				case "delete":

@@ -2,7 +2,7 @@ package m00nl1ght.interitus.block;
 
 import java.util.Random;
 
-import m00nl1ght.interitus.Main;
+import m00nl1ght.interitus.Interitus;
 import m00nl1ght.interitus.block.tileentity.TileEntitySummoner;
 import m00nl1ght.interitus.crafting.ModCrafting;
 import net.minecraft.block.Block;
@@ -167,7 +167,7 @@ public class BlockSummoner extends Block {
 	
 	@Override
 	public int getExpDrop(IBlockState state, IBlockAccess world, BlockPos pos, int fortune) {
-        return 20+Main.random.nextInt(50);
+        return 20+Interitus.random.nextInt(50);
     }
 
 }

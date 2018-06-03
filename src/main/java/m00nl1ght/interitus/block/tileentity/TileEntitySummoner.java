@@ -3,7 +3,7 @@ package m00nl1ght.interitus.block.tileentity;
 import javax.annotation.Nullable;
 
 import io.netty.buffer.ByteBuf;
-import m00nl1ght.interitus.Main;
+import m00nl1ght.interitus.Interitus;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.IEntityLivingData;
@@ -40,7 +40,7 @@ public class TileEntitySummoner extends TileEntity implements ITickable {
 			} particleTicks--;
 			
 			if (spawnTicks<=0) {
-				spawnTicks=spawnDelayBase+(spawnDelayRange>0?Main.random.nextInt(spawnDelayRange):0);
+				spawnTicks=spawnDelayBase+(spawnDelayRange>0?Interitus.random.nextInt(spawnDelayRange):0);
 				this.trySpawn(sworld);
 			} spawnTicks--;
 		}
@@ -51,7 +51,7 @@ public class TileEntitySummoner extends TileEntity implements ITickable {
 			return false;
 		} else {
 			if (player.getEntityWorld().isRemote) {
-				Main.proxy.displaySummonerScreen(this);
+				Interitus.proxy.displaySummonerScreen(this);
 			}
 			return true;
 		}

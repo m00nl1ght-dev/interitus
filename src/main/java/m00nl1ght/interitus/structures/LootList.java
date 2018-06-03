@@ -11,7 +11,7 @@ import javax.annotation.Nonnull;
 
 import org.apache.commons.io.IOUtils;
 
-import m00nl1ght.interitus.Main;
+import m00nl1ght.interitus.Interitus;
 import m00nl1ght.interitus.structures.LootList.LootEntry;
 import m00nl1ght.interitus.util.RandomCollection;
 import net.minecraft.inventory.IInventory;
@@ -55,7 +55,7 @@ public class LootList extends RandomCollection<LootEntry> {
 	public static LootList loadFromFile(File folder, String name) {
 		File file = new File(folder, name + ".nbt");
 		if (!file.exists()) {
-			Main.logger.error("Could not load loot list (file not found): " + file.getPath());
+			Interitus.logger.error("Could not load loot list (file not found): " + file.getPath());
 			return null;
 		} else {
 			InputStream inputstream = null;
@@ -66,7 +66,7 @@ public class LootList extends RandomCollection<LootEntry> {
 			    template.loadFromNBT(nbttagcompound);
 				return template;
 			} catch (Throwable var10) {
-				Main.logger.error("Could not load loot list (nbt/stream error): " + name);
+				Interitus.logger.error("Could not load loot list (nbt/stream error): " + name);
 			} finally {
 				IOUtils.closeQuietly(inputstream);
 			}
@@ -127,7 +127,7 @@ public class LootList extends RandomCollection<LootEntry> {
 //			if (item==ModItem.RUNE) {
 //				return ItemRune.getRandomRune(min);
 //			}
-			ItemStack stack = new ItemStack(item, min==max?min:min+Main.random.nextInt(max-min+1), meta, null);
+			ItemStack stack = new ItemStack(item, min==max?min:min+Interitus.random.nextInt(max-min+1), meta, null);
 			if (nbt!=null) {stack.setTagCompound(nbt.copy());}
 			return stack;
 		}

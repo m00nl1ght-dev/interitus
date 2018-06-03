@@ -10,7 +10,7 @@ import javax.annotation.Nullable;
 
 import com.google.common.base.Predicate;
 
-import m00nl1ght.interitus.Main;
+import m00nl1ght.interitus.Interitus;
 import m00nl1ght.interitus.block.tileentity.TileEntityAdvStructure.LootEntryPrimer;
 import m00nl1ght.interitus.block.tileentity.TileEntityAdvStructure.LootGenPrimer;
 import m00nl1ght.interitus.structures.BlockRegionStorage.Condition;
@@ -91,7 +91,7 @@ public class Structure {
 	public void placeInChunk(World world, StructureData data, int chunkx, int chunkz) {
 		
 		if (!this.storage.valid()) {
-			Main.logger.warn("Structure could not be placed because of invalid block storage: "+data);
+			Interitus.logger.warn("Structure could not be placed because of invalid block storage: "+data);
 			return;
 		}
 		
@@ -128,7 +128,7 @@ public class Structure {
         						if (loot!=null && loot.length>0) {
         							for (LootGen gen : loot) {
         								for (int i=0; i<gen.count; i++) {
-        									if (!LootList.putInRandomEmptySlot((TileEntityChest)newTE, gen.list.get(), Main.random)) {break;}
+        									if (!LootList.putInRandomEmptySlot((TileEntityChest)newTE, gen.list.get(), Interitus.random)) {break;}
         								}
         							}
         						}
@@ -170,7 +170,7 @@ public class Structure {
     			}
     			world.spawnEntity(entity);
     		} else {
-    			Main.logger.error("Failed to spawn entity from structure data!");
+    			Interitus.logger.error("Failed to spawn entity from structure data!");
     		}
     	}
     	

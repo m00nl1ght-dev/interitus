@@ -2,7 +2,7 @@ package m00nl1ght.interitus.network;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import m00nl1ght.interitus.Main;
+import m00nl1ght.interitus.Interitus;
 import m00nl1ght.interitus.block.tileentity.TileEntityAdvStructure;
 import m00nl1ght.interitus.structures.StructurePackInfo;
 import net.minecraft.client.Minecraft;
@@ -68,7 +68,7 @@ public class SDefaultPackage implements IMessage {
 			packetbuffer.writeCompoundTag(StructurePackInfo.create());
 			ModNetwork.INSTANCE.sendTo(new SDefaultPackage("StructBlockGui", packetbuffer), player);
 		} catch (Exception exception) {
-			Main.logger.warn("Could not send structure block gui packet", exception);
+			Interitus.logger.warn("Could not send structure block gui packet", exception);
 		}
     }
     
@@ -78,7 +78,7 @@ public class SDefaultPackage implements IMessage {
 			te.writeCoordinates(packetbuffer);
 			ModNetwork.INSTANCE.sendTo(new SDefaultPackage("StructDataGui", packetbuffer), player);
 		} catch (Exception exception) {
-			Main.logger.warn("Could not send structure data gui packet", exception);
+			Interitus.logger.warn("Could not send structure data gui packet", exception);
 		}
     }
     
@@ -89,7 +89,7 @@ public class SDefaultPackage implements IMessage {
 			packetbuffer.writeBlockPos(target);
 			ModNetwork.INSTANCE.sendTo(new SDefaultPackage("StructLootGui", packetbuffer), player);
 		} catch (Exception exception) {
-			Main.logger.warn("Could not send structure loot gui packet", exception);
+			Interitus.logger.warn("Could not send structure loot gui packet", exception);
 		}
     }
 
@@ -127,10 +127,10 @@ public class SDefaultPackage implements IMessage {
 				NBTTagCompound tag = data.readCompoundTag();
 				if (tag == null) {throw new IllegalStateException("no pack info");}
 				if (tileentity1 instanceof TileEntityAdvStructure) {
-					Main.proxy.displayAdvStructScreen((TileEntityAdvStructure) tileentity1, StructurePackInfo.fromNBT(tag));
+					Interitus.proxy.displayAdvStructScreen((TileEntityAdvStructure) tileentity1, StructurePackInfo.fromNBT(tag));
 				}
 			} catch (Exception exception1) {
-				Main.logger.error("Couldn't proc structure data gui", exception1);
+				Interitus.logger.error("Couldn't proc structure data gui", exception1);
 			}			
 		}
 		
@@ -139,10 +139,10 @@ public class SDefaultPackage implements IMessage {
 				BlockPos blockpos = new BlockPos(data.readInt(), data.readInt(), data.readInt());
 				TileEntity tileentity1 = Minecraft.getMinecraft().world.getTileEntity(blockpos);
 				if (tileentity1 instanceof TileEntityAdvStructure) {
-					Main.proxy.displayStructureDataScreen((TileEntityAdvStructure) tileentity1, null);
+					Interitus.proxy.displayStructureDataScreen((TileEntityAdvStructure) tileentity1, null);
 				}
 			} catch (Exception exception1) {
-				Main.logger.error("Couldn't proc structure data gui", exception1);
+				Interitus.logger.error("Couldn't proc structure data gui", exception1);
 			}			
 		}
 		
@@ -153,10 +153,10 @@ public class SDefaultPackage implements IMessage {
 				TileEntity tileentity1 = Minecraft.getMinecraft().world.getTileEntity(blockpos);
 				if (tileentity1 instanceof TileEntityAdvStructure) {
 					TileEntityAdvStructure te = (TileEntityAdvStructure) tileentity1;
-					Main.proxy.displayStructureLootScreen(te, te.getLootOrNew(target));
+					Interitus.proxy.displayStructureLootScreen(te, te.getLootOrNew(target));
 				}
 			} catch (Exception exception1) {
-				Main.logger.error("Couldn't proc structure loot gui", exception1);
+				Interitus.logger.error("Couldn't proc structure loot gui", exception1);
 			}			
 		}
 		
