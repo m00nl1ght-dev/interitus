@@ -485,13 +485,13 @@ public class TileEntityAdvStructure extends TileEntity {
 		this.setName(compound.getString("name"));
 		this.author = compound.getString("author");
 		this.metadata = compound.getString("metadata");
-		int i = MathHelper.clamp(compound.getInteger("posX"), -32, 32);
-		int j = MathHelper.clamp(compound.getInteger("posY"), -32, 32);
-		int k = MathHelper.clamp(compound.getInteger("posZ"), -32, 32);
+		int i = MathHelper.clamp(compound.getInteger("posX"), -64, 64);
+		int j = MathHelper.clamp(compound.getInteger("posY"), -64, 64);
+		int k = MathHelper.clamp(compound.getInteger("posZ"), -64, 64);
 		this.position = new BlockPos(i, j, k);
-		int l = MathHelper.clamp(compound.getInteger("sizeX"), 0, 32);
-		int i1 = MathHelper.clamp(compound.getInteger("sizeY"), 0, 32);
-		int j1 = MathHelper.clamp(compound.getInteger("sizeZ"), 0, 32);
+		int l = MathHelper.clamp(compound.getInteger("sizeX"), 0, 128);
+		int i1 = MathHelper.clamp(compound.getInteger("sizeY"), 0, 128);
+		int j1 = MathHelper.clamp(compound.getInteger("sizeZ"), 0, 128);
 		this.size = new BlockPos(l, i1, j1);
 
 		try {
