@@ -11,6 +11,7 @@ import m00nl1ght.interitus.block.tileentity.TileEntityAdvStructure;
 import m00nl1ght.interitus.block.tileentity.TileEntityAdvStructure.LootEntryPrimer;
 import m00nl1ght.interitus.network.CDefaultPackage;
 import m00nl1ght.interitus.structures.BlockRegionStorage.Condition;
+import m00nl1ght.interitus.structures.StructurePackInfo;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;
@@ -25,11 +26,13 @@ public class GuiStructureData extends GuiScreen {
 	private ConditionList listCond;
 	private LootList listLoot;
 	private final GuiScreen parent;
+	private final StructurePackInfo packInfo;
 	private boolean state = false;
 
-	public GuiStructureData(TileEntityAdvStructure te, GuiScreen parent) {
+	public GuiStructureData(TileEntityAdvStructure te, GuiScreen parent, StructurePackInfo packInfo) {
 		this.tileStructure = te;
 		this.parent = parent;
+		this.packInfo = packInfo;
 		this.decimalFormat.setDecimalFormatSymbols(new DecimalFormatSymbols(Locale.US));
 	}
 
@@ -180,7 +183,7 @@ public class GuiStructureData extends GuiScreen {
 			getFontRenderer().drawString("@ x " + entry.pos.getX() + " y " + entry.pos.getY() + " z " + entry.pos.getZ(), x + 140, slotTop + 5, 16777215);
 			getFontRenderer().drawString(entry.gens().size() + " gens", x + 280, slotTop + 5, 16777215);
 			if (this.drawButton(mc, x+325, slotTop-1, 17, 17, true, "...")) {
-				mc.displayGuiScreen(new GuiEditLootEntry(tileStructure, GuiStructureData.this, entry));
+				mc.displayGuiScreen(new GuiEditLootEntry(tileStructure, GuiStructureData.this, entry, packInfo));
 			}
 			if (this.drawButton(mc, x+343, slotTop-1, 17, 17, true, "X")) {
 				return tileStructure.getLoot().remove(slotIdx)!=null;

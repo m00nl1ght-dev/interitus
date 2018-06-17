@@ -6,6 +6,7 @@ import java.text.DecimalFormatSymbols;
 import java.util.List;
 import java.util.Locale;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.GuiTextField;
@@ -19,7 +20,6 @@ import org.lwjgl.input.Keyboard;
 
 import com.google.common.collect.Lists;
 
-import m00nl1ght.interitus.Interitus;
 import m00nl1ght.interitus.block.tileentity.TileEntityAdvStructure;
 import m00nl1ght.interitus.block.tileentity.TileEntityAdvStructure.Mode;
 import m00nl1ght.interitus.network.CDefaultPackage;
@@ -34,6 +34,7 @@ public class GuiEditAdvStructure extends GuiScreen {
     private final List<GuiTextField> tabOrder = Lists.<GuiTextField>newArrayList();
     private final DecimalFormat decimalFormat = new DecimalFormat("0.0###");
     public final StructurePackInfo packInfo;
+	private boolean tbClosed;
 
     public GuiEditAdvStructure(TileEntityAdvStructure te, StructurePackInfo packInfo) {
         this.tileStructure = te;
@@ -56,11 +57,13 @@ public class GuiEditAdvStructure extends GuiScreen {
     
     @Override
     public void initGui() {
+		this.tbClosed=false;
         Keyboard.enableRepeatEvents(true);
         this.tileStructure.setAcceptUpdates(false); // in case another player modifies this TE while this GUI is opened
         this.buttonList.clear();
         this.doneButton = this.addButton(new GuiButton(0, this.width / 2 - 4 - 150, 210, 150, 20, I18n.format("gui.done")));
         this.saveButton = this.addButton(new GuiButton(9, this.width / 2 + 4 + 100, 185, 50, 20, I18n.format("structure_block.button.save")));
+        this.saveButton.enabled = !packInfo.active.read_only;
         this.loadButton = this.addButton(new GuiButton(10, this.width / 2 + 4 + 100, 185, 50, 20, I18n.format("structure_block.button.load")));
         this.modeButton = this.addButton(new GuiButton(18, this.width / 2 + 4, 210, 150, 20, "MODE"));
         this.detectSizeButton = this.addButton(new GuiButton(19, this.width / 2 + 4 + 100, 80, 50, 20, I18n.format("structure_block.button.detect_size")));
@@ -131,7 +134,7 @@ public class GuiEditAdvStructure extends GuiScreen {
     
     @Override
 	protected void actionPerformed(GuiButton button) throws IOException {
-		if (button.enabled) {
+		if (button.enabled && !this.tbClosed) {
 			if (button.id == 0) {
 				if (this.sendToServer(1)) {
 					this.mc.displayGuiScreen((GuiScreen) null);
@@ -183,10 +186,11 @@ public class GuiEditAdvStructure extends GuiScreen {
 			} else if (button.id == 26) {
 				CDefaultPackage.requestAction(this.tileStructure, 2, 0, 0);
 			} else if (button.id == 27) {
-				this.sendToServer(1); // untested
-				Interitus.proxy.displayStructureDataScreen(this.tileStructure, this);
-			} else if (button.id == 28) {
-				this.mc.displayGuiScreen(null);
+				this.sendToServer(-1); // untested
+				this.mc.displayGuiScreen(new GuiStructureData(this.tileStructure, this, packInfo));
+			} else if (button.id == 28) { // choose pack
+				this.sendToServer(5);
+				this.tbClosed = true;
 			} else if (button.id == 21) {
 				switch (this.tileStructure.getMirror()) {
 				case NONE:
@@ -360,7 +364,7 @@ public class GuiEditAdvStructure extends GuiScreen {
 		this.tileStructure.setPosition(new BlockPos(Integer.parseInt(this.posXEdit.getText()), Integer.parseInt(this.posYEdit.getText()), Integer.parseInt(this.posZEdit.getText())));
 		this.tileStructure.setSize(new BlockPos(Integer.parseInt(this.sizeXEdit.getText()), Integer.parseInt(this.sizeYEdit.getText()), Integer.parseInt(this.sizeZEdit.getText())));
 		this.tileStructure.setMetadata(this.dataEdit.getText());
-		return CDefaultPackage.sendStructUpdatePacket(this.tileStructure, pendingAction);
+		return pendingAction>=0?CDefaultPackage.sendStructUpdatePacket(this.tileStructure, pendingAction):true;
 	}
 
 	private int parseCoordinate(String p_189817_1_) {
@@ -373,6 +377,12 @@ public class GuiEditAdvStructure extends GuiScreen {
 	
 	@Override
 	protected void keyTyped(char typedChar, int keyCode) throws IOException {
+		if (this.tbClosed) {
+			if (keyCode == 1) {
+				Minecraft.getMinecraft().displayGuiScreen(null);
+			}
+			return;
+		}
 		if (this.nameEdit.getVisible() && isValidCharacterForName(typedChar, keyCode)) {
 			this.nameEdit.textboxKeyTyped(typedChar, keyCode);
 		}
@@ -449,6 +459,7 @@ public class GuiEditAdvStructure extends GuiScreen {
 
 	@Override
 	protected void mouseClicked(int mouseX, int mouseY, int mouseButton) throws IOException {
+		if (tbClosed) {return;}
 		super.mouseClicked(mouseX, mouseY, mouseButton);
 
 		if (this.nameEdit.getVisible()) {
@@ -483,6 +494,11 @@ public class GuiEditAdvStructure extends GuiScreen {
 	@Override
 	public void drawScreen(int mouseX, int mouseY, float partialTicks) {
 		this.drawDefaultBackground();
+		
+		if (this.tbClosed) {
+			return;
+		}
+		
 		Mode tileentitystructure$mode = this.tileStructure.getMode();
 		this.drawCenteredString(this.fontRenderer, "Advanced Structure", this.width / 2, 10, 16777215);
 
@@ -507,10 +523,9 @@ public class GuiEditAdvStructure extends GuiScreen {
 			this.sizeZEdit.drawTextBox();
 			this.drawString(this.fontRenderer, this.tileStructure.getConditions().size()+" conditions", this.width / 2 - 22, 131, 10526880);
 			this.drawString(this.fontRenderer, this.tileStructure.getLoot().size()+" loot entries", this.width / 2 - 22, 141, 10526880);
-		}
-
-		if (tileentitystructure$mode == Mode.LOAD) {
-			//NOP
+			if (packInfo.active.read_only) {
+				this.drawString(this.fontRenderer, "Unable to save structures, the active pack is read-only.", this.width / 2 - 4 - 146, 155, 16777120);
+			}
 		}
 
 		if (tileentitystructure$mode == Mode.DATA) {

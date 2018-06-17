@@ -18,10 +18,15 @@ import java.util.zip.ZipOutputStream;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.io.Files;
 
 import m00nl1ght.interitus.Interitus;
+import m00nl1ght.interitus.network.SDefaultPackage;
+import m00nl1ght.interitus.util.Toolkit;
 import m00nl1ght.interitus.world.capabilities.ICapabilityWorldDataStorage;
 import m00nl1ght.interitus.world.capabilities.WorldDataStorageProvider;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.nbt.CompressedStreamTools;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.ResourceLocation;
@@ -37,6 +42,7 @@ public class StructurePack {
 	static StructurePack current = emptyPack; // @Nonnull
 	static final HashMap<String, StructurePack> packs = new HashMap<String, StructurePack>();
 	public static final FilenameFilter MCSP_FILTER = new MCSPFilter();
+	private static EntityPlayer editing = null;
 	
 	final Map<String, Structure> structures = Maps.<String, Structure>newHashMap();
 	final Map<Biome, ArrayList<StructureConfig>> spawns = Maps.<Biome, ArrayList<StructureConfig>>newHashMap();
@@ -44,13 +50,41 @@ public class StructurePack {
 	public final RegistryMappings mappings = new RegistryMappings();
 	public final String name;
 	private boolean read_only;
-	private String title = "Interitus Structure Pack";
+	private String author = "Unknown";
 	private String description = "";
 	private float version = Interitus.SUPPORTED_PACK_VERSION_MAX;
 	private boolean loaded = false;
 	
 	public StructurePack(String name) {
 		this.name = name;
+	}
+
+	public static boolean playerTryEdit(EntityPlayer player) {
+		if (!player.canUseCommandBlock()) {
+			if (!player.getEntityWorld().isRemote) {
+				Toolkit.sendMessageToPlayer(player, "You don't have permission to do that.");
+			}
+			return false;
+		} else {
+			if (!player.getEntityWorld().isRemote) {
+				if (editing == null || editing == player || !Toolkit.isPlayerOnServer(player)) {
+					editing = player;
+					SDefaultPackage.sendStructurePackGui((EntityPlayerMP) player);
+				} else {
+					Toolkit.sendMessageToPlayer(player, player.getDisplayNameString() + " is currently configuring Interitus. Please wait.");
+					return false;
+				}
+			}
+			return true;
+		}
+	}
+	
+	public static void resetEditingPlayer() {
+		editing=null;
+	}
+	
+	public static EntityPlayer getEditingPlayer() {
+		return editing;
 	}
 	
 	private void preload() throws IOException {
@@ -181,7 +215,7 @@ public class StructurePack {
 	
 	private NBTTagCompound writeInfoToNBT() {
 		NBTTagCompound nbt = new NBTTagCompound();
-		nbt.setString("title", this.title);
+		nbt.setString("author", this.author);
 		nbt.setString("description", this.description);
 		nbt.setFloat("version", this.version);
 		nbt.setBoolean("final", this.read_only);
@@ -189,7 +223,7 @@ public class StructurePack {
 	}
 	
 	private void readInfoFromNBT(NBTTagCompound nbt) {
-		this.title = nbt.getString("title");
+		this.author = nbt.getString("author");
 		this.description = nbt.getString("description");
 		this.version = nbt.getFloat("version");
 		this.read_only = nbt.getBoolean("final");
@@ -208,22 +242,12 @@ public class StructurePack {
 		if (this.name.equals("Default")) {return false;}
 		if (current==this) {loadDefault();}
 		File file = new File(basePath, name+".mcsp");
-		return file.delete();
-	}
-	
-	public boolean copy(String dest) {
-		if (this.name.equals("Default")) {
-			return create(dest);
+		if (file.delete()) {
+			packs.remove(this.name);
+			StructurePackInfo.markDirty();
+			return true;
 		}
-		File file = new File(basePath, dest+".mcsp");
-		if (file.exists()) {return false;}
-		try {
-			this.save(file);
-		} catch (IOException e) {
-			Interitus.logger.error("Failed to copy structure pack "+this.name+" to "+dest+": ", e);
-			return false;
-		}
-		return true;
+		return false;
 	}
 	
 	public static StructurePack get() {
@@ -244,11 +268,19 @@ public class StructurePack {
 	
 	public static Structure getOrCreateStructure(String name) {
 		Structure str = current.structures.get(name);
-		if (str==null) {
+		if (str==null && !current.read_only) {
 			str = new Structure(name);
 			current.structures.put(str.name, str);
+			StructurePackInfo.markDirty();
 		}
 		return str;
+	}
+	
+	public boolean deleteStructure(String name) {
+		if (this.read_only) {return false;}
+		if (this.structures.remove(name)==null) {return false;};
+		StructurePackInfo.markDirty();
+		return true;
 	}
 	
 	public static LootList getLootList(String name) {
@@ -257,19 +289,50 @@ public class StructurePack {
 	
 	public static LootList getOrCreateLootList(String name) {
 		LootList str = current.loot.get(name);
-		if (str==null) {
+		if (str==null && !current.read_only) {
 			str = new LootList(name);
 			current.loot.put(str.name, str);
+			StructurePackInfo.markDirty();
 		}
 		return str;
+	}
+	
+	public boolean deleteLootList(String name) {
+		if (this.read_only) {return false;}
+		if (this.loot.remove(name)==null) {return false;};
+		StructurePackInfo.markDirty();
+		return true;
+	}
+	
+	public void setDescription(String text) {
+		if (this.read_only) {return;}
+		this.description=text;
+		StructurePackInfo.markDirty();
+	}
+	
+	public boolean sign(EntityPlayer player) {
+		if (this.read_only) {return false;}
+		this.read_only=true;
+		String org = this.author;
+		this.author=player.getName();
+		try {
+			if (!this.save()) {this.read_only=false; this.author=org; return false;}
+		} catch (Exception e) {
+			Interitus.logger.error("Failed to save pack (signing): ", e);
+			this.read_only=false;
+			this.author=org;
+			return false;
+		}
+		StructurePackInfo.markDirty();
+		return true;
 	}
 	
 	public boolean isLoaded() {
 		return this.loaded;
 	}
 	
-	public String getTitle() {
-		return this.title;
+	public String getAuthor() {
+		return this.author;
 	}
 	
 	public String getDescription() {
@@ -290,8 +353,9 @@ public class StructurePack {
 		StructurePack pack = new StructurePack("Default");
 		pack.loaded=true;
 		pack.read_only = true;
-		pack.title = "Default Structure Pack";
-		pack.description = "An empty structure pack that behaves like vanilla minecraft.";
+		pack.author = "";
+		pack.description = "Empty, behaves like vanilla.";
+		StructurePackInfo.markDirty();
 		return pack;
 	}
 	
@@ -307,35 +371,49 @@ public class StructurePack {
 		return packs.get(name);
 	}
 	
-	public static boolean create(String name) {
+	public static void create(String name, EntityPlayer player, StructurePack from) {
+		if (name.isEmpty()) {throw new IllegalStateException("new pack name is empty!");}
+		if (getPack(name)!=null) {throw new IllegalStateException("pack already exists!");}
 		File file = new File(basePath, name+".mcsp");
-		if (file.exists()) {return false;}
-		if (name.isEmpty() || name.equals("Default")) {return false;}
+		if (file.exists()) {throw new IllegalStateException("pack file already exists!");}
 		StructurePack pack = new StructurePack(name);
-		pack.title = name;
-		pack.description = "";
-		pack.loaded = true;
-		try {
-			if (!pack.save()) {
-				return false;
+		if (from==null || from.name.equals("Default")) {
+			pack.author = player.getName();
+			pack.description = "";
+			pack.loaded = true;
+			try {
+				if (!pack.save(file)) {
+					throw new IllegalStateException("failed to save new pack!");
+				}
+			} catch (IOException e) {
+				throw new IllegalStateException("Error saving new structure pack <"+pack.name+">: ", e);
 			}
-		} catch (IOException e) {
-			Interitus.logger.error("Error saving new structure pack <"+pack.name+">: ", e);
-			return false;
+		} else {
+			File fromFile = new File(basePath, from.name+".mcsp");
+			if (!fromFile.exists()) {throw new IllegalStateException("pack file to copy not found!");}
+			pack.author = from.author;
+			pack.description = from.description;
+			pack.version = from.version;
+			try {
+				Files.copy(fromFile, file);
+			} catch (IOException e) {
+				throw new IllegalStateException("failed to copy structure pack file!");
+			}
 		}
 		packs.put(name, pack);
-		return true;
+		StructurePackInfo.markDirty();
 	}
 	
 	public static boolean load(StructurePack pack) {
+		current.unload();
 		try {
 			pack.load();
 		} catch (IOException e) {
 			Interitus.logger.error("Error loading structure pack <"+pack.name+">: ", e);
 			pack.unload();
+			loadDefault();
 			return false;
 		}
-		current.unload();
 		updateCurrentPack(pack);
 		return true;
 	}
@@ -346,6 +424,7 @@ public class StructurePack {
 	
 	private static void updateCurrentPack(StructurePack pack) {
 		current = pack;
+		StructurePackInfo.markDirty();
 		WorldServer world = DimensionManager.getWorld(0);
 		ICapabilityWorldDataStorage data = world.getCapability(WorldDataStorageProvider.INTERITUS_WORLD, null);
 		if (data!=null) {
@@ -355,6 +434,7 @@ public class StructurePack {
 	
 	public static void updateAvailbalePacks() {
 		packs.clear();
+		StructurePackInfo.markDirty();
 		for (File file : basePath.listFiles(MCSP_FILTER)) {
 			String name = file.getName();
 			name = name.substring(0, name.length()-5);

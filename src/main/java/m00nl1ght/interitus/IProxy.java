@@ -4,7 +4,6 @@ import m00nl1ght.interitus.block.tileentity.TileEntityAdvStructure;
 import m00nl1ght.interitus.block.tileentity.TileEntityAdvStructure.LootEntryPrimer;
 import m00nl1ght.interitus.block.tileentity.TileEntitySummoner;
 import m00nl1ght.interitus.structures.StructurePackInfo;
-import net.minecraft.client.gui.GuiScreen;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
@@ -29,8 +28,10 @@ public interface IProxy {
 
 	public void displaySummonerScreen(TileEntitySummoner te);
 	
-	public void displayStructureDataScreen(TileEntityAdvStructure te, GuiScreen parent);
+	public void displayStructureDataScreen(TileEntityAdvStructure te, StructurePackInfo packInfo);
 	
-	public void displayStructureLootScreen(TileEntityAdvStructure te, LootEntryPrimer entry);
+	public void displayStructureLootScreen(TileEntityAdvStructure te, LootEntryPrimer entry, StructurePackInfo packInfo);
+
+	public void displayAdvStructScreen(StructurePackInfo packInfo);
 
 }

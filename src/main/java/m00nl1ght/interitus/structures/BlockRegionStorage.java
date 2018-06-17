@@ -8,6 +8,7 @@ import java.util.Set;
 
 import javax.annotation.Nullable;
 
+import m00nl1ght.interitus.Interitus;
 import m00nl1ght.interitus.block.tileentity.TileEntityAdvStructure.LootGenPrimer;
 import m00nl1ght.interitus.world.InteritusChunkGenerator;
 import net.minecraft.block.material.Material;
@@ -190,13 +191,17 @@ public class BlockRegionStorage {
         	this.nbt.put(pos, tag);
         	if (tag.hasKey("structLoot")) {
         		NBTTagList nbtLoot = tag.getTagList("structLoot", 10);
-        		for (int j=0; j<nbtLoot.tagCount(); j++) {
-        			NBTTagCompound lootTag = nbtLoot.getCompoundTagAt(j);
-        			LootGen[] gens = new LootGen[nbtLoot.tagCount()];
-                	for (int k=0; k<nbtLoot.tagCount(); k++) { 
-                		gens[k]=new LootGen(nbtLoot.getCompoundTagAt(k));
-                	}
-                	loot.put(pos, gens);
+				for (int j = 0; j < nbtLoot.tagCount(); j++) {
+					try {
+						NBTTagCompound lootTag = nbtLoot.getCompoundTagAt(j);
+						LootGen[] gens = new LootGen[nbtLoot.tagCount()];
+						for (int k = 0; k < nbtLoot.tagCount(); k++) {
+							gens[k] = new LootGen(nbtLoot.getCompoundTagAt(k));
+						}
+						loot.put(pos, gens);
+					} catch (Exception e) {
+						Interitus.logger.warn("Error loading loot container: ", e);
+					}
         		}
         		tag.removeTag("structLoot");
         	}

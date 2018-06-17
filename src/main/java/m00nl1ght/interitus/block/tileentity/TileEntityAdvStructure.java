@@ -56,7 +56,7 @@ public class TileEntityAdvStructure extends TileEntity {
     private BlockPos size = BlockPos.ORIGIN;
     private Mirror mirror = Mirror.NONE;
     private Rotation rotation = Rotation.NONE;
-    private Mode mode = Mode.DATA;
+    private Mode mode = Mode.LOAD;
     private boolean ignoreEntities = true;
     private boolean powered;
     private boolean showAir;
@@ -275,7 +275,7 @@ public class TileEntityAdvStructure extends TileEntity {
                 this.setMode(Mode.CORNER);
                 break;
             case CORNER:
-                this.setMode(Mode.DATA);
+                this.setMode(Mode.SAVE);
                 break;
             case DATA:
                 this.setMode(Mode.SAVE);
@@ -387,6 +387,7 @@ public class TileEntityAdvStructure extends TileEntity {
     
     public boolean save() {
         if (this.mode == Mode.SAVE && !this.world.isRemote && !StringUtils.isNullOrEmpty(this.name)) {
+        	if (StructurePack.isReadOnly()) {return false;}
         	BlockPos pos1 = this.pos.add(this.position);
             Structure template = StructurePack.getOrCreateStructure(name);
             template.takeBlocksFromWorld(world, pos1, this.size, !this.ignoreEntities);

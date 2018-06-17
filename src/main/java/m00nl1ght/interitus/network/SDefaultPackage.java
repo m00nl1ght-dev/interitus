@@ -61,6 +61,16 @@ public class SDefaultPackage implements IMessage {
         return this.data;
     }
     
+    public static void sendStructurePackGui(EntityPlayerMP player) {
+    	try {
+			PacketBuffer packetbuffer = new PacketBuffer(Unpooled.buffer());
+			packetbuffer.writeCompoundTag(StructurePackInfo.create());
+			ModNetwork.INSTANCE.sendTo(new SDefaultPackage("StructPackGui", packetbuffer), player);
+		} catch (Exception exception) {
+			Interitus.logger.warn("Could not send structure pack gui packet", exception);
+		}
+    }
+    
     public static void sendStructureBlockGui(EntityPlayerMP player, TileEntityAdvStructure te) {
     	try {
 			PacketBuffer packetbuffer = new PacketBuffer(Unpooled.buffer());
@@ -76,6 +86,7 @@ public class SDefaultPackage implements IMessage {
     	try {
 			PacketBuffer packetbuffer = new PacketBuffer(Unpooled.buffer());
 			te.writeCoordinates(packetbuffer);
+			packetbuffer.writeCompoundTag(StructurePackInfo.create());
 			ModNetwork.INSTANCE.sendTo(new SDefaultPackage("StructDataGui", packetbuffer), player);
 		} catch (Exception exception) {
 			Interitus.logger.warn("Could not send structure data gui packet", exception);
@@ -87,6 +98,7 @@ public class SDefaultPackage implements IMessage {
 			PacketBuffer packetbuffer = new PacketBuffer(Unpooled.buffer());
 			te.writeCoordinates(packetbuffer);
 			packetbuffer.writeBlockPos(target);
+			packetbuffer.writeCompoundTag(StructurePackInfo.create());
 			ModNetwork.INSTANCE.sendTo(new SDefaultPackage("StructLootGui", packetbuffer), player);
 		} catch (Exception exception) {
 			Interitus.logger.warn("Could not send structure loot gui packet", exception);
@@ -99,6 +111,11 @@ public class SDefaultPackage implements IMessage {
 		public IMessage onMessage(SDefaultPackage p, MessageContext ctx) {
 
 			switch (p.getChannelName()) {
+				case "StructPackGui":
+					Minecraft.getMinecraft().addScheduledTask(() -> {
+						this.procStructPackGui(p.getBufferData());
+					});
+					break;
 				case "StructBlockGui":
 					Minecraft.getMinecraft().addScheduledTask(() -> {
 						this.procStructBlockGui(p.getBufferData());
@@ -120,6 +137,16 @@ public class SDefaultPackage implements IMessage {
 			return null;
 		}
 
+		private void procStructPackGui(PacketBuffer data) {
+			try {
+				NBTTagCompound tag = data.readCompoundTag();
+				if (tag == null) {throw new IllegalStateException("no pack info");}
+				Interitus.proxy.displayAdvStructScreen(StructurePackInfo.fromNBT(tag));
+			} catch (Exception exception1) {
+				Interitus.logger.error("Couldn't proc structure pack gui", exception1);
+			}			
+		}
+		
 		private void procStructBlockGui(PacketBuffer data) {
 			try {
 				BlockPos blockpos = new BlockPos(data.readInt(), data.readInt(), data.readInt());
@@ -138,8 +165,10 @@ public class SDefaultPackage implements IMessage {
 			try {
 				BlockPos blockpos = new BlockPos(data.readInt(), data.readInt(), data.readInt());
 				TileEntity tileentity1 = Minecraft.getMinecraft().world.getTileEntity(blockpos);
+				NBTTagCompound tag = data.readCompoundTag();
+				if (tag == null) {throw new IllegalStateException("no pack info");}
 				if (tileentity1 instanceof TileEntityAdvStructure) {
-					Interitus.proxy.displayStructureDataScreen((TileEntityAdvStructure) tileentity1, null);
+					Interitus.proxy.displayStructureDataScreen((TileEntityAdvStructure) tileentity1, StructurePackInfo.fromNBT(tag));
 				}
 			} catch (Exception exception1) {
 				Interitus.logger.error("Couldn't proc structure data gui", exception1);
@@ -150,10 +179,12 @@ public class SDefaultPackage implements IMessage {
 			try {
 				BlockPos blockpos = new BlockPos(data.readInt(), data.readInt(), data.readInt());
 				BlockPos target = data.readBlockPos();
+				NBTTagCompound tag = data.readCompoundTag();
+				if (tag == null) {throw new IllegalStateException("no pack info");}
 				TileEntity tileentity1 = Minecraft.getMinecraft().world.getTileEntity(blockpos);
 				if (tileentity1 instanceof TileEntityAdvStructure) {
 					TileEntityAdvStructure te = (TileEntityAdvStructure) tileentity1;
-					Interitus.proxy.displayStructureLootScreen(te, te.getLootOrNew(target));
+					Interitus.proxy.displayStructureLootScreen(te, te.getLootOrNew(target), StructurePackInfo.fromNBT(tag));
 				}
 			} catch (Exception exception1) {
 				Interitus.logger.error("Couldn't proc structure loot gui", exception1);

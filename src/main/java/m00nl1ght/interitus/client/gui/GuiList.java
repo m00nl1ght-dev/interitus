@@ -274,10 +274,16 @@ public abstract class GuiList extends Gui {
 		GlStateManager.disableBlend();
 		GL11.glDisable(GL11.GL_SCISSOR_TEST);
 		
+		this.drawExtra();
+		
 		this.mDownPre = this.mDown;
 	}
 
-    @Override
+    protected void drawExtra() {
+		
+	}
+
+	@Override
 	protected void drawGradientRect(int left, int top, int right, int bottom, int color1, int color2) {
         float a1 = (color1 >> 24 & 255) / 255.0F;
         float r1 = (color1 >> 16 & 255) / 255.0F;
@@ -299,6 +305,26 @@ public abstract class GuiList extends Gui {
         buffer.pos(left,  top, 0.0D).color(r1, g1, b1, a1).endVertex();
         buffer.pos(left,  bottom, 0.0D).color(r2, g2, b2, a2).endVertex();
         buffer.pos(right, bottom, 0.0D).color(r2, g2, b2, a2).endVertex();
+        tessellator.draw();
+        GlStateManager.shadeModel(GL11.GL_FLAT);
+        GlStateManager.disableBlend();
+        GlStateManager.enableAlpha();
+        GlStateManager.enableTexture2D();
+    }
+    
+	protected void drawRect(int x, int y, int w, int h, float r1, float g1, float b1, float a1, float r2, float g2, float b2, float a2) {
+        GlStateManager.disableTexture2D();
+        GlStateManager.enableBlend();
+        GlStateManager.disableAlpha();
+        GlStateManager.tryBlendFuncSeparate(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, 1, 0);
+        GlStateManager.shadeModel(GL11.GL_SMOOTH);
+        Tessellator tessellator = Tessellator.getInstance();
+        BufferBuilder buffer = tessellator.getBuffer();
+        buffer.begin(7, DefaultVertexFormats.POSITION_COLOR);
+        buffer.pos(x+w, y, 0.0D).color(r1, g1, b1, a1).endVertex();
+        buffer.pos(x,  y, 0.0D).color(r1, g1, b1, a1).endVertex();
+        buffer.pos(x,  y+h, 0.0D).color(r2, g2, b2, a2).endVertex();
+        buffer.pos(x+w, y+h, 0.0D).color(r2, g2, b2, a2).endVertex();
         tessellator.draw();
         GlStateManager.shadeModel(GL11.GL_FLAT);
         GlStateManager.disableBlend();

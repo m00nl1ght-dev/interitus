@@ -8,10 +8,10 @@ import m00nl1ght.interitus.client.gui.GuiEditAdvStructure;
 import m00nl1ght.interitus.client.gui.GuiEditLootEntry;
 import m00nl1ght.interitus.client.gui.GuiEditSummoner;
 import m00nl1ght.interitus.client.gui.GuiStructureData;
+import m00nl1ght.interitus.client.gui.GuiStructurePacks;
 import m00nl1ght.interitus.item.ModItem;
 import m00nl1ght.interitus.structures.StructurePackInfo;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.resources.I18n;
 import net.minecraftforge.client.event.ModelRegistryEvent;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
@@ -74,13 +74,18 @@ public class ClientProxy implements IProxy {
 	}
 	
 	@Override
-	public void displayStructureDataScreen(TileEntityAdvStructure te, GuiScreen parent) {
-		Minecraft.getMinecraft().displayGuiScreen(new GuiStructureData(te, parent));
+	public void displayStructureDataScreen(TileEntityAdvStructure te, StructurePackInfo packInfo) {
+		Minecraft.getMinecraft().displayGuiScreen(new GuiStructureData(te, null, packInfo));
 	}
 	
 	@Override
-	public void displayStructureLootScreen(TileEntityAdvStructure te, LootEntryPrimer entry) {
-		Minecraft.getMinecraft().displayGuiScreen(new GuiEditLootEntry(te, null, entry));
+	public void displayStructureLootScreen(TileEntityAdvStructure te, LootEntryPrimer entry, StructurePackInfo packInfo) {
+		Minecraft.getMinecraft().displayGuiScreen(new GuiEditLootEntry(te, null, entry, packInfo));
+	}
+
+	@Override
+	public void displayAdvStructScreen(StructurePackInfo packInfo) {
+		Minecraft.getMinecraft().displayGuiScreen(new GuiStructurePacks(packInfo));
 	}
 
 }

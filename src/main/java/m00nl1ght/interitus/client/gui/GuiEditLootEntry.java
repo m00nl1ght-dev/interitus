@@ -15,6 +15,7 @@ import m00nl1ght.interitus.block.tileentity.TileEntityAdvStructure;
 import m00nl1ght.interitus.block.tileentity.TileEntityAdvStructure.LootEntryPrimer;
 import m00nl1ght.interitus.block.tileentity.TileEntityAdvStructure.LootGenPrimer;
 import m00nl1ght.interitus.network.CDefaultPackage;
+import m00nl1ght.interitus.structures.StructurePackInfo;
 
 public class GuiEditLootEntry extends GuiScreen {
 	
@@ -24,9 +25,10 @@ public class GuiEditLootEntry extends GuiScreen {
 	private LootGenList list;
 	private final GuiStructureData parent;
 	private final LootEntryPrimer primer;
+	private final StructurePackInfo packInfo;
 	
-	public GuiEditLootEntry(TileEntityAdvStructure te, GuiStructureData parent, LootEntryPrimer primer) {
-        this.tileStructure = te; this.parent = parent; this.primer = primer;
+	public GuiEditLootEntry(TileEntityAdvStructure te, GuiStructureData parent, LootEntryPrimer primer, StructurePackInfo packInfo) {
+        this.tileStructure = te; this.parent = parent; this.primer = primer; this.packInfo = packInfo;
         this.decimalFormat.setDecimalFormatSymbols(new DecimalFormatSymbols(Locale.US));
     }
 	
@@ -106,7 +108,7 @@ public class GuiEditLootEntry extends GuiScreen {
 			if (this.drawButton(mc, x+343, relativeY-1, 17, 17, primer.gens().size()<16, "+")) {
 				LootGenPrimer p = new LootGenPrimer(1, "undefined");
 				primer.gens().add(p);
-				mc.displayGuiScreen(new GuiEditLootGen(tileStructure, GuiEditLootEntry.this, p));
+				mc.displayGuiScreen(new GuiEditLootGen(tileStructure, GuiEditLootEntry.this, p, packInfo));
 			}
 		}
 
@@ -117,7 +119,7 @@ public class GuiEditLootEntry extends GuiScreen {
 			getFontRenderer().drawString(gen.list(), x+15, slotTop+5, 16777215);
 			this.drawCenteredString(fontRenderer, ""+gen.amount(), x+210, slotTop+5, 16777215);
 			if (this.drawButton(mc, x+120, slotTop-1, 17, 17, true, "...")) {
-				mc.displayGuiScreen(new GuiEditLootGen(tileStructure, GuiEditLootEntry.this, gen));
+				mc.displayGuiScreen(new GuiEditLootGen(tileStructure, GuiEditLootEntry.this, gen, packInfo));
 			}
 			if (this.drawButton(mc, x+180, slotTop-1, 17, 17, gen.amount()>0, "-")) {
 				gen.setAmount(gen.amount()-1);

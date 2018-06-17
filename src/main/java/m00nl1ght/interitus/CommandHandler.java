@@ -74,51 +74,33 @@ public class CommandHandler implements ICommand {
 			return;
 		}
 		
-		if(args.length == 1) { 
-			sender.sendMessage(new TextComponentString("Invalid command. Enter '/interitus ?' for help."));
-			return; 
-        }
-		
-		if (args[0].equals("loot")) {
-			switch (args[1]) {
-			case "new":
-				if (args.length<3) {sender.sendMessage(new TextComponentString("Incorrect number of arguments!")); return;}
-				StructurePack.getOrCreateLootList(args[2]);
-				sender.sendMessage(new TextComponentString("Created loot list.")); 
-				return;
-			case "export":
-				if (args.length<3) {sender.sendMessage(new TextComponentString("Incorrect number of arguments!")); return;}
-				LootList list = StructurePack.getOrCreateLootList(args[2]);
-				list.saveToFile(StructurePack.basePath);
-				sender.sendMessage(new TextComponentString("Saved loot list to file.")); 
-				return;
-			case "get":
-				if (args.length<3) {sender.sendMessage(new TextComponentString("Incorrect number of arguments!")); return;}
-				LootList list1 = StructurePack.getOrCreateLootList(args[2]);
-				sender.sendMessage(new TextComponentString("Got item from loot list: "+list1.get())); 
-				return;
-			case "add":
-				if (args.length<6) {sender.sendMessage(new TextComponentString("Incorrect number of arguments!")); return;}
-				LootList list0 = StructurePack.getOrCreateLootList(args[2]);
-				list0.add(new LootList.LootEntry(player.getHeldItemMainhand(), Double.parseDouble(args[3]), Integer.parseInt(args[4]), Integer.parseInt(args[5])));
-				sender.sendMessage(new TextComponentString("Added "+player.getHeldItemMainhand()+" with weight "+Double.parseDouble(args[3]))); 
-				return;
-			default:
-				sender.sendMessage(new TextComponentString("Invalid command.")); return;
-			}
-		}
-		
 		if (args[0].equals("pack")) {
+			if(args.length == 1) { 
+				StructurePack.playerTryEdit(player);
+				return; 
+	        }
 			switch (args[1]) {
+				case "refresh":
+					StructurePack.updateAvailbalePacks();
+					sender.sendMessage(new TextComponentString("Refreshed structure pack list."));
+					return;
 				case "create":
 					if (args.length<3) {sender.sendMessage(new TextComponentString("Incorrect number of arguments!")); return;}
-					if (StructurePack.create(args[2])) {
-						sender.sendMessage(new TextComponentString("Created structure pack."));
-					} else {
+					StructurePack pack1 = args.length<4?null:StructurePack.getPack(args[3]);
+					try {
+						StructurePack.create(args[2], player, pack1);
+					} catch (Exception e) {
+						Interitus.logger.error("Error creating structure pack: ", e);
 						sender.sendMessage(new TextComponentString("Failed to create structure pack."));
+						return;
 					}
+					sender.sendMessage(new TextComponentString("Created structure pack."));
 					return;
 				case "save":
+					if (StructurePack.get().isReadOnly()) {
+						sender.sendMessage(new TextComponentString("Unable to save pack: read-only."));
+						return;
+					}
 					try {
 						if(StructurePack.get().save()) {
 							sender.sendMessage(new TextComponentString("Saved structure pack."));
@@ -158,18 +140,44 @@ public class CommandHandler implements ICommand {
 						sender.sendMessage(new TextComponentString("Failed to delete structure pack."));
 					}
 					return;
-				case "copy":
-					if (args.length<4) {sender.sendMessage(new TextComponentString("Incorrect number of arguments!")); return;}
-					StructurePack pack1 = StructurePack.getPack(args[2]);
-					if (pack1==null) {sender.sendMessage(new TextComponentString("Pack not found!")); return;}
-					if (pack1.copy(args[3])) {
-						sender.sendMessage(new TextComponentString("Copied structure pack."));
-					} else {
-						sender.sendMessage(new TextComponentString("Failed to copy structure pack."));
-					}
-					return;
 				default:
 					sender.sendMessage(new TextComponentString("Invalid command.")); return;
+			}
+		}
+		
+		if(args.length == 1) { 
+			sender.sendMessage(new TextComponentString("Invalid command. Enter '/interitus ?' for help."));
+			return; 
+        }
+		
+		if (args[0].equals("loot")) {
+			switch (args[1]) {
+			case "new":
+				if (StructurePack.get().isReadOnly()) {sender.sendMessage(new TextComponentString("Unable to modify pack: read-only.")); return;}
+				if (args.length<3) {sender.sendMessage(new TextComponentString("Incorrect number of arguments!")); return;}
+				StructurePack.getOrCreateLootList(args[2]);
+				sender.sendMessage(new TextComponentString("Created loot list.")); 
+				return;
+			case "export":
+				if (args.length<3) {sender.sendMessage(new TextComponentString("Incorrect number of arguments!")); return;}
+				LootList list = StructurePack.getOrCreateLootList(args[2]);
+				list.saveToFile(StructurePack.basePath);
+				sender.sendMessage(new TextComponentString("Saved loot list to file.")); 
+				return;
+			case "get":
+				if (args.length<3) {sender.sendMessage(new TextComponentString("Incorrect number of arguments!")); return;}
+				LootList list1 = StructurePack.getOrCreateLootList(args[2]);
+				sender.sendMessage(new TextComponentString("Got item from loot list: "+list1.get())); 
+				return;
+			case "add":
+				if (StructurePack.get().isReadOnly()) {sender.sendMessage(new TextComponentString("Unable to modify pack: read-only.")); return;}
+				if (args.length<6) {sender.sendMessage(new TextComponentString("Incorrect number of arguments!")); return;}
+				LootList list0 = StructurePack.getOrCreateLootList(args[2]);
+				list0.add(new LootList.LootEntry(player.getHeldItemMainhand(), Double.parseDouble(args[3]), Integer.parseInt(args[4]), Integer.parseInt(args[5])));
+				sender.sendMessage(new TextComponentString("Added "+player.getHeldItemMainhand()+" with weight "+Double.parseDouble(args[3]))); 
+				return;
+			default:
+				sender.sendMessage(new TextComponentString("Invalid command.")); return;
 			}
 		}
 		
