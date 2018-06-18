@@ -21,5 +21,10 @@ Features:
   - your structures are generated in this world (depending on the config options of the pack) (WIP)
   
 - and more (WIP)
-  
+
+TODO // Not working yet:
+
+- Save data/config for structure generation in the active pack, create editor GUI
+- ingame loot list editor GUI (currently only possible using commands)
+- ...
   
