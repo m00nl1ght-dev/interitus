@@ -14,7 +14,7 @@ import net.minecraft.client.renderer.Tessellator;
 
 public class GuiStructurePacks extends GuiScreen {
 	
-	private GuiButton closeButton;
+	private GuiButton closeButton, addButton;
 	private PackList list;
 	private final StructurePackInfo packInfo;
 	private boolean saved = false;
@@ -29,6 +29,7 @@ public class GuiStructurePacks extends GuiScreen {
 		Keyboard.enableRepeatEvents(true);
 		this.buttonList.clear();
 		this.closeButton = this.addButton(new GuiButton(0, this.width / 2 - 75, 305, 150, 20, "Close"));
+		this.addButton = this.addButton(new GuiButton(1, this.width / 2 + 157, 83, 17, 17, "+"));
 		this.list = new PackList(this.width / 2 - 180, 100, 360, 200, 38);
 	}
 
@@ -43,6 +44,8 @@ public class GuiStructurePacks extends GuiScreen {
 			if (button.id == 0) {
 				CDefaultPackage.packGuiAction(0, "", "");
 				this.mc.displayGuiScreen(null);
+			} else if (button.id == 1) {
+				this.mc.displayGuiScreen(new GuiCreatePack(packInfo, null, this));
 			}
 		}
 	}

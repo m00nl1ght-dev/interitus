@@ -62,7 +62,7 @@ public class RegistryMappings {
 	}
 	
 	public void build(NBTTagCompound nbt) {
-		data.clear();
+		data.clear(); missing.clear();
 		
 		for (String key : nbt.getKeySet()) {
 			ResourceLocation name = new ResourceLocation(key);
@@ -99,6 +99,11 @@ public class RegistryMappings {
 	
 	public ArrayList<ResourceLocation> getMissingBlocks() {
 		return this.missing;
+	}
+	
+	@Override
+	public String toString() {
+		return data.toString();
 	}
 
 }

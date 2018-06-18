@@ -100,11 +100,11 @@ public class BlockRegionStorage {
 	
 	// Read & Write NBT
 
-	public NBTTagCompound writeToNBT(NBTTagCompound nbt) {
+	public NBTTagCompound writeToNBT(RegistryMappings reg, NBTTagCompound nbt) {
 		
 		int[] mappings = new int[blockstateIDs.size()-2];
 		for (int i=2; i<blockstateIDs.size(); i++) {
-			mappings[i-2] = StructurePack.current.mappings.idFor(blockstateIDs.get(i));
+			mappings[i-2] = reg.idFor(blockstateIDs.get(i));
 		}
 
 		ByteBuffer blockBytes = ByteBuffer.allocate(blocks.getBackingLongArray().length * Long.BYTES);
@@ -156,7 +156,7 @@ public class BlockRegionStorage {
         return nbt;
     }
 
-    public void readFromNBT(NBTTagCompound nbt, RegistryMappings registry) {
+    public void readFromNBT(RegistryMappings registry, NBTTagCompound nbt) {
         
         int[] size = nbt.getIntArray("size");
         if (size.length==3) {

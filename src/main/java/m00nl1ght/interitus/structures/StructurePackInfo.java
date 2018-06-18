@@ -2,6 +2,8 @@ package m00nl1ght.interitus.structures;
 
 import java.util.ArrayList;
 
+import m00nl1ght.interitus.Interitus;
+import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.NBTBase;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
@@ -110,9 +112,9 @@ public class StructurePackInfo {
 		public PackInfo(String new_name, PackInfo from) {
 			name = new_name;
 			read_only = false;
-			author = from.author;
-			description = from.description;
-			version = from.version;
+			author = (from!=null && from.read_only)?from.author:Minecraft.getMinecraft().player.getName();
+			description = (from==null || from.name.equals("Default"))?"":from.description;
+			version = from==null?Interitus.SUPPORTED_PACK_VERSION_MAX:from.version;
 		}
 		
 	}

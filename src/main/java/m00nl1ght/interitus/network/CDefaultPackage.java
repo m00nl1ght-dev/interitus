@@ -186,6 +186,10 @@ public class CDefaultPackage implements IMessage {
 					
 					switch (pendingAction) {
 					case 2:
+						if (!StructurePack.canEdit(player)) {
+							player.sendMessage(new TextComponentString("Could not save structure because "+StructurePack.getEditingPlayer().getName()+" is currently editing the pack."));
+							return;
+						}
 						if (tileentitystructure.save()) {
 							player.sendStatusMessage(new TextComponentTranslation("structure_block.save_success", new Object[] {tileentitystructure.getName()}), false);
 						} else {
@@ -293,8 +297,8 @@ public class CDefaultPackage implements IMessage {
 						player.sendMessage(new TextComponentString("Created structure pack <"+param0+">."));
 						return;
 					case 4: // save
-						if (StructurePack.getEditingPlayer()!=null) {
-							player.sendMessage(new TextComponentString("Could not save structure because "+StructurePack.getEditingPlayer().getName()+" is currently editing the pack."));
+						if (!StructurePack.canEdit(player)) {
+							player.sendMessage(new TextComponentString("Could not save pack because "+StructurePack.getEditingPlayer().getName()+" is currently editing the pack."));
 							return;
 						}
 						try {

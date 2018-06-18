@@ -227,14 +227,14 @@ public class Structure {
 		}
 	}
 
-    public NBTTagCompound writeToNBT(NBTTagCompound nbt) {
+    public NBTTagCompound writeToNBT(RegistryMappings mappings, NBTTagCompound nbt) {
         nbt.setString("author", this.author);
-        this.storage.writeToNBT(nbt);
+        this.storage.writeToNBT(mappings, nbt);
         return nbt;
     }
 
-    public void readFromNBT(NBTTagCompound nbt, RegistryMappings mappings) {
-        this.storage.readFromNBT(nbt, mappings);
+    public void readFromNBT(RegistryMappings mappings, NBTTagCompound nbt) {
+        this.storage.readFromNBT(mappings, nbt);
         this.author = nbt.getString("author");
     }
 

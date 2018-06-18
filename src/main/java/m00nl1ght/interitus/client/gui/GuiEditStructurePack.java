@@ -38,7 +38,7 @@ public class GuiEditStructurePack extends GuiScreen {
 		this.signButton = this.addButton(new GuiButton(3, this.width / 2 - 154, 260, 150, 20, "Sign this pack"));
 		this.signButton.enabled = !packInfo.active.read_only;
 		this.nameField = new GuiTextField(2, this.fontRenderer, this.width / 2 - 154, 100, 300, 20);
-        this.nameField.setMaxStringLength(50);
+        this.nameField.setMaxStringLength(40);
         this.nameField.setText(packInfo.active.description);
         this.nameField.setEnabled(!packInfo.active.read_only);
 	}

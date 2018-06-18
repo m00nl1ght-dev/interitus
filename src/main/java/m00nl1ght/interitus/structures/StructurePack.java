@@ -18,8 +18,6 @@ import java.util.zip.ZipOutputStream;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.google.common.io.Files;
-
 import m00nl1ght.interitus.Interitus;
 import m00nl1ght.interitus.network.SDefaultPackage;
 import m00nl1ght.interitus.util.Toolkit;
@@ -71,7 +69,7 @@ public class StructurePack {
 					editing = player;
 					SDefaultPackage.sendStructurePackGui((EntityPlayerMP) player);
 				} else {
-					Toolkit.sendMessageToPlayer(player, player.getDisplayNameString() + " is currently configuring Interitus. Please wait.");
+					Toolkit.sendMessageToPlayer(player, player.getDisplayNameString() + " is currently editing the active structure pack. Please wait.");
 					return false;
 				}
 			}
@@ -85,6 +83,10 @@ public class StructurePack {
 	
 	public static EntityPlayer getEditingPlayer() {
 		return editing;
+	}
+	
+	public static boolean canEdit(EntityPlayer player) {
+		return editing==null || editing.getName().equals(player.getName());
 	}
 	
 	private void preload() throws IOException {
@@ -158,7 +160,7 @@ public class StructurePack {
 		this.structures.clear();
 		for (Entry<String, NBTTagCompound> entry : struct.entrySet()) {
 			Structure str = new Structure(entry.getKey());
-			str.readFromNBT(entry.getValue(), mappings);
+			str.readFromNBT(mappings, entry.getValue());
 			this.structures.put(str.name, str);
 		}
 		
@@ -174,29 +176,30 @@ public class StructurePack {
 	}
 	
 	public boolean save() throws IOException {
-		return this.save(new File(basePath, name+".mcsp"));
+		return this.save(this);
 	}
 	
-	public boolean save(File file) throws IOException {
+	public boolean save(StructurePack target) throws IOException {
 		if (!loaded) {return false;}
 		if (this.name.equals("Default")) {return false;}
+		File file = new File(basePath, target.name+".mcsp");
 		if (file.exists()) {file.delete();}
 		basePath.mkdirs(); file.createNewFile();
 		ZipOutputStream zip = new ZipOutputStream(new FileOutputStream(file));
 		DataOutputStream data = new DataOutputStream(zip);
 		
-		this.nbtToZip(this.writeInfoToNBT(), zip, data, "pack");
+		target.version = Interitus.SUPPORTED_PACK_VERSION_MAX;
+		this.nbtToZip(target.writeInfoToNBT(), zip, data, "pack");
 		
 		mappings.reset();
 		for (Structure str : this.structures.values()) {
-			NBTTagCompound tag = str.writeToNBT(new NBTTagCompound());
+			NBTTagCompound tag = str.writeToNBT(mappings, new NBTTagCompound());
 			this.nbtToZip(tag, zip, data, "structures/"+str.name);
 		}
 		for (LootList loot : this.loot.values()) {
 			NBTTagCompound tag = loot.saveToNBT(new NBTTagCompound());
 			this.nbtToZip(tag, zip, data, "loot/"+loot.name);
 		}
-		
 		NBTTagCompound mappingsTag = this.mappings.save();
 		this.nbtToZip(mappingsTag, zip, data, "mappings");
 		
@@ -374,15 +377,13 @@ public class StructurePack {
 	public static void create(String name, EntityPlayer player, StructurePack from) {
 		if (name.isEmpty()) {throw new IllegalStateException("new pack name is empty!");}
 		if (getPack(name)!=null) {throw new IllegalStateException("pack already exists!");}
-		File file = new File(basePath, name+".mcsp");
-		if (file.exists()) {throw new IllegalStateException("pack file already exists!");}
 		StructurePack pack = new StructurePack(name);
 		if (from==null || from.name.equals("Default")) {
 			pack.author = player.getName();
 			pack.description = "";
 			pack.loaded = true;
 			try {
-				if (!pack.save(file)) {
+				if (!pack.save()) {
 					throw new IllegalStateException("failed to save new pack!");
 				}
 			} catch (IOException e) {
@@ -391,19 +392,29 @@ public class StructurePack {
 		} else {
 			File fromFile = new File(basePath, from.name+".mcsp");
 			if (!fromFile.exists()) {throw new IllegalStateException("pack file to copy not found!");}
-			pack.author = from.author;
+			pack.author = from.read_only?from.author:player.getName();
 			pack.description = from.description;
-			pack.version = from.version;
-			try {
-				Files.copy(fromFile, file);
-			} catch (IOException e) {
-				throw new IllegalStateException("failed to copy structure pack file!");
+			if (from.loaded) {
+				try {
+					from.save(pack);
+				} catch (Exception e) {
+					throw new IllegalStateException("failed to save copy of pack!", e);
+				}
+			} else {
+				try { // FIXME crash when loading copied pack ingame
+					from.load();
+					from.save(pack);
+					from.unload();
+				} catch (Exception e) {
+					from.unload();
+					throw new IllegalStateException("failed to load/save copy of pack!", e);
+				}
 			}
 		}
 		packs.put(name, pack);
 		StructurePackInfo.markDirty();
 	}
-	
+
 	public static boolean load(StructurePack pack) {
 		current.unload();
 		try {
