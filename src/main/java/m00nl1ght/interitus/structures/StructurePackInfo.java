@@ -44,6 +44,7 @@ public class StructurePackInfo {
 			t.setString("n", str.name);
 			BlockPos size = str.getSize(Rotation.NONE);
 			t.setIntArray("s", new int[] {size.getX(), size.getY(), size.getZ()});
+			t.setInteger("t", str.tasks.size());
 			structlist.appendTag(t);
 		}
 		tag.setTag("s", structlist);
@@ -123,10 +124,12 @@ public class StructurePackInfo {
 		
 		public final String name;
 		public final int[] size;
+		public int genTasks;
 		
 		public StructureInfo(NBTTagCompound tag) {
 			name = tag.getString("n");
 			size = tag.getIntArray("s");
+			genTasks = tag.getInteger("t");
 		}
 		
 	}

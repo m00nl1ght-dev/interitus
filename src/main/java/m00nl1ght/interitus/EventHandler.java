@@ -21,7 +21,6 @@ import net.minecraft.world.gen.IChunkGenerator;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.event.world.BlockEvent;
-import net.minecraftforge.event.world.WorldEvent;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent.PlayerLoggedInEvent;
@@ -58,7 +57,7 @@ public class EventHandler {
 	@SubscribeEvent
 	public static void attachCapabilityWorld(AttachCapabilitiesEvent<World> event) {
 		IChunkProvider provider = event.getObject().getChunkProvider();
-		if (provider instanceof ChunkProviderServer) {
+		if (!event.getObject().isRemote && provider instanceof ChunkProviderServer) {
 			try {
 				ChunkProviderServer prov = (ChunkProviderServer) provider;
 				IChunkGenerator gen = new InteritusChunkGenWrapper(event.getObject(), prov.chunkGenerator);
@@ -72,33 +71,27 @@ public class EventHandler {
 		}
 	}
 	
-	@SubscribeEvent
-	public static void onWorldLoad(WorldEvent.Load event) {
-		if (event.getWorld() instanceof WorldServer) {
-			WorldServer world = (WorldServer) event.getWorld();
-			if (world.provider.getDimension()==0) {
-				ICapabilityWorldDataStorage data = world.getCapability(WorldDataStorageProvider.INTERITUS_WORLD, null);
-				String name = data!=null?data.getActivePack():"";
-				if (name.isEmpty()) {
-					Interitus.logger.info("This world save does not contain valid interitus data, the default structure pack will be loaded.");
-					StructurePack.loadDefault();
-					if (data!=null) {data.setActivePack("Default");}
-				} else {
-					StructurePack.updateAvailbalePacks();
-					StructurePack pack = StructurePack.getPack(name);
-					if (pack==null) {
-						Interitus.logger.error("Structure pack <"+name+"> not found. Loading the default pack instead...");
-						StructurePack.loadDefault();
-						return;
-					}
-					if (StructurePack.load(pack)) {
-						Interitus.logger.info("Structure pack <"+name+"> loaded successfully.");
-					} else {
-						Interitus.logger.error("Loading the default pack instead.");
-						StructurePack.loadDefault();
-					}
-				}
+	public static void onLoadOverworld(ICapabilityWorldDataStorage instance) {
+		WorldServer world = instance.getWorld();
+		String name = instance.getActivePack();
+		if (name.isEmpty()) {
+			Interitus.logger.error("This world save contains invalid interitus data, loading the default structure pack.");
+			StructurePack.loadDefault();
+			instance.setActivePack("Default");
+		} else {
+			StructurePack pack = StructurePack.getPack(name);
+			if (pack == null) {
+				Interitus.logger.error("Structure pack <" + name + "> not found. Loading the default pack instead...");
+				StructurePack.loadDefault();
+				//TODO warning for glitchy structures
+				return;
 			}
+			if (StructurePack.load(pack)) {
+				Interitus.logger.info("Structure pack <" + name + "> loaded successfully.");
+			} else {
+				//TODO warning for glitchy structures
+			}
+			
 		}
 	}
 

@@ -6,8 +6,12 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Iterator;
 
-import net.minecraft.block.material.Material;
+import com.google.common.base.Predicate;
+import com.google.common.primitives.Floats;
+import com.google.common.primitives.Ints;
+
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.ResourceLocation;
@@ -21,6 +25,21 @@ import net.minecraftforge.fml.common.FMLCommonHandler;
 public final class Toolkit {
 	
 	public static final ResourceLocation BUTTON_TEXTURES = new ResourceLocation("minecraft","textures/gui/widgets.png");
+	
+	public static final Predicate<String> FLOAT_VALIDATOR = new Predicate<String>() {
+		@Override
+		public boolean apply(String input) {
+			Float f = Floats.tryParse(input);
+			return input.isEmpty() || f!=null && Float.isFinite(f);
+		}
+	};
+	
+	public static final Predicate<String> INT_VALIDATOR = new Predicate<String>() {
+		@Override
+		public boolean apply(String input) {
+			return input.isEmpty() || Ints.tryParse(input)!=null;
+		}
+	};
 
 	public static void serverBroadcastMsg(String message) {
 		MinecraftServer minecraftserver = FMLCommonHandler.instance().getMinecraftServerInstance();
@@ -53,19 +72,6 @@ public final class Toolkit {
         return player.world.rayTraceBlocks(vec3d, vec3d2, false, false, true);
     }
 
-	public static int getTopSolidBlock(Chunk chunk, int x, int z, int yA) { // recently changed, untested
-		int k;
-		IBlockState block = null;
-		for (k = yA; k > 0; k--) {
-			block = chunk.getBlockState(new BlockPos(x, k, z));
-			if (block.getMaterial().isOpaque() && !(block.getMaterial() == Material.WOOD)) {
-				break;
-			} // recently changed from .isSolid() in .isOpaque() -> PROBLEMS?
-		}
-
-		return k;
-	}
-
 	public static String readFile(String path, Charset encoding) throws IOException {
 		byte[] encoded = Files.readAllBytes(Paths.get(path));
 		return new String(encoded, encoding);
@@ -75,6 +81,10 @@ public final class Toolkit {
 		IBlockState orgState = chunk.getBlockState(pos);
 		chunk.setBlockState(pos, newBlock);
 		chunk.getWorld().notifyBlockUpdate(new BlockPos(chunk.x*16+pos.getX(), pos.getY(), chunk.z*16+pos.getZ()), orgState, newBlock, 8);
+	}
+
+	public static void drawStringRight(FontRenderer fontRenderer, String string, int x, int y, int c) {
+		fontRenderer.drawStringWithShadow(string, x-fontRenderer.getStringWidth(string), y, c);
 	}
 	
 }

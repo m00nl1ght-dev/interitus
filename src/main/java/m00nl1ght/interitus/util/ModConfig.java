@@ -9,5 +9,6 @@ public class ModConfig {
 	public int structureTriesPerChunk = 1;			//tries to find a suitable structure position on chunk gen (Default: 1)
 	public int chunkCacheMaxSize = 100;				//how many chunks should be cached (Default: 100)
 	public int chunkCacheShrink = 20;				//how many chunks should be uncached when the cache is full (Default: 20)
+	public boolean debugWorldgen = true;					//send debug msg to chat when structures are generated
 	
 }

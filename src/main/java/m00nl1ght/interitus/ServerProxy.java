@@ -4,12 +4,14 @@ import m00nl1ght.interitus.block.tileentity.TileEntityAdvStructure;
 import m00nl1ght.interitus.block.tileentity.TileEntityAdvStructure.LootEntryPrimer;
 import m00nl1ght.interitus.block.tileentity.TileEntitySummoner;
 import m00nl1ght.interitus.structures.StructurePackInfo;
+import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.text.translation.I18n;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLServerStartedEvent;
 import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
+import net.minecraftforge.fml.common.event.FMLServerStoppedEvent;
 
 public class ServerProxy implements IProxy {
 	
@@ -37,6 +39,11 @@ public class ServerProxy implements IProxy {
 
 	@Override
 	public void serverStarting(FMLServerStartingEvent e) {
+		
+	}
+	
+	@Override
+	public void serverStopped(FMLServerStoppedEvent e) {
 		
 	}
 
@@ -67,6 +74,11 @@ public class ServerProxy implements IProxy {
 
 	@Override
 	public void displayAdvStructScreen(StructurePackInfo packInfo) {
+		throw new UnsupportedOperationException("no ui on server side");
+	}
+
+	@Override
+	public void displayGenTasksScreen(NBTTagCompound nbt, String struct) {
 		throw new UnsupportedOperationException("no ui on server side");
 	}
 

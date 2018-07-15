@@ -4,11 +4,13 @@ import m00nl1ght.interitus.block.tileentity.TileEntityAdvStructure;
 import m00nl1ght.interitus.block.tileentity.TileEntityAdvStructure.LootEntryPrimer;
 import m00nl1ght.interitus.block.tileentity.TileEntitySummoner;
 import m00nl1ght.interitus.structures.StructurePackInfo;
+import net.minecraft.nbt.NBTTagCompound;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLServerStartedEvent;
 import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
+import net.minecraftforge.fml.common.event.FMLServerStoppedEvent;
 
 public interface IProxy {
 	
@@ -22,6 +24,8 @@ public interface IProxy {
 
     public void serverStarting(FMLServerStartingEvent e);
     
+	public void serverStopped(FMLServerStoppedEvent e);
+    
     public String localize(String unlocalized, Object... args);
     
 	public void displayAdvStructScreen(TileEntityAdvStructure te, StructurePackInfo packInfo);
@@ -33,5 +37,7 @@ public interface IProxy {
 	public void displayStructureLootScreen(TileEntityAdvStructure te, LootEntryPrimer entry, StructurePackInfo packInfo);
 
 	public void displayAdvStructScreen(StructurePackInfo packInfo);
+	
+	public void displayGenTasksScreen(NBTTagCompound nbt, String struct);
 
 }

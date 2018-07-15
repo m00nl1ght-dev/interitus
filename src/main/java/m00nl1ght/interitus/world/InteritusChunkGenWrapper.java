@@ -25,6 +25,7 @@ public class InteritusChunkGenWrapper extends InteritusChunkGenerator {
 	@Override
 	public void populate(int x, int z) {
 		wrapped.populate(x, z);
+		this.structures.place(x, z);
 	}
 
 	@Override

@@ -5,6 +5,7 @@ import io.netty.buffer.Unpooled;
 import m00nl1ght.interitus.Interitus;
 import m00nl1ght.interitus.block.tileentity.TileEntityAdvStructure;
 import m00nl1ght.interitus.block.tileentity.TileEntitySummoner;
+import m00nl1ght.interitus.structures.Structure;
 import m00nl1ght.interitus.structures.StructurePack;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.player.EntityPlayerMP;
@@ -63,6 +64,31 @@ public class CDefaultPackage implements IMessage {
 
     public PacketBuffer getBufferData() {
         return this.data;
+    }
+    
+    public static boolean openGenTasks(String struct) {
+    	try {
+			PacketBuffer packetbuffer = new PacketBuffer(Unpooled.buffer());
+			packetbuffer.writeString(struct);
+			ModNetwork.INSTANCE.sendToServer(new CDefaultPackage("OpenGenTask", packetbuffer));
+			return true;
+		} catch (Exception exception) {
+			Interitus.logger.warn("Failed to send gen task open request: ", exception);
+			return false;
+		}
+    }
+    
+    public static boolean updateGenTasks(NBTTagCompound tag, String struct) {
+    	try {
+			PacketBuffer packetbuffer = new PacketBuffer(Unpooled.buffer());
+			packetbuffer.writeString(struct);
+			packetbuffer.writeCompoundTag(tag);
+			ModNetwork.INSTANCE.sendToServer(new CDefaultPackage("GenTasks", packetbuffer));
+			return true;
+		} catch (Exception exception) {
+			Interitus.logger.warn("Failed to send gen task packet: ", exception);
+			return false;
+		}
     }
     
     public static boolean packGuiAction(int id, String param0, String param1) {
@@ -140,12 +166,24 @@ public class CDefaultPackage implements IMessage {
 						this.procSummoner(serverPlayer, p.getBufferData());
 					});
 					break;
+				case "GenTasks":
+					serverPlayer.getServerWorld().addScheduledTask(() -> {
+						if (!serverPlayer.canUseCommandBlock()) { return; }
+						this.procGenTasks(serverPlayer, p.getBufferData());
+					});
+					break;
+				case "OpenGenTask":
+					serverPlayer.getServerWorld().addScheduledTask(() -> {
+						if (!serverPlayer.canUseCommandBlock()) { return; }
+						this.procOpenTasks(serverPlayer, p.getBufferData());
+					});
+					break;
 				default:
 					throw new IllegalStateException("Unknown CDefaultPacket channel: " + p.getChannelName());
 			}
 			return null;
 		}
-		
+
 		private void procSummoner(EntityPlayerMP player, PacketBuffer data) {
 			try {
 				BlockPos blockpos = new BlockPos(data.readInt(), data.readInt(), data.readInt());
@@ -357,6 +395,32 @@ public class CDefaultPackage implements IMessage {
 				}
 			} catch (Exception exception1) {
 				Interitus.logger.error("Couldn't proc pack action request: ", exception1);
+			}
+		}
+		
+		
+		private void procGenTasks(EntityPlayerMP serverPlayer, PacketBuffer data) {
+			try {
+				if (!StructurePack.canEdit(serverPlayer)) {throw new IllegalStateException("another player is editing the pack");}
+				String struct = data.readString(1000);
+				Structure str = StructurePack.getStructure(struct);
+				if (str==null) {throw new IllegalStateException("structure not found");}
+				NBTTagCompound tag = data.readCompoundTag();
+				if (tag == null) {throw new IllegalStateException("no nbt tag");}
+				StructurePack.updateGenTasks(str, tag);
+			} catch (Exception e) {
+				Interitus.logger.error("Couldn't proc gen task update: ", e);
+			}
+		}
+		
+		private void procOpenTasks(EntityPlayerMP serverPlayer, PacketBuffer data) {
+			try {
+				String struct = data.readString(1000);
+				Structure str = StructurePack.getStructure(struct);
+				if (str==null) {throw new IllegalStateException("structure not found");}
+				SDefaultPackage.sendGenTaskGui(serverPlayer, str);
+			} catch (Exception e) {
+				Interitus.logger.error("Couldn't proc gen task open req: ", e);
 			}
 		}
 		

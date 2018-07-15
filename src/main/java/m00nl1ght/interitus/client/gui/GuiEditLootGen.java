@@ -10,6 +10,7 @@ import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.renderer.Tessellator;
 import org.lwjgl.input.Keyboard;
+import org.lwjgl.input.Mouse;
 
 import m00nl1ght.interitus.block.tileentity.TileEntityAdvStructure;
 import m00nl1ght.interitus.block.tileentity.TileEntityAdvStructure.LootGenPrimer;
@@ -76,7 +77,7 @@ public class GuiEditLootGen extends GuiScreen {
 		
 		this.drawCenteredString(this.fontRenderer, "Choose Loot List", this.width / 2, 10, 16777215);
 		
-		this.list.drawScreen(mouseX, mouseY, partialTicks);
+		this.list.drawScreen(mouseX, mouseY, Mouse.isButtonDown(0), partialTicks);
 		
 		super.drawScreen(mouseX, mouseY, partialTicks);
 	}

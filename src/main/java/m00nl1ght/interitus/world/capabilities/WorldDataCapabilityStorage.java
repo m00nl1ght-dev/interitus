@@ -1,5 +1,7 @@
 package m00nl1ght.interitus.world.capabilities;
 
+import m00nl1ght.interitus.EventHandler;
+import m00nl1ght.interitus.structures.StructurePack;
 import m00nl1ght.interitus.world.InteritusChunkGenWrapper;
 import net.minecraft.nbt.NBTBase;
 import net.minecraft.nbt.NBTTagCompound;
@@ -18,6 +20,7 @@ public class WorldDataCapabilityStorage implements IStorage<ICapabilityWorldData
 	@Override
 	public NBTBase writeNBT(Capability<ICapabilityWorldDataStorage> capability, ICapabilityWorldDataStorage instance, EnumFacing side) {
 		NBTTagCompound tag = new NBTTagCompound();
+		if (instance.getWorld().isRemote || instance.getWorld().provider.getDimension()!=0) {return tag;}
 		tag.setString("active_pack", instance.getActivePack());
 		InteritusChunkGenWrapper.get(instance.getWorld()).writeToNBT(tag);
 		return tag;
@@ -25,9 +28,13 @@ public class WorldDataCapabilityStorage implements IStorage<ICapabilityWorldData
 
 	@Override
 	public void readNBT(Capability<ICapabilityWorldDataStorage> capability, ICapabilityWorldDataStorage instance, EnumFacing side, NBTBase nbt) {
+		if (instance.getWorld().isRemote || instance.getWorld().provider.getDimension()!=0) {return;}
 		NBTTagCompound tag = (NBTTagCompound) nbt;
 		instance.setActivePack(tag.getString("active_pack"));
-		InteritusChunkGenWrapper.get(instance.getWorld()).readFromNBT(tag);
+		EventHandler.onLoadOverworld(instance);
+		if (!StructurePack.isDefault()) {
+			InteritusChunkGenWrapper.get(instance.getWorld()).readFromNBT(tag);
+		}
 	}
 
 }

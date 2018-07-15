@@ -4,15 +4,19 @@ import m00nl1ght.interitus.block.ModBlock;
 import m00nl1ght.interitus.block.tileentity.TileEntityAdvStructure;
 import m00nl1ght.interitus.block.tileentity.TileEntitySummoner;
 import m00nl1ght.interitus.block.tileentity.TileEntityAdvStructure.LootEntryPrimer;
+import m00nl1ght.interitus.client.GenTaskClient;
 import m00nl1ght.interitus.client.gui.GuiEditAdvStructure;
 import m00nl1ght.interitus.client.gui.GuiEditLootEntry;
 import m00nl1ght.interitus.client.gui.GuiEditSummoner;
+import m00nl1ght.interitus.client.gui.GuiGenTasks;
+import m00nl1ght.interitus.client.gui.GuiPackStructures;
 import m00nl1ght.interitus.client.gui.GuiStructureData;
 import m00nl1ght.interitus.client.gui.GuiStructurePacks;
 import m00nl1ght.interitus.item.ModItem;
 import m00nl1ght.interitus.structures.StructurePackInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.I18n;
+import net.minecraft.nbt.NBTTagCompound;
 import net.minecraftforge.client.event.ModelRegistryEvent;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
@@ -20,6 +24,7 @@ import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLServerStartedEvent;
 import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
+import net.minecraftforge.fml.common.event.FMLServerStoppedEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.relauncher.Side;
 
@@ -41,6 +46,7 @@ public class ClientProxy implements IProxy {
 	@Override
 	public void postInit(FMLPostInitializationEvent e) {
 		ModBlock.initTileEntityRenderers();
+		GenTaskClient.initBiomes();
 	}
 
 	@Override
@@ -50,6 +56,11 @@ public class ClientProxy implements IProxy {
 	
 	@Override
 	public void serverStarted(FMLServerStartedEvent e) {
+		
+	}
+	
+	@Override
+	public void serverStopped(FMLServerStoppedEvent e) {
 		
 	}
 
@@ -86,6 +97,13 @@ public class ClientProxy implements IProxy {
 	@Override
 	public void displayAdvStructScreen(StructurePackInfo packInfo) {
 		Minecraft.getMinecraft().displayGuiScreen(new GuiStructurePacks(packInfo));
+	}
+	
+	@Override
+	public void displayGenTasksScreen(NBTTagCompound nbt, String struct) {
+		if (Minecraft.getMinecraft().currentScreen instanceof GuiPackStructures) {
+			Minecraft.getMinecraft().displayGuiScreen(new GuiGenTasks((GuiPackStructures) Minecraft.getMinecraft().currentScreen, struct, nbt));
+		}
 	}
 
 }

@@ -24,7 +24,7 @@ public abstract class GuiList extends Gui {
     protected final int slotHeight;
     protected int mouseX;
     protected int mouseY;
-    protected boolean mDown, mDownPre;
+    protected boolean mDown, mDownPre, isHovering;
     private float initialMouseClickY = -2.0F;
     private float scrollFactor;
     protected float scrollDistance;
@@ -33,6 +33,7 @@ public abstract class GuiList extends Gui {
     private boolean highlightSelected = true;
     private boolean hasHeader;
     private int headerHeight;
+    private double scaleW, scaleH;
 
 	public GuiList(Minecraft client, int x, int y, int w, int h, int entryHeight) {
 		this.client = client;
@@ -41,6 +42,9 @@ public abstract class GuiList extends Gui {
 		this.y = y;
 		this.x = x;
 		this.slotHeight = entryHeight;
+		ScaledResolution res = new ScaledResolution(client);
+		scaleW = client.displayWidth / res.getScaledWidth_double();
+		scaleH = client.displayHeight / res.getScaledHeight_double();
 	}
 
     public void setHighlightSelection(boolean flag) {
@@ -88,7 +92,7 @@ public abstract class GuiList extends Gui {
     protected void drawOverlay(int mouseX, int mouseY) {}
 
 	private void applyScrollLimits() {
-		int listHeight = this.getContentHeight() - this.h;
+		int listHeight = this.getContentHeight() - this.h + 4;
 		if (this.scrollDistance < 0.0F) {
 			this.scrollDistance = 0.0F;
 		}
@@ -122,12 +126,12 @@ public abstract class GuiList extends Gui {
 		return this.selectedIndex == index;
 	}
 
-	public void drawScreen(int mouseX, int mouseY, float partialTicks) {
+	public void drawScreen(int mouseX, int mouseY, boolean mBtn, float partialTicks) {
 		this.mouseX = mouseX;
 		this.mouseY = mouseY;
 		this.drawBackground();
 
-		boolean isHovering = mouseX >= this.x && mouseX <= this.x + this.w && mouseY >= this.y && mouseY <= this.y + this.h;
+		isHovering = mouseX >= this.x && mouseX <= this.x + this.w && mouseY >= this.y && mouseY <= this.y + this.h;
 		int listLength = this.getElementCount();
 		int scrollBarWidth = 6;
 		int scrollBarRight = this.x + this.w;
@@ -137,7 +141,7 @@ public abstract class GuiList extends Gui {
 		int viewHeight = this.h;
 		int border = 4;
 		
-		this.mDown = Mouse.isButtonDown(0);
+		this.mDown = mBtn;
 
 		if (mDown) {
 			if (this.initialMouseClickY == -1.0F) {
@@ -188,13 +192,10 @@ public abstract class GuiList extends Gui {
 		Tessellator tess = Tessellator.getInstance();
 		BufferBuilder worldr = tess.getBuffer();
 
-		ScaledResolution res = new ScaledResolution(client);
-		double scaleW = client.displayWidth / res.getScaledWidth_double();
-		double scaleH = client.displayHeight / res.getScaledHeight_double();
 		GL11.glEnable(GL11.GL_SCISSOR_TEST);
 		GL11.glScissor((int) (x * scaleW), (int) (client.displayHeight - ((this.y+this.h) * scaleH)), (int) (w * scaleW), (int) (viewHeight * scaleH));
 
-		this.drawGradientRect(this.x, this.y, this.w + this.x, this.y + this.h, 0xC0101010, 0xD0101010);
+		drawGradRect(this.x, this.y, this.w + this.x, this.y + this.h, 0xC0101010, 0xD0101010);
 
 		int baseY = this.y + border - (int) this.scrollDistance;
 
@@ -283,8 +284,7 @@ public abstract class GuiList extends Gui {
 		
 	}
 
-	@Override
-	protected void drawGradientRect(int left, int top, int right, int bottom, int color1, int color2) {
+	protected static void drawGradRect(int left, int top, int right, int bottom, int color1, int color2) {
         float a1 = (color1 >> 24 & 255) / 255.0F;
         float r1 = (color1 >> 16 & 255) / 255.0F;
         float g1 = (color1 >>  8 & 255) / 255.0F;
@@ -312,7 +312,7 @@ public abstract class GuiList extends Gui {
         GlStateManager.enableTexture2D();
     }
     
-	protected void drawRect(int x, int y, int w, int h, float r1, float g1, float b1, float a1, float r2, float g2, float b2, float a2) {
+	public static void drawRect(int x, int y, int w, int h, float r1, float g1, float b1, float a1, float r2, float g2, float b2, float a2) {
         GlStateManager.disableTexture2D();
         GlStateManager.enableBlend();
         GlStateManager.disableAlpha();
@@ -332,7 +332,7 @@ public abstract class GuiList extends Gui {
         GlStateManager.enableTexture2D();
     }
     
-	public boolean drawButton(Minecraft mc, int x, int y, int w, int h, boolean enabled, String string) {
+	public boolean drawButton(Minecraft mc, int x, int y, int w, int h, boolean enabled, boolean recEvents, String string) {
 		mc.getTextureManager().bindTexture(Toolkit.BUTTON_TEXTURES);
 		GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
 		boolean hovered = mouseX >= x && mouseY >= y && mouseX < x + w && mouseY < y + h;
@@ -346,7 +346,7 @@ public abstract class GuiList extends Gui {
 		int j = 14737632;
 		if (!enabled) {j = 10526880;} else if (hovered) {j = 16777120;}
 		this.drawCenteredString(mc.fontRenderer, string, x + w / 2, y + (h - 8) / 2, j);
-		if (enabled && hovered && !mDownPre && mDown) {
+		if (enabled && recEvents && hovered && !mDownPre && mDown) {
 			mDownPre = true;
 			return true;
 		}

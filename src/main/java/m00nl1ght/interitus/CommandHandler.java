@@ -18,7 +18,6 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.world.World;
-import net.minecraft.world.gen.ChunkProviderServer;
 
 public class CommandHandler implements ICommand {
 
@@ -59,8 +58,13 @@ public class CommandHandler implements ICommand {
 		}
 		
 		if (args[0].equals("profiler")) {
-			sender.sendMessage(new TextComponentString("Generator info: "+((ChunkProviderServer)world.getChunkProvider()).chunkGenerator.toString()));
-			Interitus.profiler.printToChat(sender);
+			Interitus.profiler.printToChat(world, sender);
+			return;
+		}
+		
+		if (args[0].equals("resetstats")) {
+			Interitus.profiler.resetStats();
+			sender.sendMessage(new TextComponentString("Done."));
 			return;
 		}
 		

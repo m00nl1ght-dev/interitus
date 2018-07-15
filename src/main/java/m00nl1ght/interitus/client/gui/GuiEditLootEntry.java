@@ -10,6 +10,7 @@ import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.renderer.Tessellator;
 import org.lwjgl.input.Keyboard;
+import org.lwjgl.input.Mouse;
 
 import m00nl1ght.interitus.block.tileentity.TileEntityAdvStructure;
 import m00nl1ght.interitus.block.tileentity.TileEntityAdvStructure.LootEntryPrimer;
@@ -75,7 +76,7 @@ public class GuiEditLootEntry extends GuiScreen {
 		
 		this.drawCenteredString(this.fontRenderer, parent==null?"Create Loot Entry":"Edit Loot Entry", this.width / 2, 10, 16777215);
 		
-		this.list.drawScreen(mouseX, mouseY, partialTicks);
+		this.list.drawScreen(mouseX, mouseY, Mouse.isButtonDown(0), partialTicks);
 		
 		super.drawScreen(mouseX, mouseY, partialTicks);
 	}
@@ -105,7 +106,7 @@ public class GuiEditLootEntry extends GuiScreen {
 			int x = entryRight-this.w;
 			getFontRenderer().drawString("Loot List", x+15, relativeY+5, 16777215);
 			getFontRenderer().drawString("Amount", x+181, relativeY+5, 16777215);
-			if (this.drawButton(mc, x+343, relativeY-1, 17, 17, primer.gens().size()<16, "+")) {
+			if (this.drawButton(mc, x+343, relativeY-1, 17, 17, primer.gens().size()<16, true, "+")) {
 				LootGenPrimer p = new LootGenPrimer(1, "undefined");
 				primer.gens().add(p);
 				mc.displayGuiScreen(new GuiEditLootGen(tileStructure, GuiEditLootEntry.this, p, packInfo));
@@ -118,16 +119,16 @@ public class GuiEditLootEntry extends GuiScreen {
 			LootGenPrimer gen = primer.gens().get(slotIdx);
 			getFontRenderer().drawString(gen.list(), x+15, slotTop+5, 16777215);
 			this.drawCenteredString(fontRenderer, ""+gen.amount(), x+210, slotTop+5, 16777215);
-			if (this.drawButton(mc, x+120, slotTop-1, 17, 17, true, "...")) {
+			if (this.drawButton(mc, x+120, slotTop-1, 17, 17, true, this.isHovering, "...")) {
 				mc.displayGuiScreen(new GuiEditLootGen(tileStructure, GuiEditLootEntry.this, gen, packInfo));
 			}
-			if (this.drawButton(mc, x+180, slotTop-1, 17, 17, gen.amount()>0, "-")) {
+			if (this.drawButton(mc, x+180, slotTop-1, 17, 17, gen.amount()>0, this.isHovering, "-")) {
 				gen.setAmount(gen.amount()-1);
 			}
-			if (this.drawButton(mc, x+220, slotTop-1, 17, 17, gen.amount()<64, "+")) {
+			if (this.drawButton(mc, x+220, slotTop-1, 17, 17, gen.amount()<64, this.isHovering, "+")) {
 				gen.setAmount(gen.amount()+1);
 			}
-			if (this.drawButton(mc, x+343, slotTop-1, 17, 17, true, "X")) {
+			if (this.drawButton(mc, x+343, slotTop-1, 17, 17, true, this.isHovering, "X")) {
 				return primer.gens().remove(slotIdx)!=null;
 			}
 			return false;

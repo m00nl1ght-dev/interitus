@@ -6,6 +6,7 @@ import java.text.DecimalFormatSymbols;
 import java.util.Locale;
 
 import org.lwjgl.input.Keyboard;
+import org.lwjgl.input.Mouse;
 
 import m00nl1ght.interitus.block.tileentity.TileEntityAdvStructure;
 import m00nl1ght.interitus.block.tileentity.TileEntityAdvStructure.LootEntryPrimer;
@@ -103,9 +104,9 @@ public class GuiStructureData extends GuiScreen {
 		this.drawCenteredString(this.fontRenderer, "Strcuture Data Overwiew", this.width / 2, 10, 16777215);
 
 		if (state) {
-			this.listLoot.drawScreen(mouseX, mouseY, partialTicks);
+			this.listLoot.drawScreen(mouseX, mouseY, Mouse.isButtonDown(0), partialTicks);
 		} else {
-			this.listCond.drawScreen(mouseX, mouseY, partialTicks);
+			this.listCond.drawScreen(mouseX, mouseY, Mouse.isButtonDown(0), partialTicks);
 		}
 
 		super.drawScreen(mouseX, mouseY, partialTicks);
@@ -143,11 +144,13 @@ public class GuiStructureData extends GuiScreen {
 		protected boolean drawSlot(int slotIdx, int entryRight, int slotTop, int slotBuffer, Tessellator tess) {
 			int x = entryRight - this.w;
 			Condition cond = tileStructure.getConditions().get(slotIdx);
-			BlockPos pos = cond.pos.subtract(tileStructure.getPos().add(tileStructure.getPosition()));
+			int px = cond.pos.getX() - tileStructure.getPos().getX() - tileStructure.getPosition().getX();
+			int py = cond.pos.getY() - tileStructure.getPos().getY() - tileStructure.getPosition().getY();
+			int pz = cond.pos.getZ() - tileStructure.getPos().getZ() - tileStructure.getPosition().getZ();
 			getFontRenderer().drawString(cond.type.name(), x + 15, slotTop + 5, 16777215);
-			getFontRenderer().drawString("@ x " + pos.getX() + " y " + pos.getY() + " z " + pos.getZ(), x + 100, slotTop + 5, 16777215);
+			getFontRenderer().drawString("@ x " + px + " y " + py + " z " + pz, x + 100, slotTop + 5, 16777215);
 			getFontRenderer().drawString("@ x " + cond.pos.getX() + " y " + cond.pos.getY() + " z " + cond.pos.getZ(), x + 220, slotTop + 5, 16777215);
-			if (this.drawButton(mc, x+343, slotTop-1, 17, 17, true, "X")) {
+			if (this.drawButton(mc, x+343, slotTop-1, 17, 17, true, this.isHovering, "X")) {
 				return tileStructure.getConditions().remove(slotIdx)!=null;
 			}
 			return false;
@@ -182,10 +185,10 @@ public class GuiStructureData extends GuiScreen {
 			getFontRenderer().drawString("@ x " + pos.getX() + " y " + pos.getY() + " z " + pos.getZ(), x + 15, slotTop + 5, 16777215);
 			getFontRenderer().drawString("@ x " + entry.pos.getX() + " y " + entry.pos.getY() + " z " + entry.pos.getZ(), x + 140, slotTop + 5, 16777215);
 			getFontRenderer().drawString(entry.gens().size() + " gens", x + 280, slotTop + 5, 16777215);
-			if (this.drawButton(mc, x+325, slotTop-1, 17, 17, true, "...")) {
+			if (this.drawButton(mc, x+325, slotTop-1, 17, 17, true, this.isHovering, "...")) {
 				mc.displayGuiScreen(new GuiEditLootEntry(tileStructure, GuiStructureData.this, entry, packInfo));
 			}
-			if (this.drawButton(mc, x+343, slotTop-1, 17, 17, true, "X")) {
+			if (this.drawButton(mc, x+343, slotTop-1, 17, 17, true, this.isHovering, "X")) {
 				return tileStructure.getLoot().remove(slotIdx)!=null;
 			}
 			return false;

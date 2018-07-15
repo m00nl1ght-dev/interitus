@@ -10,6 +10,7 @@ import javax.annotation.Nullable;
 
 import m00nl1ght.interitus.Interitus;
 import m00nl1ght.interitus.block.tileentity.TileEntityAdvStructure.LootGenPrimer;
+import m00nl1ght.interitus.util.VarBlockPos;
 import m00nl1ght.interitus.world.InteritusChunkGenerator;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
@@ -22,7 +23,6 @@ import net.minecraft.util.EnumFacing;
 import net.minecraft.util.Mirror;
 import net.minecraft.util.Rotation;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.BlockPos.MutableBlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 
@@ -156,7 +156,7 @@ public class BlockRegionStorage {
         return nbt;
     }
 
-    public void readFromNBT(RegistryMappings registry, NBTTagCompound nbt) {
+    public void readFromNBT(StructurePack pack, NBTTagCompound nbt) {
         
         int[] size = nbt.getIntArray("size");
         if (size.length==3) {
@@ -171,7 +171,7 @@ public class BlockRegionStorage {
         
         int[] mappings = nbt.getIntArray("mappings");
         for (int i=0; i<mappings.length; i++) {
-        	IBlockState state = registry.get(mappings[i]);
+        	IBlockState state = pack.mappings.get(mappings[i]);
         	if (state==null) {state=DEFAULT_STATE;}
         	blockstateIDs.add(state);
         }
@@ -196,7 +196,7 @@ public class BlockRegionStorage {
 						NBTTagCompound lootTag = nbtLoot.getCompoundTagAt(j);
 						LootGen[] gens = new LootGen[nbtLoot.tagCount()];
 						for (int k = 0; k < nbtLoot.tagCount(); k++) {
-							gens[k] = new LootGen(nbtLoot.getCompoundTagAt(k));
+							gens[k] = new LootGen(pack, nbtLoot.getCompoundTagAt(k));
 						}
 						loot.put(pos, gens);
 					} catch (Exception e) {
@@ -293,11 +293,11 @@ public class BlockRegionStorage {
 	
 	public static class Condition {
 		
-		public final BlockPos pos;
+		public final VarBlockPos pos;
 		public final ConditionType type;
 		
 		public Condition(ConditionType type, BlockPos pos) {
-			this.type=type; this.pos=pos;
+			this.type=type; this.pos=new VarBlockPos(pos);
 		}
 		
 		public static boolean isValidType(String type) {
@@ -306,26 +306,29 @@ public class BlockRegionStorage {
 		}
 		
 		public boolean fullfilled(InteritusChunkGenerator gen, BlockPos origin) {
-			BlockPos pos1 = origin.add(this.pos);
+			this.pos.reset(origin);
 			switch (type) {
-			case inGround: return gen.isGround(pos1);
-			case inWater: return gen.getBlockState(pos1).getMaterial()==Material.WATER;
-			case inStone: return gen.getBlockState(pos1).getBlock()==Blocks.STONE;
-			case inAir: return gen.getBlockState(pos1).getMaterial()==Material.AIR;
-			case overSurface: return pos1.getY()>=gen.getHeight(pos1);
+			case inGround: return gen.isGround(pos);
+			case inWater: return gen.getBlockState(pos).getMaterial()==Material.WATER;
+			case inStone: return gen.getBlockState(pos).getBlock()==Blocks.STONE;
+			case inAir: return gen.getBlockState(pos).getMaterial()==Material.AIR;
+			case overSurface: return pos.getY()>gen.getHeight(pos);
 			default: return false;
 			}
 		}
 		
 		public Condition toAbsolute(BlockPos structurePos) {
-			return new Condition(this.type, this.pos.subtract(structurePos));
+			this.pos.reset();
+			return new Condition(this.type, this.pos.varSubtract(structurePos));
 		}
 
 		public Condition toRelative(BlockPos structurePos) {
-			return new Condition(this.type, this.pos.add(structurePos));
+			this.pos.reset();
+			return new Condition(this.type, this.pos.varAdd(structurePos));
 		}
 
 		public NBTTagCompound writeToNbt(NBTTagCompound tag) {
+			this.pos.reset();
 			tag.setInteger("x", pos.getX());
 			tag.setInteger("y", pos.getY());
 			tag.setInteger("z", pos.getZ());
@@ -376,16 +379,16 @@ public class BlockRegionStorage {
 			if (count<=0) {throw new IllegalStateException("Invalid loot gen: count can not be zero or negative!");} 
 		}
 		
-		public LootGen(NBTTagCompound tag) {
+		public LootGen(StructurePack pack, NBTTagCompound tag) {
 			String name=tag.getString("list");
-			this.list = StructurePack.getLootList(name);
+			this.list = pack.loot.get(name);
 			this.count=tag.getInteger("count");
 			if (list==null) {throw new IllegalStateException("Invalid loot gen (from NBT): LootList <"+name+"> not found!");}
 			if (count<=0) {throw new IllegalStateException("Invalid loot gen (from NBT): count can not be zero or negative!");} 
 		}
 
-		public LootGen(LootGenPrimer gen) {
-			this.list = StructurePack.getLootList(gen.list());
+		public LootGen(StructurePack pack, LootGenPrimer gen) {
+			this.list = pack.loot.get(gen.list());
 			this.count=gen.amount();
 			if (list==null) {throw new IllegalStateException("Invalid loot gen (from primer): LootList <"+gen.list()+"> not found!");}
 			if (count<=0) {throw new IllegalStateException("Invalid loot gen (from primer): count can not be zero or negative!");} 
@@ -402,7 +405,7 @@ public class BlockRegionStorage {
 	
 	// Position Transform
 	
-	public void transformPos(MutableBlockPos target, int x, int y, int z, Mirror mirror, Rotation rotation) {
+	public void transformPos(VarBlockPos target, int x, int y, int z, Mirror mirror, Rotation rotation) {
 		switch (mirror) {
 		case LEFT_RIGHT:
 			z = sizeZ-z-1;
@@ -414,17 +417,17 @@ public class BlockRegionStorage {
 		}
 		switch (rotation) {
 		case COUNTERCLOCKWISE_90:
-			target.setPos(z, y, sizeZ-x-1); break;
+			target.set(z, y, sizeZ-x-1); break;
 		case CLOCKWISE_90:
-			target.setPos(sizeX-z-1, y, x); break;
+			target.set(sizeX-z-1, y, x); break;
 		case CLOCKWISE_180:
-			target.setPos(sizeX-x-1, y, sizeZ-z-1); break;
+			target.set(sizeX-x-1, y, sizeZ-z-1); break;
 		default: 
-			target.setPos(x, y, z);
+			target.set(x, y, z);
 		}
 	}
 	
-	public void reversePos(MutableBlockPos target, int x, int y, int z, Mirror mirror, Rotation rotation) {
+	public void reversePos(VarBlockPos posInStruct, int x, int y, int z, Mirror mirror, Rotation rotation) {
 		switch (rotation) {
 			case CLOCKWISE_90:
 				int i=x; x=z; z=sizeZ-i-1; break;
@@ -443,7 +446,7 @@ public class BlockRegionStorage {
 				break;
 			default:
 		}
-		target.setPos(x, y, z);
+		posInStruct.set(x, y, z);
 	}
 
     public Vec3d transformVec3d(Vec3d vec, Mirror mirror, Rotation rotation) {

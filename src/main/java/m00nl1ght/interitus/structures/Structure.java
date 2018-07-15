@@ -1,9 +1,10 @@
 package m00nl1ght.interitus.structures;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Random;
 import java.util.UUID;
 
 import javax.annotation.Nullable;
@@ -16,6 +17,7 @@ import m00nl1ght.interitus.block.tileentity.TileEntityAdvStructure.LootGenPrimer
 import m00nl1ght.interitus.structures.BlockRegionStorage.Condition;
 import m00nl1ght.interitus.structures.BlockRegionStorage.EntityInfo;
 import m00nl1ght.interitus.structures.BlockRegionStorage.LootGen;
+import m00nl1ght.interitus.util.VarBlockPos;
 import m00nl1ght.interitus.world.InteritusChunkGenerator;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
@@ -32,16 +34,18 @@ import net.minecraft.util.Mirror;
 import net.minecraft.util.Rotation;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.BlockPos.MutableBlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
+import net.minecraft.world.biome.Biome;
 import net.minecraft.world.chunk.Chunk;
+import net.minecraft.world.chunk.Chunk.EnumCreateEntityType;
 
 
 public class Structure {
 	
-	//public final StructureConfig DEFAULT_CONFIG = new StructureConfig(this, 0.1F, 0, 64); //TODO
-    protected BlockRegionStorage storage = new BlockRegionStorage();
+    protected final BlockRegionStorage storage = new BlockRegionStorage();
+    final ArrayList<WorldGenTask> tasks = new ArrayList<WorldGenTask>();
+    final ArrayList<StructureData> instances = new ArrayList<StructureData>();
 	public final String name;
     private String author = "?";
     
@@ -55,53 +59,21 @@ public class Structure {
 	public Structure(String name) {
 		this.name=name;
 	}
-	
-    public boolean canBePlacedAt(InteritusChunkGenerator gen, BlockPos pos) {
-		for (Condition cond : storage.getConditions()) {
-			if (!cond.fullfilled(gen, pos)) {
-				//Main.logger.info("("+name+") struct failed at pos "+pos.toString()+" ("+cond.toString()+")"); 
-				return false;
-			}
-		}
-		return true;
-	}
     
-    public boolean placeBlock(World world, BlockPos pos, IBlockState state) {
-    	
-    	if (pos.getY()>255 || pos.getY()<0) {return false;}
-    	Chunk chunk = world.getChunkFromBlockCoords(pos);
-
-    	world.captureBlockSnapshots=true; // hacky way to prevent block updates of non-TEs :/
-    	IBlockState oldState = chunk.setBlockState(pos, state);
-    	world.captureBlockSnapshots=false;
-
-		if (oldState == null) {
-			return false;
-		} else {
-			if (state.getLightOpacity(world, pos) != oldState.getLightOpacity(world, pos) || state.getLightValue(world, pos) != oldState.getLightValue(world, pos)) {
-				world.checkLight(pos);
-			}
-			if (chunk.isPopulated()) {
-				world.notifyBlockUpdate(pos, oldState, state, 2);
-			}
-			return true;
-		}
-    }
-    
-	public void placeInChunk(World world, StructureData data, int chunkx, int chunkz) {
+	public void placeInChunk(Chunk chunk, StructureData data) {
 		
 		if (!this.storage.valid()) {
 			Interitus.logger.warn("Structure could not be placed because of invalid block storage: "+data);
 			return;
 		}
 		
-		int xmin = Math.max(0, chunkx*16-data.pos.getX());
-		int zmin = Math.max(0, chunkz*16-data.pos.getZ());
-		int xmax = Math.min(this.storage.sizeXswapped(data.rotation), chunkx*16-data.pos.getX()+16);
-		int zmax = Math.min(this.storage.sizeZswapped(data.rotation), chunkz*16-data.pos.getZ()+16);
+		int xmin = Math.max(0, chunk.x*16-data.pos.getX());
+		int zmin = Math.max(0, chunk.z*16-data.pos.getZ());
+		int xmax = Math.min(this.storage.sizeXswapped(data.rotation), chunk.x*16-data.pos.getX()+16);
+		int zmax = Math.min(this.storage.sizeZswapped(data.rotation), chunk.z*16-data.pos.getZ()+16);
 		
-		MutableBlockPos posInStruct = new MutableBlockPos();
-		MutableBlockPos posInWorld = new MutableBlockPos();
+		VarBlockPos posInStruct = new VarBlockPos();
+		VarBlockPos posInWorld = new VarBlockPos();
 		    	
     	for (int x = xmin; x < xmax; x++) {
         	for (int z = zmin; z < zmax; z++) {
@@ -111,11 +83,11 @@ public class Structure {
         			IBlockState block = storage.getBlock(posInStruct);
         			if (block.getBlock()==Blocks.STRUCTURE_VOID) {continue;}
         			block = block.withMirror(data.mirror).withRotation(data.rotation);
-        			posInWorld.setPos(data.pos.getX()+x, data.pos.getY()+y, data.pos.getZ()+z);
+        			posInWorld.set(data.pos.getX()+x, data.pos.getY()+y, data.pos.getZ()+z);
         			
         			NBTTagCompound nbtTE = storage.getNBT(posInStruct);
-        			if (placeBlock(world, posInWorld, block) && nbtTE != null) {
-        				TileEntity newTE = world.getTileEntity(posInWorld);
+        			if (placeBlock(chunk, posInWorld, block) && nbtTE != null) {
+        				TileEntity newTE = chunk.getTileEntity(posInWorld, EnumCreateEntityType.IMMEDIATE);
         				if (newTE != null) { // set NBT data of the new TE if it has spawned
         					nbtTE.setInteger("x", posInWorld.getX());
         					nbtTE.setInteger("y", posInWorld.getY());
@@ -157,7 +129,7 @@ public class Structure {
 
     		Entity entity;
     		try {
-    			entity = EntityList.createEntityFromNBT(entityinfo.entityData, world);
+    			entity = EntityList.createEntityFromNBT(entityinfo.entityData, chunk.getWorld());
     		} catch (Exception var15) {
     			entity = null;
     		}
@@ -168,7 +140,7 @@ public class Structure {
     				EntityHanging hanging = (EntityHanging) entity;
     				hanging.facingDirection = this.storage.transformFacing(hanging.facingDirection, data.mirror, data.rotation);
     			}
-    			world.spawnEntity(entity);
+    			chunk.getWorld().spawnEntity(entity);
     		} else {
     			Interitus.logger.error("Failed to spawn entity from structure data!");
     		}
@@ -192,17 +164,18 @@ public class Structure {
 		BlockPos posXY2 = new BlockPos(Math.max(startPos.getX(), endPos.getX()), Math.max(startPos.getY(), endPos.getY()), Math.max(startPos.getZ(), endPos.getZ()));
 		// posXY1 / posXY2 -> actual corner points of structure in the world
 
-		for (BlockPos.MutableBlockPos pointer : BlockPos.getAllInBoxMutable(posXY1, posXY2)) {
+		for (VarBlockPos pointer : VarBlockPos.getBoxIterator(posXY1, posXY2)) {
 			IBlockState block = worldIn.getBlockState(pointer);
 			this.storage.registerBlockstate(block);
 		}
 		
 		this.storage.init();
+		VarBlockPos posInStruct = new VarBlockPos();
 		
-		for (BlockPos.MutableBlockPos pointer : BlockPos.getAllInBoxMutable(posXY1, posXY2)) {
+		for (VarBlockPos pointer : VarBlockPos.getBoxIterator(posXY1, posXY2)) {
 			IBlockState block = worldIn.getBlockState(pointer);
 			if (block.getBlock()==Blocks.AIR) {continue;}
-			BlockPos posInStruct = pointer.subtract(posXY1);
+			posInStruct.setSubtract(pointer, posXY1);
 			TileEntity tileentity = worldIn.getTileEntity(pointer);
 			if (tileentity != null) {
 				NBTTagCompound nbttagcompound = tileentity.writeToNBT(new NBTTagCompound());
@@ -226,16 +199,82 @@ public class Structure {
 	        }
 		}
 	}
+	
+    public boolean checkConditions(InteritusChunkGenerator gen, BlockPos pos) {
+		for (Condition cond : storage.getConditions()) {
+			if (!cond.fullfilled(gen, pos)) {
+				return false;
+			}
+		}
+		return true;
+	}
+    
+	public boolean nearOccurence(BlockPos pos, int maxDistSqr) {
+		for (StructureData str1 : this.instances) {
+			int a = str1.pos.getX() - pos.getX(), b = str1.pos.getZ() - pos.getZ();
+			if (a*a+b*b<maxDistSqr) {return true;}
+		}
+		return false;
+	}
+    
+	public boolean placeBlock(Chunk chunk, BlockPos pos, IBlockState state) {
+		if (pos.getY() > 255 || pos.getY() < 0) { return false; }
+		World world = chunk.getWorld();
+		
+		world.captureBlockSnapshots = true; // hacky way to prevent block updates of non-TEs :/
+		IBlockState oldState = chunk.setBlockState(pos, state);
+		world.captureBlockSnapshots = false;
 
-    public NBTTagCompound writeToNBT(RegistryMappings mappings, NBTTagCompound nbt) {
+		if (oldState == null) {
+			return false;
+		} else {
+			if (state.getLightOpacity(world, pos) != oldState.getLightOpacity(world, pos) || state.getLightValue(world, pos) != oldState.getLightValue(world, pos)) {
+				world.checkLight(pos);
+			}
+			if (chunk.isPopulated()) {
+				world.notifyBlockUpdate(pos, oldState, state, 2);
+			}
+			return true;
+		}
+	}
+
+    public NBTTagCompound writeToNBT(StructurePack pack, NBTTagCompound nbt) {
         nbt.setString("author", this.author);
-        this.storage.writeToNBT(mappings, nbt);
+        this.storage.writeToNBT(pack.mappings, nbt);
+        NBTTagList list = new NBTTagList();
+        for (WorldGenTask task : this.tasks) {
+        	list.appendTag(WorldGenTask.save(task, pack.mappings));
+        }
+        nbt.setTag("gen", list);
         return nbt;
     }
 
-    public void readFromNBT(RegistryMappings mappings, NBTTagCompound nbt) {
-        this.storage.readFromNBT(mappings, nbt);
+    public void readFromNBT(StructurePack pack, Map<Integer, Map<Biome, ArrayList<WorldGenTask>>> genList, NBTTagCompound nbt) {
+        this.storage.readFromNBT(pack, nbt);
         this.author = nbt.getString("author");
+        this.tasks.clear();
+        NBTTagList list = nbt.getTagList("gen", 10);
+        for (int i = 0; i < list.tagCount(); i++) {
+        	WorldGenTask task = WorldGenTask.build(this, pack.mappings, list.getCompoundTagAt(i));
+        	tasks.add(task);
+        	if (genList!=null) {
+        		for (int dim : task.dimensions) {
+        			Map<Biome, ArrayList<WorldGenTask>> map = genList.get(dim);
+        			if (map==null) {
+        				map = new HashMap<Biome, ArrayList<WorldGenTask>>();
+        				genList.put(dim, map);
+        			}
+        			for (Biome biome : task.biomes) {
+        				ArrayList<WorldGenTask> blist = map.get(biome);
+    					if (blist==null) {
+    						blist=new ArrayList<WorldGenTask>();
+    						map.put(biome, blist);
+    					}
+    					blist.add(task);
+        			}
+        		}
+        	}
+        }
     }
 
     public BlockPos getSize(Rotation rotation) {
@@ -249,43 +288,6 @@ public class Structure {
     public String getAuthor() {
         return this.author;
     }
-    
-    public int getRandomY(World world, int genYmode, int h, Random rand) {
-		switch (genYmode) {
-		//onground
-		case 1:
-			return h+(rand.nextInt(6)-3);
-		case 2:
-			return h+(rand.nextInt(11)-5);
-		case 3:
-			return h+(rand.nextInt(15)-7);
-		//cavern
-		case 5:
-			return Math.min(5 + rand.nextInt(15), h-20);
-		case 6:
-			return Math.min(5 + rand.nextInt(30), h-15);
-		case 7:
-			return Math.min(5 + rand.nextInt(50), h-10);
-		case 8:
-			return Math.min(10, rand.nextInt(h-10));
-		//based water surface
-		case 10:
-			return world.getSeaLevel();
-		case 11:
-			return world.getSeaLevel()-rand.nextInt(5);
-		case 12:
-			return world.getSeaLevel()-rand.nextInt(15);
-		case 13:
-			return world.getSeaLevel()-rand.nextInt(15)-5;
-		case 14:
-			return world.getSeaLevel()-rand.nextInt(20)-10;
-		case 15:
-			return world.getSeaLevel()-rand.nextInt(10)-25;
-		// default (0) onground
-		default:
-			return h;
-		}
-	}
 
     public static class StructureData {
     	
@@ -309,10 +311,6 @@ public class Structure {
     	
     }
 
-//	public StructureConfig getDefaultConfig() { // TODO
-//		return DEFAULT_CONFIG;
-//	}
-
 	public void setConditions(ArrayList<Condition> conditions, BlockPos structPos) {
 		this.storage.clearConditions();
 		for (Condition cond : conditions) {
@@ -332,7 +330,7 @@ public class Structure {
 		for (LootEntryPrimer primer : entries) {
 			LootGen[] gens = new LootGen[primer.gens().size()];
 			for (int i = 0; i < gens.length; i++) {
-				gens[i] = new LootGen(primer.gens().get(i));
+				gens[i] = new LootGen(StructurePack.current, primer.gens().get(i));
 			}
 			this.storage.addLootGen(primer.pos.subtract(structPos), gens);
 		}
@@ -349,7 +347,7 @@ public class Structure {
 		}
 	}
 
-	public BlockRegionStorage getStorage() {
+	protected BlockRegionStorage getStorage() {
 		return this.storage;
 	}
 

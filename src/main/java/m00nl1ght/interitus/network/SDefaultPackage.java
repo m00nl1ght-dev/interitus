@@ -4,6 +4,8 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import m00nl1ght.interitus.Interitus;
 import m00nl1ght.interitus.block.tileentity.TileEntityAdvStructure;
+import m00nl1ght.interitus.structures.Structure;
+import m00nl1ght.interitus.structures.StructurePack;
 import m00nl1ght.interitus.structures.StructurePackInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.EntityPlayerMP;
@@ -59,6 +61,17 @@ public class SDefaultPackage implements IMessage {
 
     public PacketBuffer getBufferData() {
         return this.data;
+    }
+    
+    public static void sendGenTaskGui(EntityPlayerMP player, Structure struct) {
+    	try {
+			PacketBuffer packetbuffer = new PacketBuffer(Unpooled.buffer());
+			packetbuffer.writeString(struct.name);
+			packetbuffer.writeCompoundTag(StructurePack.getGenTaskClientTag(struct));
+			ModNetwork.INSTANCE.sendTo(new SDefaultPackage("GenTaskGui", packetbuffer), player);
+		} catch (Exception exception) {
+			Interitus.logger.warn("Could not send structure pack gui packet", exception);
+		}
     }
     
     public static void sendStructurePackGui(EntityPlayerMP player) {
@@ -131,6 +144,11 @@ public class SDefaultPackage implements IMessage {
 						this.procStructLootGui(p.getBufferData());
 					});
 					break;
+				case "GenTaskGui":
+					Minecraft.getMinecraft().addScheduledTask(() -> {
+						this.procGenTaskGui(p.getBufferData());
+					});
+					break;
 				default:
 					throw new IllegalStateException("Unknown SDefaultPacket channel: "+p.getChannelName());
 			}
@@ -188,6 +206,17 @@ public class SDefaultPackage implements IMessage {
 				}
 			} catch (Exception exception1) {
 				Interitus.logger.error("Couldn't proc structure loot gui", exception1);
+			}			
+		}
+		
+		private void procGenTaskGui(PacketBuffer data) {
+			try {
+				String struct = data.readString(1000);
+				NBTTagCompound tag = data.readCompoundTag();
+				if (tag == null) {throw new IllegalStateException("no pack info");}
+				Interitus.proxy.displayGenTasksScreen(tag, struct);
+			} catch (Exception exception1) {
+				Interitus.logger.error("Couldn't proc gen task gui", exception1);
 			}			
 		}
 		

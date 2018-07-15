@@ -10,7 +10,7 @@ public class WorldDataStorage implements ICapabilityWorldDataStorage {
 	public static final ResourceLocation NAME = new ResourceLocation(Interitus.MODID, "interitus_world");
 	
 	private WorldServer world;
-	private String pack = "";
+	private String pack = "Default";
 	
 	@Override
 	public WorldServer getWorld() {

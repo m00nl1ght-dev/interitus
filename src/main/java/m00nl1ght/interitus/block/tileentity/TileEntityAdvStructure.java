@@ -17,6 +17,7 @@ import m00nl1ght.interitus.item.ModItem;
 import m00nl1ght.interitus.network.SDefaultPackage;
 import m00nl1ght.interitus.structures.Structure;
 import m00nl1ght.interitus.structures.StructurePack;
+import m00nl1ght.interitus.structures.StructurePackInfo;
 import m00nl1ght.interitus.util.Toolkit;
 import m00nl1ght.interitus.structures.BlockRegionStorage.Condition;
 import m00nl1ght.interitus.structures.Structure.StructureData;
@@ -390,10 +391,16 @@ public class TileEntityAdvStructure extends TileEntity {
         	if (StructurePack.isReadOnly()) {return false;}
         	BlockPos pos1 = this.pos.add(this.position);
             Structure template = StructurePack.getOrCreateStructure(name);
-            template.takeBlocksFromWorld(world, pos1, this.size, !this.ignoreEntities);
+            try {
+            	template.takeBlocksFromWorld(world, pos1, this.size, !this.ignoreEntities);
+            } catch (Exception e) {
+            	Interitus.logger.error("Error saving structure <"+this.name+">:", e);
+            	return false;
+            }
             template.setConditions(this.conditions, pos1);
             template.setLoot(this.loot, pos1);
             template.setAuthor(this.author);
+            StructurePackInfo.markDirty();
             return true;
         } else {
             return false; 

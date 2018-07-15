@@ -6,7 +6,7 @@ import java.text.DecimalFormatSymbols;
 import java.util.List;
 import java.util.Locale;
 
-import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.GuiTextField;
@@ -17,11 +17,13 @@ import net.minecraft.util.Rotation;
 import net.minecraft.util.math.BlockPos;
 
 import org.lwjgl.input.Keyboard;
+import org.lwjgl.input.Mouse;
 
 import com.google.common.collect.Lists;
 
 import m00nl1ght.interitus.block.tileentity.TileEntityAdvStructure;
 import m00nl1ght.interitus.block.tileentity.TileEntityAdvStructure.Mode;
+import m00nl1ght.interitus.client.gui.GuiDropdown.GuiEditableDropdown;
 import m00nl1ght.interitus.network.CDefaultPackage;
 import m00nl1ght.interitus.structures.StructurePackInfo;
 
@@ -29,8 +31,9 @@ public class GuiEditAdvStructure extends GuiScreen {
 	
     public static final int[] LEGAL_KEY_CODES = new int[] {203, 205, 14, 211, 199, 207};
     private final TileEntityAdvStructure tileStructure;
-    private GuiTextField nameEdit, packEdit, posXEdit, posYEdit, posZEdit, sizeXEdit, sizeYEdit, sizeZEdit, dataEdit;
+    private GuiTextField packEdit, posXEdit, posYEdit, posZEdit, sizeXEdit, sizeYEdit, sizeZEdit, dataEdit;
     private GuiButton doneButton,saveButton,loadButton,rotateZeroDegreesButton,rotateNinetyDegreesButton,rotate180DegreesButton,rotate270DegressButton,modeButton,detectSizeButton,showEntitiesButton,mirrorButton,showAirButton,showBoundingBoxButton,giveToolButton,emptyAirButton,voidAirButton,editDataButton,browsePacksButton;
+    private GuiEditableDropdown nameEdit;
     private final List<GuiTextField> tabOrder = Lists.<GuiTextField>newArrayList();
     private final DecimalFormat decimalFormat = new DecimalFormat("0.0###");
     public final StructurePackInfo packInfo;
@@ -84,10 +87,9 @@ public class GuiEditAdvStructure extends GuiScreen {
         this.packEdit.setMaxStringLength(32);
         this.packEdit.setText(this.packInfo.active.name);
         this.tabOrder.add(this.packEdit);
-        this.nameEdit = new GuiTextField(2, this.fontRenderer, this.width / 2 + 4, 40, 150, 20);
+        this.nameEdit = new NameDropdown(this.fontRenderer, 150, 20, 100);
         this.nameEdit.setMaxStringLength(32);
         this.nameEdit.setText(this.tileStructure.getName());
-        this.tabOrder.add(this.nameEdit);
         BlockPos blockpos = this.tileStructure.getPosition();
         this.posXEdit = new GuiTextField(3, this.fontRenderer, this.width / 2 - 152, 80, 40, 20);
         this.posXEdit.setMaxStringLength(10);
@@ -128,13 +130,14 @@ public class GuiEditAdvStructure extends GuiScreen {
     
     @Override
     public void onGuiClosed() {
+    	GuiDropdown.close();
         Keyboard.enableRepeatEvents(false);
         this.tileStructure.setAcceptUpdates(true);
     }
     
     @Override
 	protected void actionPerformed(GuiButton button) throws IOException {
-		if (button.enabled && !this.tbClosed) {
+		if (button.enabled && !this.tbClosed && !GuiDropdown.isOpen()) {
 			if (button.id == 0) {
 				if (this.sendToServer(1)) {
 					this.mc.displayGuiScreen((GuiScreen) null);
@@ -276,7 +279,6 @@ public class GuiEditAdvStructure extends GuiScreen {
 		this.sizeYEdit.setFocused(false);
 		this.sizeZEdit.setFocused(false);
 		this.dataEdit.setFocused(false);
-		this.nameEdit.setVisible(false);
 		this.packEdit.setVisible(false);
 		this.posXEdit.setVisible(false);
 		this.posYEdit.setVisible(false);
@@ -304,8 +306,8 @@ public class GuiEditAdvStructure extends GuiScreen {
 
 		switch (this.tileStructure.getMode()) {
 		case SAVE:
-			this.nameEdit.setVisible(true);
 			this.nameEdit.setFocused(true);
+			this.nameEdit.setOpenable(false);
 			this.nameEdit.setEnabled(true);
 			this.packEdit.setVisible(true);
 			this.packEdit.setEnabled(false);
@@ -326,8 +328,8 @@ public class GuiEditAdvStructure extends GuiScreen {
 			this.browsePacksButton.visible = true;
 			break;
 		case LOAD:
-			this.nameEdit.setVisible(true);
 			this.nameEdit.setFocused(true);
+			this.nameEdit.setOpenable(true);
 			this.packEdit.setVisible(true);
 			this.packEdit.setEnabled(false);
 			this.posXEdit.setVisible(true);
@@ -345,8 +347,8 @@ public class GuiEditAdvStructure extends GuiScreen {
 			this.updateDirectionButtons();
 			break;
 		case CORNER:
-			this.nameEdit.setVisible(true);
 			this.nameEdit.setFocused(true);
+			this.nameEdit.setOpenable(false);
 			this.packEdit.setVisible(true);
 			this.packEdit.setEnabled(false);
 			this.browsePacksButton.visible = true;
@@ -378,12 +380,12 @@ public class GuiEditAdvStructure extends GuiScreen {
 	@Override
 	protected void keyTyped(char typedChar, int keyCode) throws IOException {
 		if (this.tbClosed) {
-			if (keyCode == 1) {
-				Minecraft.getMinecraft().displayGuiScreen(null);
-			}
+//			if (keyCode == 1) {
+//				Minecraft.getMinecraft().displayGuiScreen(null);//TODO not shure about this
+//			}
 			return;
 		}
-		if (this.nameEdit.getVisible() && isValidCharacterForName(typedChar, keyCode)) {
+		if (this.tileStructure.getMode()!=Mode.DATA && isValidCharacterForName(typedChar, keyCode)) {
 			this.nameEdit.textboxKeyTyped(typedChar, keyCode);
 		}
 		if (this.posXEdit.getVisible()) {
@@ -459,12 +461,9 @@ public class GuiEditAdvStructure extends GuiScreen {
 
 	@Override
 	protected void mouseClicked(int mouseX, int mouseY, int mouseButton) throws IOException {
-		if (tbClosed) {return;}
+		if (tbClosed || GuiDropdown.isOpen()) {return;}
 		super.mouseClicked(mouseX, mouseY, mouseButton);
 
-		if (this.nameEdit.getVisible()) {
-			this.nameEdit.mouseClicked(mouseX, mouseY, mouseButton);
-		}
 		if (this.packEdit.getVisible()) {
 			this.packEdit.mouseClicked(mouseX, mouseY, mouseButton);
 		}
@@ -494,6 +493,7 @@ public class GuiEditAdvStructure extends GuiScreen {
 	@Override
 	public void drawScreen(int mouseX, int mouseY, float partialTicks) {
 		this.drawDefaultBackground();
+		boolean mBtn = Mouse.isButtonDown(0);
 		
 		if (this.tbClosed) {
 			return;
@@ -506,7 +506,6 @@ public class GuiEditAdvStructure extends GuiScreen {
 			this.drawString(this.fontRenderer, "Structure Pack", this.width / 2 - 153, 30, 10526880);
 			this.drawString(this.fontRenderer, "Structure Name", this.width / 2 + 3, 30, 10526880);
 			this.packEdit.drawTextBox();
-			this.nameEdit.drawTextBox();
 		}
 
 		if (tileentitystructure$mode == Mode.LOAD || tileentitystructure$mode == Mode.SAVE) {
@@ -534,11 +533,31 @@ public class GuiEditAdvStructure extends GuiScreen {
 		}
 
 		super.drawScreen(mouseX, mouseY, partialTicks);
+		this.nameEdit.draw(this.width / 2 + 4, 40, mouseX, mouseY, mBtn);
+		GuiDropdown.drawDropdown(mouseX, mouseY, mBtn);
 	}
 
 	@Override
 	public boolean doesGuiPauseGame() {
 		return false;
+	}
+	
+	private class NameDropdown extends GuiEditableDropdown {
+
+		public NameDropdown(FontRenderer renderer, int w, int h, int listH) {
+			super(renderer, w, h, listH);
+		}
+
+		@Override
+		protected int getElementCount() {
+			return packInfo.structures.size();
+		}
+
+		@Override
+		protected String getElement(int id) {
+			return packInfo.structures.get(id).name;
+		}
+		
 	}
 
 }

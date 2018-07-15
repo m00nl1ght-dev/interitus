@@ -10,13 +10,13 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import m00nl1ght.interitus.Interitus;
 import m00nl1ght.interitus.network.SDefaultPackage;
@@ -27,6 +27,7 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.nbt.CompressedStreamTools;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.nbt.NBTTagList;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.WorldServer;
 import net.minecraft.world.biome.Biome;
@@ -35,23 +36,22 @@ import net.minecraftforge.common.DimensionManager;
 public class StructurePack {
 	
 	public static final File basePath = new File(Interitus.MODID+"/structurepacks/");
-	private static final ArrayList<StructureConfig> UNKNOWN_BIOME = Lists.newArrayList();
-	static final StructurePack emptyPack = createDefaultPack();
+	static final Map<Integer, Map<Biome, ArrayList<WorldGenTask>>> genTasks = Maps.<Integer, Map<Biome, ArrayList<WorldGenTask>>>newHashMap();
+	static final StructurePack emptyPack = new DefaultPack();
 	static StructurePack current = emptyPack; // @Nonnull
 	static final HashMap<String, StructurePack> packs = new HashMap<String, StructurePack>();
 	public static final FilenameFilter MCSP_FILTER = new MCSPFilter();
 	private static EntityPlayer editing = null;
 	
 	final Map<String, Structure> structures = Maps.<String, Structure>newHashMap();
-	final Map<Biome, ArrayList<StructureConfig>> spawns = Maps.<Biome, ArrayList<StructureConfig>>newHashMap();
 	final Map<String, LootList> loot = new HashMap<String, LootList>();
 	public final RegistryMappings mappings = new RegistryMappings();
 	public final String name;
-	private boolean read_only;
-	private String author = "Unknown";
-	private String description = "";
-	private float version = Interitus.SUPPORTED_PACK_VERSION_MAX;
-	private boolean loaded = false;
+	boolean read_only;
+	String author = "Unknown";
+	String description = "";
+	float version = Interitus.SUPPORTED_PACK_VERSION_MAX;
+	boolean loaded = false;
 	
 	public StructurePack(String name) {
 		this.name = name;
@@ -89,8 +89,7 @@ public class StructurePack {
 		return editing==null || editing.getName().equals(player.getName());
 	}
 	
-	private void preload() throws IOException {
-		if (this.name.equals("Default")) {return;}
+	void preload() throws IOException {
 		File file = new File(basePath, name+".mcsp");
 		if (!file.exists()) {throw new FileNotFoundException();}
 		ZipInputStream zip = new ZipInputStream(new FileInputStream(file));
@@ -113,8 +112,11 @@ public class StructurePack {
 		this.readInfoFromNBT(nbtInfo);
 	}
 	
-	private void load() throws IOException {
-		if (this.name.equals("Default")) {return;}
+	void load() throws IOException {
+		load(genTasks);
+	}
+	
+	void load(Map<Integer, Map<Biome, ArrayList<WorldGenTask>>> genList) throws IOException {
 		File file = new File(basePath, name+".mcsp");
 		if (!file.exists()) {throw new FileNotFoundException();}
 		ZipInputStream zip = new ZipInputStream(new FileInputStream(file));
@@ -147,7 +149,6 @@ public class StructurePack {
 		if (nbtInfo==null) {throw new IOException("Missing structure pack info");}
 		this.readInfoFromNBT(nbtInfo);
 		
-		if (nbtMappings==null) {throw new IOException("Missing block mappings");}
 		this.mappings.build(nbtMappings);
 		if (!mappings.getMissingBlocks().isEmpty()) {
 			Interitus.logger.error("Problems occured while loading the structure pack:");
@@ -157,18 +158,24 @@ public class StructurePack {
 			Interitus.logger.error("The structures will still work, but the missing blocks will be replaced with air.");
 		}
 		
-		this.structures.clear();
-		for (Entry<String, NBTTagCompound> entry : struct.entrySet()) {
-			Structure str = new Structure(entry.getKey());
-			str.readFromNBT(mappings, entry.getValue());
-			this.structures.put(str.name, str);
+		if (genList!=null) {
+			for (Map<Biome, ArrayList<WorldGenTask>> map : genList.values()) {
+				map.clear();
+			}
 		}
 		
 		this.loot.clear();
-		for (Entry<String, NBTTagCompound> entry : struct.entrySet()) {
+		for (Entry<String, NBTTagCompound> entry : loot.entrySet()) {
 			LootList list = new LootList(entry.getKey());
 			list.loadFromNBT(entry.getValue());
 			this.loot.put(list.name, list);
+		}
+		
+		this.structures.clear();
+		for (Entry<String, NBTTagCompound> entry : struct.entrySet()) {
+			Structure str = new Structure(entry.getKey());
+			str.readFromNBT(this, genList, entry.getValue());
+			this.structures.put(str.name, str);
 		}
 		
 		mappings.reset();
@@ -181,7 +188,6 @@ public class StructurePack {
 	
 	public boolean save(StructurePack target) throws IOException {
 		if (!loaded) {return false;}
-		if (this.name.equals("Default")) {return false;}
 		File file = new File(basePath, target.name+".mcsp");
 		if (file.exists()) {file.delete();}
 		basePath.mkdirs(); file.createNewFile();
@@ -193,7 +199,7 @@ public class StructurePack {
 		
 		mappings.reset();
 		for (Structure str : this.structures.values()) {
-			NBTTagCompound tag = str.writeToNBT(mappings, new NBTTagCompound());
+			NBTTagCompound tag = str.writeToNBT(this, new NBTTagCompound());
 			this.nbtToZip(tag, zip, data, "structures/"+str.name);
 		}
 		for (LootList loot : this.loot.values()) {
@@ -232,17 +238,15 @@ public class StructurePack {
 		this.read_only = nbt.getBoolean("final");
 	}
 	
-	private void unload() {
-		if (this.name.equals("Default")) {return;}
+	void unload() {
 		this.loaded = false;
 		this.loot.clear();
 		this.structures.clear();
-		this.spawns.clear();
+		this.genTasks.clear();
 		this.mappings.reset();
 	}
 	
 	public boolean delete() {
-		if (this.name.equals("Default")) {return false;}
 		if (current==this) {loadDefault();}
 		File file = new File(basePath, name+".mcsp");
 		if (file.delete()) {
@@ -259,10 +263,6 @@ public class StructurePack {
 	
 	public static boolean isReadOnly() {
 		return current.read_only;
-	}
-	
-	public static ArrayList<StructureConfig> getStrcutureConfigFor(Biome biome) {
-		return current.spawns.getOrDefault(biome, UNKNOWN_BIOME);
 	}
 	
 	public static Structure getStructure(String name) {
@@ -305,6 +305,50 @@ public class StructurePack {
 		if (this.loot.remove(name)==null) {return false;};
 		StructurePackInfo.markDirty();
 		return true;
+	}
+	
+	public static NBTTagCompound getGenTaskClientTag(Structure struct) {
+		NBTTagCompound tag = new NBTTagCompound();
+		NBTTagList list = new NBTTagList();
+		for (WorldGenTask task : struct.tasks) {
+			list.appendTag(WorldGenTask.getClientTag(task));
+		}
+		tag.setTag("u", list);
+		return tag;
+	}
+	
+	public static void updateGenTasks(Structure str, NBTTagCompound tag) {
+		if (current.read_only) {return;}
+		str.tasks.clear();
+		for (Map<Biome, ArrayList<WorldGenTask>> map : genTasks.values()) {
+			for (ArrayList<WorldGenTask> list : map.values()) {
+				Iterator<WorldGenTask> it = list.iterator();
+				while (it.hasNext()) {
+					if (it.next().structure==str) {it.remove();}
+				}
+			}
+		}
+		NBTTagList tlist = tag.getTagList("u", 10);
+		for (int i = 0; i < tlist.tagCount(); i++) {
+			WorldGenTask task = WorldGenTask.buildFromClient(str, tlist.getCompoundTagAt(i));
+			str.tasks.add(task);
+			for (int dim : task.dimensions) {
+				Map<Biome, ArrayList<WorldGenTask>> map = genTasks.get(dim);
+				if (map==null) {
+    				map = new HashMap<Biome, ArrayList<WorldGenTask>>();
+    				genTasks.put(dim, map);
+    			}
+				for (Biome biome : task.biomes) {
+					ArrayList<WorldGenTask> blist = map.get(biome);
+					if (blist==null) {
+						blist=new ArrayList<WorldGenTask>();
+						map.put(biome, blist);
+					}
+					blist.add(task);
+				}
+			}
+		}
+		StructurePackInfo.markDirty();
 	}
 	
 	public void setDescription(String text) {
@@ -352,14 +396,10 @@ public class StructurePack {
 		return true;
 	}
 	
-	public static StructurePack createDefaultPack() {
-		StructurePack pack = new StructurePack("Default");
-		pack.loaded=true;
-		pack.read_only = true;
-		pack.author = "";
-		pack.description = "Empty, behaves like vanilla.";
-		StructurePackInfo.markDirty();
-		return pack;
+	public static Map<Biome, ArrayList<WorldGenTask>> getGenForDimension(int id) {
+		Map<Biome, ArrayList<WorldGenTask>> map = current.genTasks.get(id);
+		if (map==null) {genTasks.put(id, map=new HashMap<Biome, ArrayList<WorldGenTask>>());}
+		return map;
 	}
 	
 	public static void loadDefault() {
@@ -401,8 +441,8 @@ public class StructurePack {
 					throw new IllegalStateException("failed to save copy of pack!", e);
 				}
 			} else {
-				try { // FIXME crash when loading copied pack ingame
-					from.load();
+				try {
+					from.load((Map<Integer, Map<Biome, ArrayList<WorldGenTask>>>) null);
 					from.save(pack);
 					from.unload();
 				} catch (Exception e) {
@@ -416,6 +456,7 @@ public class StructurePack {
 	}
 
 	public static boolean load(StructurePack pack) {
+		//TODO finish all pending structure chunks
 		current.unload();
 		try {
 			pack.load();
@@ -465,11 +506,49 @@ public class StructurePack {
 		}
 	}
 	
+	public static boolean isDefault() {
+		return current==emptyPack;
+	}
+	
 	private static class MCSPFilter implements FilenameFilter {
 		@Override
 		public boolean accept(File dir, String name) {
 			return name.endsWith(".mcsp");
 		}
+	}
+	
+	private static class DefaultPack extends StructurePack {
+
+		public DefaultPack() {
+			super("Default");
+			this.loaded=true;
+			read_only = true;
+			author = "";
+			description = "Empty, behaves like vanilla.";
+			StructurePackInfo.markDirty();
+		}
+		
+		@Override
+		void preload() throws IOException {}
+		
+		@Override
+		void load(Map<Integer, Map<Biome, ArrayList<WorldGenTask>>> genList) throws IOException {
+			if (genList!=null) {
+				for (Map<Biome, ArrayList<WorldGenTask>> map : genList.values()) {
+					map.clear();
+				}
+			}
+		}
+		
+		@Override
+		public boolean save(StructurePack target) throws IOException {return false;}
+		
+		@Override
+		void unload() {}
+		
+		@Override
+		public boolean delete() {return false;}
+		
 	}
 
 }

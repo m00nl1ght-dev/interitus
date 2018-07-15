@@ -3,6 +3,7 @@ package m00nl1ght.interitus.client.gui;
 import java.io.IOException;
 
 import org.lwjgl.input.Keyboard;
+import org.lwjgl.input.Mouse;
 
 import m00nl1ght.interitus.network.CDefaultPackage;
 import m00nl1ght.interitus.structures.StructurePackInfo;
@@ -58,7 +59,7 @@ public class GuiPackLootLists extends GuiScreen {
 		
 		this.drawCenteredString(this.fontRenderer, "Loot Lists of <"+packInfo.active.name+">", this.width / 2, 10, 16777215);
 		
-		this.list.drawScreen(mouseX, mouseY, partialTicks);
+		this.list.drawScreen(mouseX, mouseY, Mouse.isButtonDown(0), partialTicks);
 		
 		super.drawScreen(mouseX, mouseY, partialTicks);
 	}
@@ -93,10 +94,10 @@ public class GuiPackLootLists extends GuiScreen {
 		protected boolean drawSlot(int slotIdx, int entryRight, int slotTop, int slotBuffer, Tessellator tess) {
 			int x = entryRight-this.w;
 			getFontRenderer().drawString(packInfo.lootlists.get(slotIdx), x+15, slotTop+5, 16777215);
-			if (this.drawButton(mc, x+300, slotTop-1, 17, 17, false, "...")) {
+			if (this.drawButton(mc, x+300, slotTop-1, 17, 17, false, this.isHovering, "...")) {
 				//TODO
 			}
-			if (this.drawButton(mc, x+343, slotTop-1, 17, 17, !packInfo.active.read_only, "X")) {
+			if (this.drawButton(mc, x+343, slotTop-1, 17, 17, !packInfo.active.read_only, this.isHovering, "X")) {
 				if (!CDefaultPackage.packGuiAction(8, packInfo.lootlists.get(slotIdx), "")) {return false;}
 				return packInfo.lootlists.remove(slotIdx)!=null;
 			}

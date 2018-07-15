@@ -1,24 +1,21 @@
 package m00nl1ght.interitus.structures;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map.Entry;
-
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import m00nl1ght.interitus.Interitus;
 import m00nl1ght.interitus.structures.Structure.StructureData;
+import m00nl1ght.interitus.util.Toolkit;
 import m00nl1ght.interitus.world.InteritusChunkGenerator;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.nbt.NBTTagLong;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
+import net.minecraft.world.chunk.Chunk;
 
 
 public class StructurePositionMap {
 
 	private final Long2ObjectOpenHashMap<StructureData> chunks = new Long2ObjectOpenHashMap<StructureData>(1024);
-	private final HashMap<String, ArrayList<StructureData>> struct = new HashMap<String, ArrayList<StructureData>>();
 	private final InteritusChunkGenerator gen;
 	
 	public StructurePositionMap(InteritusChunkGenerator gen) {
@@ -46,42 +43,38 @@ public class StructurePositionMap {
 				}
 			}
 		}
-		ArrayList<StructureData> list = struct.get(data.str.name);
 		if (!noPermanentSave) {
-			if (list==null) {struct.put(data.str.name, list = new ArrayList());}
-			list.add(data);
+			data.str.instances.add(data);
 		}
 		for (int x = xmin; x <= xmax; x++) {
 			for (int z = zmin; z <= zmax; z++) {
 				if (!noPermanentSave) {chunks.put(ChunkPos.asLong(x, z), data);}
-				if (placeInWorld && gen.world.isChunkGeneratedAt(x, z) && gen.world.getChunkFromChunkCoords(x, z).isTerrainPopulated()) {
-					data.str.placeInChunk(gen.world, data, x, z); insta++;
+				if (placeInWorld && gen.world.isChunkGeneratedAt(x, z)) {
+					Chunk chunk =  gen.world.getChunkFromChunkCoords(x, z);
+					if (chunk.isTerrainPopulated()) {
+						data.str.placeInChunk(chunk, data); insta++;
+					}
 				} c++;
 			}
 		}
-		//if (placeInWorld) Toolkit.serverBroadcastMsg("("+data.str.name+") created structure at "+data.pos.toString()+" (instantly "+insta+" of "+c+")");
+		if (Interitus.config.debugWorldgen) Toolkit.serverBroadcastMsg("("+data.str.name+") created structure at "+data.pos.toString()+" (instantly "+insta+" of "+c+")");
 		return true;
 	}
 	
-	public void place(BlockPos blockpos) {
-		place(blockpos.getX() >> 4, blockpos.getZ() >> 4);
-	}
-	
-	public boolean place(int x, int z) {
-		StructureData data = chunks.get(ChunkPos.asLong(x, z));
+	public boolean place(Chunk chunk) {
+		StructureData data = chunks.get(ChunkPos.asLong(chunk.x, chunk.z));
 		if (data!=null) {
-			data.str.placeInChunk(gen.world, data, x, z);
+			data.str.placeInChunk(chunk, data);
 			return true;
 		}
 		return false;
 	}
 	
-	public boolean nearOccurence(Structure str, BlockPos pos, int maxDistance) {
-		ArrayList<StructureData> list = struct.get(str.name);
-		if (list==null || list.isEmpty()) {return false;}
-		for (StructureData str1 : list) {
-			int a = str1.pos.getX() - pos.getX(), b = str1.pos.getZ() - pos.getZ();
-			if (Math.sqrt(a*a+b*b)<maxDistance) {return true;}
+	public boolean place(int x, int z) {
+		StructureData data = chunks.get(ChunkPos.asLong(x, z));
+		if (data!=null) {
+			data.str.placeInChunk(gen.world.getChunkFromChunkCoords(x, z), data);
+			return true;
 		}
 		return false;
 	}
@@ -91,20 +84,20 @@ public class StructurePositionMap {
 	}
 
 	public void writeToNBT(NBTTagCompound nbt) {
-		for (Entry<String, ArrayList<StructureData>> entry : struct.entrySet()) {
-			if (entry.getValue().isEmpty()) {continue;}
+		for (Structure str : StructurePack.current.structures.values()) {
+			if (str.instances.isEmpty()) {continue;}
 			NBTTagList list = new NBTTagList();
-			for (StructureData data : entry.getValue()) {
+			for (StructureData data : str.instances) {
 				list.appendTag(new NBTTagLong(data.pos.toLong()));
 			}
-			nbt.setTag(entry.getKey(), list);
+			nbt.setTag(str.name, list);
 		}
 	}
 	
 	public void readFromNBT(NBTTagCompound nbt) {
 		for (String key : nbt.getKeySet()) {
 			Structure struct = StructurePack.getStructure(key);
-			if (struct==null) {Interitus.logger.error("World data contains unknown structure data: structure <"+key+"> not found!");}
+			if (struct==null) {Interitus.logger.warn("World data contains unknown structure data: structure <"+key+"> not found!"); continue;}
 			NBTTagList list = nbt.getTagList(key, 4);
 			for (int i=0; i<list.tagCount(); i++) {
 				this.create(new StructureData(struct, BlockPos.fromLong(((NBTTagLong)list.get(i)).getLong())), false);
