@@ -15,8 +15,9 @@ import net.minecraft.world.chunk.Chunk;
 
 public class StructurePositionMap {
 
-	private final Long2ObjectOpenHashMap<StructureData> chunks = new Long2ObjectOpenHashMap<StructureData>(1024);
+	private final Long2ObjectOpenHashMap<StructureData> chunks = new Long2ObjectOpenHashMap<StructureData>(512);
 	private final InteritusChunkGenerator gen;
+	private boolean finishing = false;
 	
 	public StructurePositionMap(InteritusChunkGenerator gen) {
 		this.gen=gen;
@@ -31,6 +32,7 @@ public class StructurePositionMap {
 	}
 	
 	public boolean create(StructureData data, boolean placeInWorld, boolean noPermanentSave) {
+		if (finishing) {throw new IllegalStateException("Finishing pending structures");}
 		BlockPos end = data.pos.add(data.str.getSize(data.rotation)); int insta=0, c=0;
 		int xmin = Math.min(data.pos.getX() >> 4, end.getX() >> 4);
 		int xmax = Math.max(data.pos.getX() >> 4, end.getX() >> 4);
@@ -62,7 +64,8 @@ public class StructurePositionMap {
 	}
 	
 	public boolean place(Chunk chunk) {
-		StructureData data = chunks.get(ChunkPos.asLong(chunk.x, chunk.z));
+		if (finishing) {throw new IllegalStateException("Finishing pending structures");}
+		StructureData data = chunks.remove(ChunkPos.asLong(chunk.x, chunk.z));
 		if (data!=null) {
 			data.str.placeInChunk(chunk, data);
 			return true;
@@ -71,12 +74,23 @@ public class StructurePositionMap {
 	}
 	
 	public boolean place(int x, int z) {
-		StructureData data = chunks.get(ChunkPos.asLong(x, z));
+		if (finishing) {throw new IllegalStateException("Finishing pending structures");}
+		StructureData data = chunks.remove(ChunkPos.asLong(x, z));
 		if (data!=null) {
 			data.str.placeInChunk(gen.world.getChunkFromChunkCoords(x, z), data);
 			return true;
 		}
 		return false;
+	}
+	
+	public void finishPending() {
+		finishing = true;
+		for (StructureData data : chunks.values()) {
+			if (data==null) {continue;}
+			data.str.placeInChunk(gen.world.getChunkFromChunkCoords(data.pos.getX() >> 4, data.pos.getZ() >> 4), data);
+		}
+		chunks.clear();
+		finishing = false;
 	}
 	
 	public int chunkCount() {

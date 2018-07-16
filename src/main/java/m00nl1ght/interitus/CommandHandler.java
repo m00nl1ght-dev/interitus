@@ -127,12 +127,10 @@ public class CommandHandler implements ICommand {
 					}
 					return;
 				case "reload":
-					try {
-						StructurePack.reload();
-						sender.sendMessage(new TextComponentString("Loaded structure pack."));
-					} catch (IOException e) {
-						Interitus.logger.error("Failed to load structure pack: ", e);
-						sender.sendMessage(new TextComponentString("Failed to load structure pack."));
+					if (StructurePack.load(StructurePack.get())) {
+						sender.sendMessage(new TextComponentString("Reloaded structure pack."));
+					} else {
+						sender.sendMessage(new TextComponentString("Failed to reload structure pack."));
 					}
 				case "delete":
 					if (args.length<3) {sender.sendMessage(new TextComponentString("Incorrect number of arguments!")); return;}

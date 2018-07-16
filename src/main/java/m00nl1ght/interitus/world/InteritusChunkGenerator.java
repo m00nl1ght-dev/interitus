@@ -35,9 +35,10 @@ public abstract class InteritusChunkGenerator implements IChunkGenerator {
 	private final Map<Biome, ArrayList<WorldGenTask>> genTasks;
 	protected final StructurePositionMap structures = new StructurePositionMap(this);
 	private final VarBlockPos posCache = new VarBlockPos();
+	private boolean createStruct = true;
 	
 	public InteritusChunkGenerator(World world) {
-		this.genTasks = StructurePack.getGenForDimension(world.provider.getDimension());
+		this.genTasks = StructurePack.initGen(this);
 		this.world = world;
 	}
 	
@@ -92,12 +93,21 @@ public abstract class InteritusChunkGenerator implements IChunkGenerator {
 	}
 	
 	protected void createStructures(int x, int z) {
+		if (!this.createStruct) {return;}
 		Biome biome = this.world.getBiomeProvider().getBiome(posCache.set(8+x*16, 0, 8+z*16));
 		ArrayList<WorldGenTask> list = genTasks.get(biome);
 		if (list==null) {return;}
 		for (WorldGenTask task : list) {
 			if (task.apply(this, x, z)) {break;}
 		}
+	}
+	
+	public void finishPendingStructures() {
+		Interitus.logger.info("Finishing all pending structures, this may take a moment ...");
+		this.createStruct = false;
+		this.structures.finishPending();
+		this.createStruct = true;
+		Interitus.logger.info("Finished pending structures.");
 	}
 
 	public Chunk getChunkFromCache(int x, int z, boolean remove) {

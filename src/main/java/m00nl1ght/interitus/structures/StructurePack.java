@@ -21,6 +21,7 @@ import com.google.common.collect.Maps;
 import m00nl1ght.interitus.Interitus;
 import m00nl1ght.interitus.network.SDefaultPackage;
 import m00nl1ght.interitus.util.Toolkit;
+import m00nl1ght.interitus.world.InteritusChunkGenerator;
 import m00nl1ght.interitus.world.capabilities.ICapabilityWorldDataStorage;
 import m00nl1ght.interitus.world.capabilities.WorldDataStorageProvider;
 import net.minecraft.entity.player.EntityPlayer;
@@ -37,6 +38,7 @@ public class StructurePack {
 	
 	public static final File basePath = new File(Interitus.MODID+"/structurepacks/");
 	static final Map<Integer, Map<Biome, ArrayList<WorldGenTask>>> genTasks = Maps.<Integer, Map<Biome, ArrayList<WorldGenTask>>>newHashMap();
+	static final Map<Integer, InteritusChunkGenerator> genList = Maps.<Integer, InteritusChunkGenerator>newHashMap();
 	static final StructurePack emptyPack = new DefaultPack();
 	static StructurePack current = emptyPack; // @Nonnull
 	static final HashMap<String, StructurePack> packs = new HashMap<String, StructurePack>();
@@ -238,11 +240,17 @@ public class StructurePack {
 		this.read_only = nbt.getBoolean("final");
 	}
 	
-	void unload() {
+	void unload(boolean finishPending) {
+		if (finishPending) for (InteritusChunkGenerator gen : genList.values()) {
+			if (gen==null) {continue;}
+			gen.finishPendingStructures();
+		}
 		this.loaded = false;
 		this.loot.clear();
 		this.structures.clear();
-		this.genTasks.clear();
+		for (Map<Biome, ArrayList<WorldGenTask>> map : genTasks.values()) {
+			map.clear();
+		}
 		this.mappings.reset();
 	}
 	
@@ -396,15 +404,24 @@ public class StructurePack {
 		return true;
 	}
 	
-	public static Map<Biome, ArrayList<WorldGenTask>> getGenForDimension(int id) {
-		Map<Biome, ArrayList<WorldGenTask>> map = current.genTasks.get(id);
-		if (map==null) {genTasks.put(id, map=new HashMap<Biome, ArrayList<WorldGenTask>>());}
+	public static Map<Biome, ArrayList<WorldGenTask>> initGen(InteritusChunkGenerator gen) {
+		int dim = gen.world.provider.getDimension();
+		Map<Biome, ArrayList<WorldGenTask>> map = current.genTasks.get(dim);
+		if (map==null) {genTasks.put(dim, map=new HashMap<Biome, ArrayList<WorldGenTask>>());}
+		genList.put(dim, gen);
 		return map;
+	}
+	
+	public void serverStopped() {
+		genList.clear();
+		current.unload(false);
+		current = emptyPack;
+		StructurePackInfo.markDirty();
 	}
 	
 	public static void loadDefault() {
 		if (current!=emptyPack) {
-			current.unload();
+			current.unload(true);
 			updateCurrentPack(emptyPack);
 		}
 	}
@@ -444,9 +461,9 @@ public class StructurePack {
 				try {
 					from.load((Map<Integer, Map<Biome, ArrayList<WorldGenTask>>>) null);
 					from.save(pack);
-					from.unload();
+					from.unload(false);
 				} catch (Exception e) {
-					from.unload();
+					from.unload(false);
 					throw new IllegalStateException("failed to load/save copy of pack!", e);
 				}
 			}
@@ -456,13 +473,11 @@ public class StructurePack {
 	}
 
 	public static boolean load(StructurePack pack) {
-		//TODO finish all pending structure chunks
-		current.unload();
+		current.unload(true);
 		try {
 			pack.load();
 		} catch (IOException e) {
 			Interitus.logger.error("Error loading structure pack <"+pack.name+">: ", e);
-			pack.unload();
 			loadDefault();
 			return false;
 		}
@@ -470,14 +485,11 @@ public class StructurePack {
 		return true;
 	}
 	
-	public static void reload() throws IOException {
-		current.load();
-	}
-	
 	private static void updateCurrentPack(StructurePack pack) {
 		current = pack;
 		StructurePackInfo.markDirty();
 		WorldServer world = DimensionManager.getWorld(0);
+		if (world==null) {return;}
 		ICapabilityWorldDataStorage data = world.getCapability(WorldDataStorageProvider.INTERITUS_WORLD, null);
 		if (data!=null) {
 			data.setActivePack(pack.name);
@@ -544,7 +556,7 @@ public class StructurePack {
 		public boolean save(StructurePack target) throws IOException {return false;}
 		
 		@Override
-		void unload() {}
+		void unload(boolean finishPending) {}
 		
 		@Override
 		public boolean delete() {return false;}
