@@ -18,10 +18,11 @@ import m00nl1ght.interitus.network.SDefaultPackage;
 import m00nl1ght.interitus.structures.Structure;
 import m00nl1ght.interitus.structures.StructurePack;
 import m00nl1ght.interitus.structures.StructurePackInfo;
+import m00nl1ght.interitus.structures.StructurePositionMap;
 import m00nl1ght.interitus.util.Toolkit;
+import m00nl1ght.interitus.util.VarBlockPos;
 import m00nl1ght.interitus.structures.BlockRegionStorage.Condition;
 import m00nl1ght.interitus.structures.Structure.StructureData;
-import m00nl1ght.interitus.world.InteritusChunkGenerator;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.EntityLivingBase;
@@ -53,8 +54,8 @@ public class TileEntityAdvStructure extends TileEntity {
 	private String name = "";
     private String author = "";
     private String metadata = "";
-    private BlockPos position = new BlockPos(0, 1, 0);
-    private BlockPos size = BlockPos.ORIGIN;
+    private VarBlockPos position = new VarBlockPos().set(0, 1, 0);
+    private VarBlockPos size = new VarBlockPos();
     private Mirror mirror = Mirror.NONE;
     private Rotation rotation = Rotation.NONE;
     private Mode mode = Mode.LOAD;
@@ -206,20 +207,26 @@ public class TileEntityAdvStructure extends TileEntity {
         }
     }
 
+    /**
+     * !!! Mutable Position (VarBlockPos)
+     */
     public BlockPos getPosition() {
         return this.position;
     }
 
     public void setPosition(BlockPos posIn) {
-        this.position = posIn;
+        this.position.set(posIn);
     }
 
+    /**
+     * !!! Mutable Size (VarBlockPos)
+     */
     public BlockPos getStructureSize() {
     	return this.size;
     }
 
     public void setSize(BlockPos sizeIn) {
-        this.size = sizeIn;
+        this.size.set(sizeIn);
     }
 
     public Mirror getMirror() {
@@ -304,8 +311,8 @@ public class TileEntityAdvStructure extends TileEntity {
 				StructureBoundingBox structureboundingbox = this.calculateEnclosingBoundingBox(blockpos, list1);
 
 				if (structureboundingbox.maxX - structureboundingbox.minX > 1 && structureboundingbox.maxY - structureboundingbox.minY > 1 && structureboundingbox.maxZ - structureboundingbox.minZ > 1) {
-					this.position = new BlockPos(structureboundingbox.minX - blockpos.getX() + 1, structureboundingbox.minY - blockpos.getY() + 1, structureboundingbox.minZ - blockpos.getZ() + 1);
-					this.size = new BlockPos(structureboundingbox.maxX - structureboundingbox.minX - 1, structureboundingbox.maxY - structureboundingbox.minY - 1, structureboundingbox.maxZ - structureboundingbox.minZ - 1);
+					this.position.set(structureboundingbox.minX - blockpos.getX() + 1, structureboundingbox.minY - blockpos.getY() + 1, structureboundingbox.minZ - blockpos.getZ() + 1);
+					this.size.set(structureboundingbox.maxX - structureboundingbox.minX - 1, structureboundingbox.maxY - structureboundingbox.minY - 1, structureboundingbox.maxZ - structureboundingbox.minZ - 1);
 					this.markDirty();
 					IBlockState iblockstate = this.world.getBlockState(blockpos);
 					this.world.notifyBlockUpdate(blockpos, iblockstate, iblockstate, 3);
@@ -431,11 +438,11 @@ public class TileEntityAdvStructure extends TileEntity {
 					this.author = template.getAuthor();
 				}
 
-				BlockPos strSize = template.getSize(this.rotation);
-				boolean flag = this.size.equals(strSize);
+				template.getSize(VarBlockPos.PUBLIC_CACHE, this.rotation);
+				boolean flag = this.size.equals(VarBlockPos.PUBLIC_CACHE);
 
 				if (!flag) {
-					this.size = strSize;
+					this.size.set(VarBlockPos.PUBLIC_CACHE);
 					this.markDirty();
 					IBlockState iblockstate = this.world.getBlockState(tePos);
 					this.world.notifyBlockUpdate(tePos, iblockstate, iblockstate, 3);
@@ -446,11 +453,8 @@ public class TileEntityAdvStructure extends TileEntity {
 				} else {
 					template.getConditions(this.conditions, this.pos.add(this.position));
 					template.getLoot(this.loot, this.pos.add(this.position));
-					InteritusChunkGenerator gen = InteritusChunkGenerator.get(world);
-					if (gen==null) {
-						Interitus.logger.error("Placing structures in the world is only possible in Interitus worlds!"); return false;
-					}
-					return gen.getStructurePositionMap().create(new StructureData(template, pos, mirror, rotation), true, true);
+					StructurePositionMap.createDirect(this.world, new StructureData(template, pos, mirror, rotation));
+					return true;
 				}
 			}
 		} else {
@@ -556,11 +560,11 @@ public class TileEntityAdvStructure extends TileEntity {
 		int i = MathHelper.clamp(compound.getInteger("posX"), -64, 64);
 		int j = MathHelper.clamp(compound.getInteger("posY"), -64, 64);
 		int k = MathHelper.clamp(compound.getInteger("posZ"), -64, 64);
-		this.position = new BlockPos(i, j, k);
+		this.position.set(i, j, k);
 		int l = MathHelper.clamp(compound.getInteger("sizeX"), 0, 128);
 		int i1 = MathHelper.clamp(compound.getInteger("sizeY"), 0, 128);
 		int j1 = MathHelper.clamp(compound.getInteger("sizeZ"), 0, 128);
-		this.size = new BlockPos(l, i1, j1);
+		this.size.set(l, i1, j1);
 
 		try {
 			this.rotation = Rotation.valueOf(compound.getString("rotation"));

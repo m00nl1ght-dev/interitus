@@ -52,5 +52,10 @@ public class InteritusChunkGenWrapper extends InteritusChunkGenerator {
 	public boolean isInsideStructure(World worldIn, String structureName, BlockPos pos) {
 		return wrapped.isInsideStructure(worldIn, structureName, pos);
 	}
+	
+	@Override
+	public String toString() {
+		return "InteritusChunkGenWrapper[dim="+world.provider.getDimension()+", gen="+wrapped.getClass().getSimpleName()+"]";
+	}
 
 }

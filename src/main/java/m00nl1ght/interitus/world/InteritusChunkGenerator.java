@@ -10,9 +10,12 @@ import m00nl1ght.interitus.Interitus;
 import m00nl1ght.interitus.structures.StructurePack;
 import m00nl1ght.interitus.structures.StructurePositionMap;
 import m00nl1ght.interitus.structures.WorldGenTask;
+import m00nl1ght.interitus.util.IDebugObject;
+import m00nl1ght.interitus.util.InteritusProfiler;
 import m00nl1ght.interitus.util.VarBlockPos;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.EnumCreatureType;
 import net.minecraft.init.Blocks;
 import net.minecraft.nbt.NBTTagCompound;
@@ -25,7 +28,7 @@ import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.gen.ChunkProviderServer;
 import net.minecraft.world.gen.IChunkGenerator;
 
-public abstract class InteritusChunkGenerator implements IChunkGenerator {
+public abstract class InteritusChunkGenerator implements IChunkGenerator, IDebugObject {
 	
 	public static final int heightMapOffset = 2;
 	
@@ -34,12 +37,13 @@ public abstract class InteritusChunkGenerator implements IChunkGenerator {
 	private final Long2ObjectLinkedOpenHashMap<Chunk> chunkCache = new Long2ObjectLinkedOpenHashMap<Chunk>(512);
 	private final Map<Biome, ArrayList<WorldGenTask>> genTasks;
 	protected final StructurePositionMap structures = new StructurePositionMap(this);
-	private final VarBlockPos posCache = new VarBlockPos();
 	private boolean createStruct = true;
 	
+	public int gAll, gDone, gRange, gCond; // debug
+	
 	public InteritusChunkGenerator(World world) {
-		this.genTasks = StructurePack.initGen(this);
 		this.world = world;
+		this.genTasks = StructurePack.initGen(this);
 	}
 	
 	public abstract Chunk generateChunk(int x, int z, boolean pre);
@@ -94,7 +98,7 @@ public abstract class InteritusChunkGenerator implements IChunkGenerator {
 	
 	protected void createStructures(int x, int z) {
 		if (!this.createStruct) {return;}
-		Biome biome = this.world.getBiomeProvider().getBiome(posCache.set(8+x*16, 0, 8+z*16));
+		Biome biome = this.world.getBiomeProvider().getBiome(VarBlockPos.PUBLIC_CACHE.set(8+x*16, 0, 8+z*16));
 		ArrayList<WorldGenTask> list = genTasks.get(biome);
 		if (list==null) {return;}
 		for (WorldGenTask task : list) {
@@ -152,7 +156,7 @@ public abstract class InteritusChunkGenerator implements IChunkGenerator {
 	public int getGroundHeight(Chunk chunk, int x, int z) { // TODO rework conditions?
 		int k; IBlockState block = null;
 		for (k = chunk.getHeightValue(x, z) + this.heightMapOffset; k > 0; k--) {
-			block = chunk.getBlockState(posCache.set(x, k, z));
+			block = chunk.getBlockState(VarBlockPos.PUBLIC_CACHE.set(x, k, z));
 			if (block.getMaterial().isOpaque() && !(block.getMaterial() == Material.WOOD)) {
 				break;
 			}
@@ -180,6 +184,18 @@ public abstract class InteritusChunkGenerator implements IChunkGenerator {
 	
 	public final StructurePositionMap getStructurePositionMap() {
 		return this.structures;
+	}
+	
+	@Override
+	public String toString() {
+		return "InteritusChunkGenerator[dim="+world.provider.getDimension()+"]";
+	}
+	
+	@Override
+	public void debugMsg(ICommandSender sender) {
+		InteritusProfiler.send(sender, "> "+this.toString());
+		InteritusProfiler.send(sender, "struct [all: "+gAll+" ok: "+gDone+" range: "+gRange+" cond: "+gCond+"]");
+		InteritusProfiler.send(sender, "chunks cached: "+chunkCache.size()+" genTasks: "+genTasks.size()+" pending: "+structures.chunkCount());
 	}
 
 }

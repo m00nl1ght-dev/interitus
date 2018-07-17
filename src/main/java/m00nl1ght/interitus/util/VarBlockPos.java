@@ -13,6 +13,7 @@ import net.minecraft.util.math.Vec3i;
 
 public class VarBlockPos extends BlockPos {
 	
+	public static final VarBlockPos PUBLIC_CACHE = new VarBlockPos();
     protected int x, y, z;
 
 	public VarBlockPos() {
@@ -167,6 +168,10 @@ public class VarBlockPos extends BlockPos {
 	
 	public VarBlockPos reset(Vec3i offset) {
 		return this.reset(offset.getX(), offset.getY(), offset.getZ());
+	}
+
+	public int[] toArray() {
+		return new int[] {this.x, this.y, this.z};
 	}
 	
 	@Override

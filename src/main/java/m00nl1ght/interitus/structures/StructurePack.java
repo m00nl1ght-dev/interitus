@@ -20,10 +20,13 @@ import java.util.zip.ZipOutputStream;
 import com.google.common.collect.Maps;
 import m00nl1ght.interitus.Interitus;
 import m00nl1ght.interitus.network.SDefaultPackage;
+import m00nl1ght.interitus.util.IDebugObject;
+import m00nl1ght.interitus.util.InteritusProfiler;
 import m00nl1ght.interitus.util.Toolkit;
 import m00nl1ght.interitus.world.InteritusChunkGenerator;
 import m00nl1ght.interitus.world.capabilities.ICapabilityWorldDataStorage;
 import m00nl1ght.interitus.world.capabilities.WorldDataStorageProvider;
+import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.nbt.CompressedStreamTools;
@@ -34,7 +37,7 @@ import net.minecraft.world.WorldServer;
 import net.minecraft.world.biome.Biome;
 import net.minecraftforge.common.DimensionManager;
 
-public class StructurePack {
+public class StructurePack implements IDebugObject {
 	
 	public static final File basePath = new File(Interitus.MODID+"/structurepacks/");
 	static final Map<Integer, Map<Biome, ArrayList<WorldGenTask>>> genTasks = Maps.<Integer, Map<Biome, ArrayList<WorldGenTask>>>newHashMap();
@@ -412,7 +415,7 @@ public class StructurePack {
 		return map;
 	}
 	
-	public void serverStopped() {
+	public static void serverStopped() {
 		genList.clear();
 		current.unload(false);
 		current = emptyPack;
@@ -520,6 +523,21 @@ public class StructurePack {
 	
 	public static boolean isDefault() {
 		return current==emptyPack;
+	}
+	
+	@Override
+	public void debugMsg(ICommandSender sender) {
+		InteritusProfiler.send(sender, "StructurePack: "+name+" v"+this.version+(this.loaded?" L ":" ")+(editing!=null?" editing: "+editing.getName():""));
+		for (InteritusChunkGenerator gen : genList.values()) {
+			gen.debugMsg(sender);
+		}
+	}
+	
+	@Override
+	public void resetStats() {
+		for (InteritusChunkGenerator gen : genList.values()) {
+			gen.resetStats();
+		}
 	}
 	
 	private static class MCSPFilter implements FilenameFilter {

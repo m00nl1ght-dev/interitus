@@ -8,8 +8,8 @@ import m00nl1ght.interitus.block.ModBlock;
 import m00nl1ght.interitus.item.ModItem;
 import m00nl1ght.interitus.network.ModNetwork;
 import m00nl1ght.interitus.structures.StructurePack;
+import m00nl1ght.interitus.util.InteritusProfiler;
 import m00nl1ght.interitus.util.ModConfig;
-import m00nl1ght.interitus.world.InteritusProfiler;
 import m00nl1ght.interitus.world.capabilities.WorldDataCapabilityStorage;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventHandler;
@@ -79,7 +79,7 @@ public class Interitus {
     
     @EventHandler
 	public void serverStopped(FMLServerStoppedEvent e) {
-    	StructurePack.loadDefault();
+    	StructurePack.serverStopped();
     	proxy.serverStopped(e);
 	}
 

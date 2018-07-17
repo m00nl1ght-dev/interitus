@@ -3,13 +3,13 @@ package m00nl1ght.interitus.structures;
 import java.util.ArrayList;
 
 import m00nl1ght.interitus.Interitus;
+import m00nl1ght.interitus.util.VarBlockPos;
 import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.NBTBase;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.nbt.NBTTagString;
 import net.minecraft.util.Rotation;
-import net.minecraft.util.math.BlockPos;
 
 public class StructurePackInfo {
 	
@@ -42,8 +42,8 @@ public class StructurePackInfo {
 		for (Structure str : StructurePack.get().structures.values()) {
 			NBTTagCompound t = new NBTTagCompound();
 			t.setString("n", str.name);
-			BlockPos size = str.getSize(Rotation.NONE);
-			t.setIntArray("s", new int[] {size.getX(), size.getY(), size.getZ()});
+			str.getSize(VarBlockPos.PUBLIC_CACHE, Rotation.NONE);
+			t.setIntArray("s", VarBlockPos.PUBLIC_CACHE.toArray());
 			t.setInteger("t", str.tasks.size());
 			structlist.appendTag(t);
 		}

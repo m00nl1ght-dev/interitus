@@ -43,6 +43,8 @@ import net.minecraft.world.chunk.Chunk.EnumCreateEntityType;
 
 public class Structure {
 	
+	private static final VarBlockPos posInStruct = new VarBlockPos();
+	private static final VarBlockPos posInWorld = new VarBlockPos();
     protected final BlockRegionStorage storage = new BlockRegionStorage();
     final ArrayList<WorldGenTask> tasks = new ArrayList<WorldGenTask>();
     final ArrayList<StructureData> instances = new ArrayList<StructureData>();
@@ -71,9 +73,6 @@ public class Structure {
 		int zmin = Math.max(0, chunk.z*16-data.pos.getZ());
 		int xmax = Math.min(this.storage.sizeXswapped(data.rotation), chunk.x*16-data.pos.getX()+16);
 		int zmax = Math.min(this.storage.sizeZswapped(data.rotation), chunk.z*16-data.pos.getZ()+16);
-		
-		VarBlockPos posInStruct = new VarBlockPos();
-		VarBlockPos posInWorld = new VarBlockPos();
 		    	
     	for (int x = xmin; x < xmax; x++) {
         	for (int z = zmin; z < zmax; z++) {
@@ -170,7 +169,6 @@ public class Structure {
 		}
 		
 		this.storage.init();
-		VarBlockPos posInStruct = new VarBlockPos();
 		
 		for (VarBlockPos pointer : VarBlockPos.getBoxIterator(posXY1, posXY2)) {
 			IBlockState block = worldIn.getBlockState(pointer);
@@ -277,8 +275,8 @@ public class Structure {
         }
     }
 
-    public BlockPos getSize(Rotation rotation) {
-        return this.storage.size(rotation);
+    public void getSize(VarBlockPos target, Rotation rotation) {
+        this.storage.size(target, rotation);
     }
 
     public void setAuthor(String authorIn) {
@@ -295,19 +293,29 @@ public class Structure {
     	public final BlockPos pos;
     	public final Mirror mirror;
     	public final Rotation rotation;
-    	
-    	public StructureData(Structure str, BlockPos pos) {
-    		this.str=str; this.pos=pos; this.mirror=Mirror.NONE; this.rotation=Rotation.NONE;
-    	}
+    	NBTTagList pendingChunks;
     	
     	public StructureData(Structure str, BlockPos pos, Mirror mirror, Rotation rotation) {
     		this.str=str; this.pos=pos; this.mirror=mirror; this.rotation=rotation;
+    	}
+    	
+    	public StructureData(Structure str, BlockPos pos, int transform) {
+    		this.str=str; this.pos=pos; 
+    		this.mirror=transform>20?Mirror.LEFT_RIGHT:transform>10?Mirror.FRONT_BACK:Mirror.NONE;
+    		transform=transform % 10;
+    		this.rotation=transform==1?Rotation.CLOCKWISE_90:transform==2?Rotation.CLOCKWISE_180:transform==3?Rotation.COUNTERCLOCKWISE_90:Rotation.NONE;
     	}
     	
     	@Override
     	public String toString() {
     		return str.name+"@"+pos+" ("+mirror.name()+", "+rotation.name()+")";
     	}
+
+		public int getTransformByte() {
+			int a = mirror==Mirror.FRONT_BACK?10:mirror==Mirror.LEFT_RIGHT?20:0;
+			a += (rotation==Rotation.CLOCKWISE_90?1:rotation==Rotation.CLOCKWISE_180?2:rotation==Rotation.COUNTERCLOCKWISE_90?3:0);
+			return a;
+		}
     	
     }
 

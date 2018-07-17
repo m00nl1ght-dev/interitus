@@ -82,8 +82,12 @@ public class BlockRegionStorage {
 		return sizeX*sizeY*sizeZ;
 	}
 	
-	public BlockPos size(Rotation rotation) {
-		return (rotation==Rotation.CLOCKWISE_90 || rotation==Rotation.COUNTERCLOCKWISE_90)?new BlockPos(sizeZ, sizeY, sizeX):new BlockPos(sizeX, sizeY, sizeZ);
+	public void size(VarBlockPos target, Rotation rotation) {
+		if (rotation==Rotation.CLOCKWISE_90 || rotation==Rotation.COUNTERCLOCKWISE_90) {
+			target.set(sizeZ, sizeY, sizeX);
+		} else {
+			target.set(sizeX, sizeY, sizeZ);
+		}
 	}
 	
 	public int sizeX() {return sizeX;}

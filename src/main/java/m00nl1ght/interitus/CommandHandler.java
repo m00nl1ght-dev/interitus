@@ -58,7 +58,7 @@ public class CommandHandler implements ICommand {
 		}
 		
 		if (args[0].equals("profiler")) {
-			Interitus.profiler.printToChat(world, sender);
+			Interitus.profiler.debugMsg(sender);
 			return;
 		}
 		

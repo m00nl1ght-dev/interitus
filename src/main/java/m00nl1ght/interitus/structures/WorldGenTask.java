@@ -3,18 +3,18 @@ package m00nl1ght.interitus.structures;
 import java.util.HashMap;
 import java.util.Random;
 
-import m00nl1ght.interitus.Interitus;
 import m00nl1ght.interitus.structures.Structure.StructureData;
-import m00nl1ght.interitus.util.VarBlockPos;
+import static m00nl1ght.interitus.util.VarBlockPos.PUBLIC_CACHE;
 import m00nl1ght.interitus.world.InteritusChunkGenerator;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.util.Mirror;
+import net.minecraft.util.Rotation;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.chunk.Chunk;
 
 public abstract class WorldGenTask {
 	
 	private static final HashMap<String, Class<?>> regServer = new HashMap<String, Class<?>>();
-	protected static VarBlockPos posCache = new VarBlockPos();
 	
 	static {
 		registerType(DefaultOnGroundTask.class);
@@ -142,14 +142,14 @@ public abstract class WorldGenTask {
 		@Override
 		public boolean apply(InteritusChunkGenerator gen, int x, int z) {
 			if (gen.random.nextDouble() > this.chance) { return false; }
-			Interitus.profiler.gAll++;
-			posCache.set(x * 16 + gen.random.nextInt(16), 0, z * 16 + gen.random.nextInt(16));
-			if (structure.nearOccurence(posCache, minDistance)) {Interitus.profiler.gRange++; return false;}
+			gen.gAll++;
+			PUBLIC_CACHE.set(x * 16 + gen.random.nextInt(16), 0, z * 16 + gen.random.nextInt(16));
+			if (structure.nearOccurence(PUBLIC_CACHE, minDistance)) {gen.gRange++; return false;}
 			Chunk chunk = gen.getChunk(x, z);
-			posCache.setY(randomY(gen.random, gen.getGroundHeight(chunk, posCache.inChunkX(), posCache.inChunkZ()) - this.hBase, this.hRange));
-			if (!structure.checkConditions(gen, posCache)) {Interitus.profiler.gCond++; return false;}
-			gen.getStructurePositionMap().create(new StructureData(structure, posCache.toImmutable()), true);
-			Interitus.profiler.gDone++;
+			PUBLIC_CACHE.setY(randomY(gen.random, gen.getGroundHeight(chunk, PUBLIC_CACHE.inChunkX(), PUBLIC_CACHE.inChunkZ()) - this.hBase, this.hRange));
+			if (!structure.checkConditions(gen, PUBLIC_CACHE)) {gen.gCond++; return false;}
+			gen.getStructurePositionMap().create(new StructureData(structure, PUBLIC_CACHE.toImmutable(), Mirror.NONE, Rotation.NONE));
+			gen.gDone++;
 			return true;
 		}
 
@@ -165,12 +165,12 @@ public abstract class WorldGenTask {
 		@Override
 		public boolean apply(InteritusChunkGenerator gen, int x, int z) {
 			if (gen.random.nextDouble() > this.chance) { return false; }
-			posCache.set(x * 16 + gen.random.nextInt(16), 0, z * 16 + gen.random.nextInt(16));
-			if (structure.nearOccurence(posCache, minDistance)) { return false; }
+			PUBLIC_CACHE.set(x * 16 + gen.random.nextInt(16), 0, z * 16 + gen.random.nextInt(16));
+			if (structure.nearOccurence(PUBLIC_CACHE, minDistance)) { return false; }
 			Chunk chunk = gen.getChunk(x, z);
-			posCache.setY(randomY(gen.random, this.hBase, this.hRange));
-			if (!structure.checkConditions(gen, posCache)) { return false; }
-			gen.getStructurePositionMap().create(new StructureData(structure, posCache.toImmutable()), true);
+			PUBLIC_CACHE.setY(randomY(gen.random, this.hBase, this.hRange));
+			if (!structure.checkConditions(gen, PUBLIC_CACHE)) { return false; }
+			gen.getStructurePositionMap().create(new StructureData(structure, PUBLIC_CACHE.toImmutable(), Mirror.NONE, Rotation.NONE));
 			return true;
 		}
 

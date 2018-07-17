@@ -18,7 +18,7 @@ import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
 @SideOnly(Side.CLIENT)
-public class TESRAdvStructure extends TileEntitySpecialRenderer<TileEntityAdvStructure>{
+public class TESRAdvStructure extends TileEntitySpecialRenderer<TileEntityAdvStructure>{ // TODO make more efficient / rework
 	
 	public TESRAdvStructure(TileEntityRendererDispatcher instance) {
 		this.rendererDispatcher=instance;

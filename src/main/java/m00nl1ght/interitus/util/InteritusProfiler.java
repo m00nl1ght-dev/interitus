@@ -1,4 +1,4 @@
-package m00nl1ght.interitus.world;
+package m00nl1ght.interitus.util;
 
 import java.util.HashMap;
 import java.util.Map.Entry;
@@ -7,46 +7,48 @@ import java.util.Stack;
 import javax.annotation.Nullable;
 
 import m00nl1ght.interitus.Interitus;
+import m00nl1ght.interitus.structures.StructurePack;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
-import net.minecraft.world.gen.ChunkProviderServer;
 
 
-public class InteritusProfiler {
+public class InteritusProfiler implements IDebugObject {
 	
 	protected HashMap<String, Long> profilerData = new HashMap<String, Long>();
-	
-	public int gAll, gDone, gRange, gCond;
 	
 	public ProfilerStack newStack(String name) {
 		return new ProfilerStack(name);
 	}
 	
-	public void printToChat(World world, ICommandSender sender) {
-		sender.sendMessage(new TextComponentString("##### ONELASTDAY PROFILER ######"));
-		sender.sendMessage(new TextComponentString("Generator: "+((ChunkProviderServer)world.getChunkProvider()).chunkGenerator.toString()));
-		sender.sendMessage(new TextComponentString("structures created: "+gAll+" (ok "+gDone+", fRange "+gRange+", fCond "+gCond+")"));
-		Interitus.logger.info("-----------------------------");
-		for (Entry<String, Long> entry : profilerData.entrySet()) {
-			sender.sendMessage(new TextComponentString(entry.getKey() + " = " + entry.getValue()));
+	@Override
+	public void debugMsg(ICommandSender sender) {
+		this.send(sender, "##### ONELASTDAY PROFILER ######");
+		StructurePack.get().debugMsg(sender);
+		if (!profilerData.isEmpty()) {
+			this.send(sender, "-----------------------------");
+			for (Entry<String, Long> entry : profilerData.entrySet()) {
+				this.send(sender, entry.getKey() + " = " + entry.getValue());
+			}
 		}
-		Interitus.logger.info("#############################");
+		this.send(sender, "#############################");
+	}
+	
+	public static void send(ICommandSender sender, String msg) {
+		sender.sendMessage(new TextComponentString(msg));
+	}
+	
+	@Override
+	public void resetStats() {
+		StructurePack.get().resetStats();
 	}
 	
 	public long getData(String name) {
 		if (profilerData.containsKey(name)) {
 			return profilerData.get(name);
 		} else {return 0L;}
-	}
-	
-	public void resetStats() {
-		gAll = 0;
-		gDone = 0;
-		gRange = 0;
-		gCond = 0;
 	}
 	
 	public HashMap<String, Long> getData() {
