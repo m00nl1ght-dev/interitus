@@ -63,12 +63,14 @@ public class Interitus {
     public void postInit(FMLPostInitializationEvent e) {
     	logger.info("PostInitialising "+MODNAME+" v"+VERSION+".");
     	StructurePack.updateAvailbalePacks();
+    	ModConfig.enshureCascadingFix();
         proxy.postInit(e);
     }
     
     @EventHandler
 	public void serverStarting(FMLServerStartingEvent e) {
     	e.registerServerCommand(new CommandHandler());
+    	ModConfig.enshureCascadingFix();
     	proxy.serverStarting(e);
 	}
     

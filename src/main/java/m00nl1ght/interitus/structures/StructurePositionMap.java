@@ -4,6 +4,7 @@ import java.util.Map.Entry;
 
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import m00nl1ght.interitus.Interitus;
+import m00nl1ght.interitus.structures.Structure.IStructureData;
 import m00nl1ght.interitus.structures.Structure.StructureData;
 import m00nl1ght.interitus.util.Toolkit;
 import m00nl1ght.interitus.util.VarBlockPos;
@@ -12,14 +13,13 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.nbt.NBTTagLong;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
 
 
 public class StructurePositionMap {
 
-	private final Long2ObjectOpenHashMap<StructureData> chunks = new Long2ObjectOpenHashMap<StructureData>(512);
+	private final Long2ObjectOpenHashMap<IStructureData> chunks = new Long2ObjectOpenHashMap<IStructureData>(512);
 	private final InteritusChunkGenerator gen;
 	private boolean finishing = false;
 	
@@ -50,9 +50,9 @@ public class StructurePositionMap {
 		int xmax = Math.max(data.pos.getX() >> 4, VarBlockPos.PUBLIC_CACHE.getX() >> 4);
 		int zmin = Math.min(data.pos.getZ() >> 4, VarBlockPos.PUBLIC_CACHE.getZ() >> 4);
 		int zmax = Math.max(data.pos.getZ() >> 4, VarBlockPos.PUBLIC_CACHE.getZ() >> 4);
-		for (int x = xmin; x <= xmax; x++) { // TODO remove this, support multiple StructureData per chunk
+		for (int x = xmin; x <= xmax; x++) {
 			for (int z = zmin; z <= zmax; z++) {
-				if (chunks.containsKey(ChunkPos.asLong(x, z))) {
+				if (chunks.containsKey(Toolkit.intPairToLong(x, z))) {
 					return false;
 				}
 			}
@@ -67,38 +67,45 @@ public class StructurePositionMap {
 						continue;
 					}
 				}
-				chunks.put(ChunkPos.asLong(x, z), data);
+				chunks.put(Toolkit.intPairToLong(x, z), data);
 			}
 		}
-		if (Interitus.config.debugWorldgen) Toolkit.serverBroadcastMsg("("+data.str.name+") created structure at "+data.pos.toString()+" (instantly "+insta+" of "+(xmax-xmin)*(zmax-zmin)+")");
+		if (Interitus.config.debugWorldgen) Toolkit.serverBroadcastMsg("("+data.str.name+") created structure at "+data.pos.toString()+" (instantly "+insta+" of "+(xmax-xmin+1)*(zmax-zmin+1)+")");
 		return true;
 	}
 	
 	public boolean place(Chunk chunk) {
 		if (finishing) {throw new IllegalStateException("Finishing pending structures");}
-		StructureData data = chunks.remove(ChunkPos.asLong(chunk.x, chunk.z));
-		if (data!=null) {
-			data.str.placeInChunk(chunk, data);
-			return true;
-		}
-		return false;
+		return this.place(chunk, chunks.remove(Toolkit.intPairToLong(chunk.x, chunk.z)));
 	}
 	
 	public boolean place(int x, int z) {
 		if (finishing) {throw new IllegalStateException("Finishing pending structures");}
-		StructureData data = chunks.remove(ChunkPos.asLong(x, z));
+		return this.place(gen.world.getChunkFromChunkCoords(x, z), chunks.remove(Toolkit.intPairToLong(x, z)));
+	}
+	
+	private boolean place(Chunk chunk, IStructureData data) {
 		if (data!=null) {
-			data.str.placeInChunk(gen.world.getChunkFromChunkCoords(x, z), data);
-			return true;
+			StructureData single = data.getSingle();
+			if (single!=null) {
+				single.str.placeInChunk(chunk, single);
+				return true;
+			}
+			StructureData[] multi = data.getMulti();
+			if (multi!=null && multi.length>0) {
+				for (StructureData data0 : multi) {
+					data0.str.placeInChunk(chunk, data0);
+				}
+				return true;
+			}
 		}
 		return false;
 	}
 	
 	public void finishPending() {
 		finishing = true;
-		for (StructureData data : chunks.values()) {
-			if (data==null) {continue;}
-			data.str.placeInChunk(gen.world.getChunkFromChunkCoords(data.pos.getX() >> 4, data.pos.getZ() >> 4), data);
+		for (Entry<Long, IStructureData> entry : chunks.entrySet()) {
+			this.place(gen.world.getChunkFromChunkCoords(Toolkit.longToIntPairA(entry.getKey()), Toolkit.longToIntPairB(entry.getKey())), entry.getValue());
 		}
 		chunks.clear();
 		finishing = false;
@@ -109,22 +116,14 @@ public class StructurePositionMap {
 	}
 
 	public void writeToNBT(NBTTagCompound nbt) {
-		for (Entry<Long, StructureData> entry : chunks.entrySet()) {
-			if (entry.getValue().pendingChunks==null) {entry.getValue().pendingChunks=new NBTTagList();}
-			entry.getValue().pendingChunks.appendTag(new NBTTagLong(entry.getKey()));
+		for (Entry<Long, IStructureData> entry : chunks.entrySet()) {
+			entry.getValue().appendChunk(entry.getKey());
 		}
 		for (Structure str : StructurePack.current.structures.values()) {
 			if (str.instances.isEmpty()) {continue;}
 			NBTTagList list = new NBTTagList();
 			for (StructureData data : str.instances) {
-				NBTTagCompound tag = new NBTTagCompound();
-				tag.setLong("p", data.pos.toLong());
-				tag.setByte("a", (byte) data.getTransformByte()); // TODO untested!
-				if (data.pendingChunks!=null && !data.pendingChunks.hasNoTags()) {
-					tag.setTag("c", data.pendingChunks);
-					data.pendingChunks = null;
-				}
-				list.appendTag(tag);
+				data.saveToNBT(list);
 			}
 			nbt.setTag(str.name, list);
 		}
@@ -145,7 +144,14 @@ public class StructurePositionMap {
 				if (tag.hasKey("c")) {
 					NBTTagList ch = tag.getTagList("c", 4);
 					for (int j = 0; j < ch.tagCount(); j++) {
-						chunks.put(((NBTTagLong)ch.get(j)).getLong(), data);
+						long c = ((NBTTagLong)ch.get(j)).getLong();
+						IStructureData d = chunks.get(c);
+						if (d==null) {
+							chunks.put(c, data);
+						} else {
+							IStructureData d0 = d.add(data);
+							if (d!=d0) {chunks.put(c, d0);}
+						}
 					}
 				}
 			}

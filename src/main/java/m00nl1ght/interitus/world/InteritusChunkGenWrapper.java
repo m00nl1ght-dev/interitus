@@ -55,7 +55,7 @@ public class InteritusChunkGenWrapper extends InteritusChunkGenerator {
 	
 	@Override
 	public String toString() {
-		return "InteritusChunkGenWrapper[dim="+world.provider.getDimension()+", gen="+wrapped.getClass().getSimpleName()+"]";
+		return "wrapped ["+wrapped.getClass().getSimpleName()+"]";
 	}
 
 }

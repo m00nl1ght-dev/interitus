@@ -12,6 +12,7 @@ import m00nl1ght.interitus.structures.StructurePositionMap;
 import m00nl1ght.interitus.structures.WorldGenTask;
 import m00nl1ght.interitus.util.IDebugObject;
 import m00nl1ght.interitus.util.InteritusProfiler;
+import m00nl1ght.interitus.util.Toolkit;
 import m00nl1ght.interitus.util.VarBlockPos;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
@@ -20,7 +21,6 @@ import net.minecraft.entity.EnumCreatureType;
 import net.minecraft.init.Blocks;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.World;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.biome.Biome.SpawnListEntry;
@@ -39,7 +39,7 @@ public abstract class InteritusChunkGenerator implements IChunkGenerator, IDebug
 	protected final StructurePositionMap structures = new StructurePositionMap(this);
 	private boolean createStruct = true;
 	
-	public int gAll, gDone, gRange, gCond; // debug
+	public int gAll, gDone, gRange, gCond, gVstruct; // debug
 	
 	public InteritusChunkGenerator(World world) {
 		this.world = world;
@@ -60,7 +60,7 @@ public abstract class InteritusChunkGenerator implements IChunkGenerator, IDebug
 	
 	protected Chunk preGenerate(int x, int z) { // thats could mess up vanilla structures though
 		Chunk chunk = generateChunk(x, z, true);
-		chunkCache.put(ChunkPos.asLong(x, z), chunk);
+		chunkCache.put(Toolkit.intPairToLong(x, z), chunk);
 		if (chunkCache.size()>Interitus.config.chunkCacheMaxSize) {
 			this.gcCache(Interitus.config.chunkCacheShrink);
 		}
@@ -116,9 +116,9 @@ public abstract class InteritusChunkGenerator implements IChunkGenerator, IDebug
 
 	public Chunk getChunkFromCache(int x, int z, boolean remove) {
 		if (remove) {
-			return chunkCache.remove(ChunkPos.asLong(x, z));
+			return chunkCache.remove(Toolkit.intPairToLong(x, z));
 		} else {
-			return chunkCache.get(ChunkPos.asLong(x, z));
+			return chunkCache.get(Toolkit.intPairToLong(x, z));
 		}
 	}
 
@@ -127,8 +127,6 @@ public abstract class InteritusChunkGenerator implements IChunkGenerator, IDebug
 	}
 	
 	public void gcCache(int shrink) {
-		//int s = chunkCache.size(); //debug
-		//int so = shrink;
 		if (shrink<=0) {return;}
 		while (!chunkCache.isEmpty() && shrink>0) {
 			chunkCache.removeFirst(); shrink--;
@@ -139,7 +137,7 @@ public abstract class InteritusChunkGenerator implements IChunkGenerator, IDebug
 		if (world.getChunkProvider().isChunkGeneratedAt(x, z)) {
 			return world.getChunkFromChunkCoords(x, z);
 		} else {
-			long c = ChunkPos.asLong(x, z);
+			long c = Toolkit.intPairToLong(x, z);
 			if (chunkCache.containsKey(c)) {
 				return chunkCache.get(c);
 			} else {
@@ -187,15 +185,13 @@ public abstract class InteritusChunkGenerator implements IChunkGenerator, IDebug
 	}
 	
 	@Override
-	public String toString() {
-		return "InteritusChunkGenerator[dim="+world.provider.getDimension()+"]";
-	}
+	public abstract String toString();
 	
 	@Override
 	public void debugMsg(ICommandSender sender) {
-		InteritusProfiler.send(sender, "> "+this.toString());
-		InteritusProfiler.send(sender, "struct [all: "+gAll+" ok: "+gDone+" range: "+gRange+" cond: "+gCond+"]");
-		InteritusProfiler.send(sender, "chunks cached: "+chunkCache.size()+" genTasks: "+genTasks.size()+" pending: "+structures.chunkCount());
+		InteritusProfiler.send(sender, "> DIM"+this.world.provider.getDimension()+" > "+this.toString());
+		InteritusProfiler.send(sender, "struct [all: "+gAll+" ok: "+gDone+" range: "+gRange+" cond: "+gCond+" vStr: "+gVstruct+"]");
+		InteritusProfiler.send(sender, "chunks cached: "+chunkCache.size()+" pending: "+structures.chunkCount());
 	}
 
 }

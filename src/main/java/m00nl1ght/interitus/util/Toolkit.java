@@ -76,6 +76,18 @@ public final class Toolkit {
 		byte[] encoded = Files.readAllBytes(Paths.get(path));
 		return new String(encoded, encoding);
 	}
+	
+	public static long intPairToLong(int a, int b) {
+		return (long)a << 32 | b & 0xFFFFFFFFL;
+	}
+	
+	public static int longToIntPairA(long l) {
+		return (int)(l >> 32);
+	}
+	
+	public static int longToIntPairB(long l) {
+		return (int)l;
+	}
 
 	public static void setChunkBlock(Chunk chunk, BlockPos pos, IBlockState newBlock) {
 		IBlockState orgState = chunk.getBlockState(pos);

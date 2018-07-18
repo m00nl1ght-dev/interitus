@@ -28,6 +28,7 @@ import net.minecraft.init.Blocks;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagDouble;
 import net.minecraft.nbt.NBTTagList;
+import net.minecraft.nbt.NBTTagLong;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.tileentity.TileEntityChest;
 import net.minecraft.util.Mirror;
@@ -286,8 +287,18 @@ public class Structure {
     public String getAuthor() {
         return this.author;
     }
-
-    public static class StructureData {
+    
+    public interface IStructureData {
+    	
+    	public default StructureData getSingle() {return null;}
+    	public default StructureData[] getMulti() {return new StructureData[] {getSingle()};}
+    	void appendChunk(long l);
+    	void saveToNBT(NBTTagList nbt);
+    	IStructureData add(StructureData data);
+    	
+    }
+    
+    public static class StructureData implements IStructureData {
     	
     	public final Structure str;
     	public final BlockPos pos;
@@ -315,6 +326,72 @@ public class Structure {
 			int a = mirror==Mirror.FRONT_BACK?10:mirror==Mirror.LEFT_RIGHT?20:0;
 			a += (rotation==Rotation.CLOCKWISE_90?1:rotation==Rotation.CLOCKWISE_180?2:rotation==Rotation.COUNTERCLOCKWISE_90?3:0);
 			return a;
+		}
+		
+		@Override
+		public StructureData getSingle() {return this;}
+
+		@Override
+		public void appendChunk(long l) {
+			if (pendingChunks==null) {pendingChunks=new NBTTagList();}
+			pendingChunks.appendTag(new NBTTagLong(l));
+		}
+
+		@Override
+		public void saveToNBT(NBTTagList nbt) {
+			NBTTagCompound tag = new NBTTagCompound();
+			tag.setLong("p", pos.toLong());
+			tag.setByte("a", (byte) getTransformByte());
+			if (pendingChunks!=null && !pendingChunks.hasNoTags()) {
+				tag.setTag("c", pendingChunks);
+				pendingChunks = null;
+			}
+			nbt.appendTag(tag);			
+		}
+
+		@Override
+		public IStructureData add(StructureData data) {
+			return new MultiStructureData(new StructureData[] {this, data});
+		}
+    	
+    }
+    
+    public static class MultiStructureData implements IStructureData {
+    	
+    	private StructureData[] struct;
+    	
+    	public MultiStructureData(StructureData[] str) {
+    		this.struct = str;
+    	}
+    	
+    	@Override
+		public StructureData[] getMulti() {
+    		return struct;
+    	}
+
+		@Override
+		public void appendChunk(long l) {
+			for (StructureData data : struct) {
+				data.appendChunk(l);
+			}
+		}
+
+		@Override
+		public void saveToNBT(NBTTagList nbt) {
+			for (StructureData data : struct) {
+				data.saveToNBT(nbt);
+			}
+		}
+
+		@Override
+		public IStructureData add(StructureData data) {
+			StructureData[] n = new StructureData[struct.length+1];
+			for (int i = 0; i < struct.length; i++) {
+				n[i] = struct[i];
+			}
+			n[struct.length] = data;
+			struct=n;
+			return this;
 		}
     	
     }
