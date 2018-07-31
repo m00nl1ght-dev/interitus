@@ -502,6 +502,7 @@ public class StructurePack implements IDebugObject {
 	public static void updateAvailbalePacks() {
 		packs.clear();
 		StructurePackInfo.markDirty();
+		basePath.mkdirs();
 		for (File file : basePath.listFiles(MCSP_FILTER)) {
 			String name = file.getName();
 			name = name.substring(0, name.length()-5);
