@@ -159,7 +159,7 @@ public abstract class ConditionTypeClient {
 		
 		@Override
 		public ConditionTypeClient init(int x, int y, FontRenderer renderer) {
-			states = new boolean[materialNames.size()];
+			if (states==null) states = new boolean[materialNames.size()];
 			list = new MaterialList(Minecraft.getMinecraft(), x, y + 40, 308, 180, 15);
 			return super.init(x, y, renderer);
 		}
@@ -186,9 +186,10 @@ public abstract class ConditionTypeClient {
 
 		@Override
 		protected void readFromNBT(NBTTagCompound tag) {
+			if (states==null) states = new boolean[materialNames.size()];
 			int[] ids = tag.getIntArray("b");
 			for (int i = 0; i < ids.length; i++) {
-				states[i] = true;
+				states[ids[i]] = true;
 			}
 		}
 
@@ -237,7 +238,7 @@ public abstract class ConditionTypeClient {
 		
 		@Override
 		public ConditionTypeClient init(int x, int y, FontRenderer renderer) {
-			states = new boolean[blockList.size()];
+			if (states==null) states = new boolean[blockList.size()];
 			list = new BlockList(Minecraft.getMinecraft(), x, y + 40, 308, 180, 15);
 			return super.init(x, y, renderer);
 		}
@@ -264,6 +265,7 @@ public abstract class ConditionTypeClient {
 
 		@Override
 		protected void readFromNBT(NBTTagCompound tag) {
+			if (states==null) states = new boolean[blockList.size()];
 			int[] ids = tag.getIntArray("b");
 			for (int i = 0; i < ids.length; i++) {
 				states[blockList.indexOf(Block.getBlockById(ids[i]))] = true;

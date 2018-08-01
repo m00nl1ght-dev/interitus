@@ -132,6 +132,7 @@ public class CommandHandler implements ICommand {
 					} else {
 						sender.sendMessage(new TextComponentString("Failed to reload structure pack."));
 					}
+					return;
 				case "delete":
 					if (args.length<3) {sender.sendMessage(new TextComponentString("Incorrect number of arguments!")); return;}
 					StructurePack pack0 = StructurePack.getPack(args[2]);

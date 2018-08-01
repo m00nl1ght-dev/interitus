@@ -68,8 +68,12 @@ public class SDefaultPackage implements IMessage {
     public static void sendCondTypeGui(EntityPlayerMP player, ConditionType type, boolean reqMaterials) {
     	try {
 			PacketBuffer packetbuffer = new PacketBuffer(Unpooled.buffer());
-			packetbuffer.writeString(type.getName());
-			packetbuffer.writeCompoundTag(ConditionType.save(type, null));
+			if (type == null) { // -> new cond type
+				packetbuffer.writeString("");
+			} else {
+				packetbuffer.writeString(type.getName());
+				packetbuffer.writeCompoundTag(ConditionType.save(type, null));
+			}
 			if (reqMaterials) {
 				NBTTagCompound matTag = new NBTTagCompound();
 				ConditionType.writeMaterialList(matTag);
@@ -250,15 +254,16 @@ public class SDefaultPackage implements IMessage {
 		private void procCondTypeGui(PacketBuffer data) {
 			try {
 				String type = data.readString(1000);
-				NBTTagCompound tag = data.readCompoundTag();
-				if (tag == null) {throw new IllegalStateException("no cond info");}
-				try {
+				NBTTagCompound tag = null;
+				if (!type.isEmpty()) { // -> new cond type
+					tag = data.readCompoundTag();
+					if (tag == null) {throw new IllegalStateException("no cond info");}
+				}
+				if (data.readerIndex()<data.writerIndex()) {
 					NBTTagCompound tag0 = data.readCompoundTag();
 					if (tag0!=null) {
 						ConditionTypeClient.setMaterialList(tag0);
 					}
-				} catch (Exception e) {
-					Interitus.logger.error("Failed to read material list: ", e);
 				}
 				Interitus.proxy.displayCondTypeScreen(tag, type);
 			} catch (Exception exception1) {

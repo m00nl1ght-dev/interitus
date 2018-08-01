@@ -390,6 +390,7 @@ public class StructurePack implements IDebugObject {
 	
 	public static void updateCondType(String ct, NBTTagCompound tag) {
 		current.cond_types.put(ct, ConditionType.build(ct, tag, null));
+		StructurePackInfo.markDirty();
 	}
 	
 	public void setDescription(String text) {

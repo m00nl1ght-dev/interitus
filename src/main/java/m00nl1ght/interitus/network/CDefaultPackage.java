@@ -68,7 +68,7 @@ public class CDefaultPackage implements IMessage {
         return this.data;
     }
     
-    public static boolean openCondType(String type) {
+    public static boolean openCondType(String type) { // empty string -> new cond type
     	try {
 			PacketBuffer packetbuffer = new PacketBuffer(Unpooled.buffer());
 			packetbuffer.writeString(type);
@@ -491,9 +491,13 @@ public class CDefaultPackage implements IMessage {
 			try {
 				String type = data.readString(1000);
 				boolean reqMaterials = data.readBoolean();
-				ConditionType ct = StructurePack.getConditionType(type);
-				if (ct==null) {throw new IllegalStateException("condition type not found");}
-				SDefaultPackage.sendCondTypeGui(serverPlayer, ct, reqMaterials);
+				if (type.isEmpty()) {
+					SDefaultPackage.sendCondTypeGui(serverPlayer, null, reqMaterials);
+				} else {
+					ConditionType ct = StructurePack.getConditionType(type);
+					if (ct==null) {throw new IllegalStateException("condition type not found");}
+					SDefaultPackage.sendCondTypeGui(serverPlayer, ct, reqMaterials);
+				}
 			} catch (Exception e) {
 				Interitus.logger.error("Couldn't proc cond type open req: ", e);
 			}

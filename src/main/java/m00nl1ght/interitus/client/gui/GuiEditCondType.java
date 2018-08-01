@@ -24,14 +24,13 @@ public class GuiEditCondType extends GuiScreen {
 
 	public GuiEditCondType(GuiScreen parent, String type, NBTTagCompound tag) {
 		this.parent = parent;
-		this.type = ConditionTypeClient.build(type, tag);
-		this.newtype = false;
-	}
-
-	public GuiEditCondType(GuiScreen parent, ConditionTypeClient ct) {
-		this.parent = parent;
-		this.type = ct;
-		this.newtype = true;
+		if (type.isEmpty() || tag==null) { // -> new cond type
+			this.type = new ConditionTypeClient.ConditionMaterialSetClient();
+			this.newtype = true;
+		} else {
+			this.type = ConditionTypeClient.build(type, tag);
+			this.newtype = false;
+		}
 	}
 	
 	@Override
@@ -107,7 +106,7 @@ public class GuiEditCondType extends GuiScreen {
 		this.drawDefaultBackground();
 		boolean mBtn = Mouse.isButtonDown(0);
 
-		this.drawCenteredString(this.fontRenderer, "Edit Condition Type <"+type.getName()+">", this.width / 2, 10, 16777215);
+		this.drawCenteredString(this.fontRenderer, newtype?"Create new Condition Type":("Edit Condition Type <"+type.getName()+">"), this.width / 2, 10, 16777215);
 		this.drawString(this.fontRenderer, warning.isEmpty()?"Name":warning, this.width / 2 - 152, 38, 16777215);
 		this.nameField.drawTextBox();
 		

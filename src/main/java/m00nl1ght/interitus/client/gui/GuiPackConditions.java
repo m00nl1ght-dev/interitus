@@ -46,7 +46,9 @@ public class GuiPackConditions extends GuiScreen {
 			if (button.id == 0) {
 				this.mc.displayGuiScreen(parent);
 			} else if (button.id == 1) {
-				this.mc.displayGuiScreen(new GuiEditCondType(this, new ConditionTypeClient.ConditionMaterialSetClient()));
+				if (CDefaultPackage.openCondType("")) {
+					tbClosed = true;
+				}
 			}
 		}
 	}
