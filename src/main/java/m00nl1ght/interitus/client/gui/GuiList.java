@@ -16,7 +16,7 @@ import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 
 public abstract class GuiList extends Gui {
 	
-	private final Minecraft client;
+	protected final Minecraft client;
     protected final int w;
     protected final int h;
     protected final int y;
@@ -126,7 +126,7 @@ public abstract class GuiList extends Gui {
 		return this.selectedIndex == index;
 	}
 
-	public void drawScreen(int mouseX, int mouseY, boolean mBtn, float partialTicks) {
+	public void drawScreen(int mouseX, int mouseY, boolean mBtn) {
 		this.mouseX = mouseX;
 		this.mouseY = mouseY;
 		this.drawBackground();
@@ -351,6 +351,28 @@ public abstract class GuiList extends Gui {
 			return true;
 		}
 		return false;
+	}
+	
+	public static abstract class GuiCheckboxList extends GuiList {
+
+		public GuiCheckboxList(Minecraft client, int x, int y, int w, int h, int entryHeight) {
+			super(client, x, y, w, h, entryHeight);
+		}
+
+		@Override
+		protected boolean drawSlot(int slotIdx, int right, int y, int slotBuffer, Tessellator tess) {
+			GuiDropdown.drawCheckbox(right - this.w + 10, y, 11, 11, this.getElementState(slotIdx));
+			this.client.fontRenderer.drawStringWithShadow(this.getElement(slotIdx), x+25, y+2, 14737632);
+			return false;
+		}
+		
+		@Override
+		protected abstract void elementClicked(int id, boolean dclick);
+		
+		protected abstract String getElement(int id);
+		
+		protected abstract boolean getElementState(int id);
+		
 	}
 
 }

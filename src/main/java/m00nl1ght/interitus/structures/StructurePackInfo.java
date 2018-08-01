@@ -15,10 +15,14 @@ public class StructurePackInfo {
 	
 	private static NBTTagCompound last;
 	
-	public ArrayList<String> lootlists = new ArrayList<String>();
-	public ArrayList<StructureInfo> structures = new ArrayList<StructureInfo>();
-	public ArrayList<PackInfo> packs = new ArrayList<PackInfo>();
-	public PackInfo active;
+	public static final ArrayList<String> lootlists = new ArrayList<String>();
+	public static final  ArrayList<String> condtypes = new ArrayList<String>();
+	public static final  ArrayList<StructureInfo> structures = new ArrayList<StructureInfo>();
+	public static final  ArrayList<PackInfo> packs = new ArrayList<PackInfo>();
+	
+	public static PackInfo active;
+	
+	private StructurePackInfo() {}
 	
 	public static NBTTagCompound create() {
 		if (last!=null) {return last;} 
@@ -38,6 +42,11 @@ public class StructurePackInfo {
 			lootlist.appendTag(new NBTTagString(list.name));
 		}
 		tag.setTag("l", lootlist);
+		NBTTagList condlist = new NBTTagList();
+		for (ConditionType ct : StructurePack.get().cond_types.values()) {
+			condlist.appendTag(new NBTTagString(ct.getName()));
+		}
+		tag.setTag("c", condlist);
 		NBTTagList structlist = new NBTTagList();
 		for (Structure str : StructurePack.get().structures.values()) {
 			NBTTagCompound t = new NBTTagCompound();
@@ -62,29 +71,35 @@ public class StructurePackInfo {
 		return tag;
 	}
 	
-	public static StructurePackInfo fromNBT(NBTTagCompound tag) {
-		StructurePackInfo info = new StructurePackInfo();
+	public static void fromNBT(NBTTagCompound tag) {
 		NBTBase nbt = tag.getTag("act");
-		if (nbt instanceof NBTTagCompound) {info.active = new PackInfo((NBTTagCompound) nbt);}
+		if (nbt instanceof NBTTagCompound) {active = new PackInfo((NBTTagCompound) nbt);}
+		packs.clear();
 		NBTTagList list = tag.getTagList("p", 10);
 		for (int i=0; i<list.tagCount(); i++) {
-			info.packs.add(new PackInfo(list.getCompoundTagAt(i)));
+			packs.add(new PackInfo(list.getCompoundTagAt(i)));
 		}
+		lootlists.clear();
 		NBTTagList lootlist = tag.getTagList("l", 8);
 		for (int i=0; i<lootlist.tagCount(); i++) {
-			info.lootlists.add(lootlist.getStringTagAt(i));
+			lootlists.add(lootlist.getStringTagAt(i));
 		}
+		condtypes.clear();
+		NBTTagList condlist = tag.getTagList("c", 8);
+		for (int i=0; i<condlist.tagCount(); i++) {
+			condtypes.add(condlist.getStringTagAt(i));
+		}
+		structures.clear();
 		NBTTagList structlist = tag.getTagList("s", 10);
 		for (int i=0; i<structlist.tagCount(); i++) {
-			info.structures.add(new StructureInfo(structlist.getCompoundTagAt(i)));
+			structures.add(new StructureInfo(structlist.getCompoundTagAt(i)));
 		}
-		return info;
 	}
 	
-	public boolean packExists(String name) {
+	public static boolean packExists(String name) {
 		if (name.equals("Default")) {return true;}
-		if (this.active.name.equals(name)) {return true;}
-		for (PackInfo pack : this.packs) {
+		if (active.name.equals(name)) {return true;}
+		for (PackInfo pack : packs) {
 			if (pack.name.equals(name)) {return true;}
 		}
 		return false;

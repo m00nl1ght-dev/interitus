@@ -56,12 +56,12 @@ public abstract class WorldGenTask {
 	public static WorldGenTask build(Structure structure, RegistryMappings mappings, NBTTagCompound tag) {
 		String type = tag.getString("type");
 		Class<?> clazz = regServer.get(type);
-		if (clazz==null) {throw new IllegalStateException("Invalid worldgen task type (c): "+type);}
+		if (clazz==null) {throw new IllegalStateException("Invalid worldgen task type: "+type);}
 		WorldGenTask task;
 		try {
 			task = (WorldGenTask) clazz.newInstance();
 		} catch (Exception e) {
-			throw new IllegalStateException("Failed to build worldgen task of type (c) <"+type+">: ", e);
+			throw new IllegalStateException("Failed to build worldgen task of type <"+type+">: ", e);
 		}
 		task.readFromNBT(structure, tag);
 		int[] bIDs = tag.getIntArray("biomes");
@@ -76,12 +76,12 @@ public abstract class WorldGenTask {
 	public static WorldGenTask buildFromClient(Structure structure, NBTTagCompound tag) {
 		String type = tag.getString("t");
 		Class<?> clazz = regServer.get(type);
-		if (clazz==null) {throw new IllegalStateException("Invalid worldgen task type (c): "+type);}
+		if (clazz==null) {throw new IllegalStateException("Invalid worldgen task type: "+type);}
 		WorldGenTask task;
 		try {
 			task = (WorldGenTask) clazz.newInstance();
 		} catch (Exception e) {
-			throw new IllegalStateException("Failed to build worldgen task of type (c) <"+type+">: ", e);
+			throw new IllegalStateException("Failed to build worldgen task of type <"+type+">: ", e);
 		}
 		task.readFromNBT(structure, tag);
 		int[] bIDs = tag.getIntArray("b");
@@ -98,11 +98,11 @@ public abstract class WorldGenTask {
 		try {
 			task = (WorldGenTask) clazz.newInstance();
 		} catch (Exception e) {
-			throw new IllegalStateException("Failed to register worldgen task type (c): "+clazz+" ", e);
+			throw new IllegalStateException("Failed to register worldgen task type: "+clazz+" ", e);
 		}
 		String type = task.getType();
-		if (type.isEmpty()) {throw new IllegalStateException("Failed to register worldgen task type (c): "+task+" (name is empty)");}
-		if (regServer.containsKey(type)) {throw new IllegalStateException("Failed to register worldgen task type (c) <"+type+"> (type already registered)");}
+		if (type.isEmpty()) {throw new IllegalStateException("Failed to register worldgen task type: "+task+" (name is empty)");}
+		if (regServer.containsKey(type)) {throw new IllegalStateException("Failed to register worldgen task type <"+type+"> (type already registered)");}
 		regServer.put(type, clazz);
 	}
 	

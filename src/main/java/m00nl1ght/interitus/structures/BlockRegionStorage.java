@@ -11,8 +11,6 @@ import javax.annotation.Nullable;
 import m00nl1ght.interitus.Interitus;
 import m00nl1ght.interitus.block.tileentity.TileEntityAdvStructure.LootGenPrimer;
 import m00nl1ght.interitus.util.VarBlockPos;
-import m00nl1ght.interitus.world.InteritusChunkGenerator;
-import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.init.Blocks;
 import net.minecraft.nbt.NBTTagCompound;
@@ -222,7 +220,7 @@ public class BlockRegionStorage {
         
         NBTTagList nbtConditions = nbt.getTagList("conditions", 10);
         for (int k = 0; k < nbtConditions.tagCount(); ++k) {
-            addCondition(Condition.readFromNBT(nbtConditions.getCompoundTagAt(k)));
+            addCondition(Condition.readFromNBT(pack, nbtConditions.getCompoundTagAt(k)));
         }
     }
 	
@@ -289,68 +287,6 @@ public class BlockRegionStorage {
 	
 	public void clearConditions() {
 		this.conditions.clear();
-	}
-	
-    public enum ConditionType {
-    	inGround, inWater, inStone, inAir, overSurface;
-    }
-	
-	public static class Condition {
-		
-		public final VarBlockPos pos;
-		public final ConditionType type;
-		
-		public Condition(ConditionType type, BlockPos pos) {
-			this.type=type; this.pos=new VarBlockPos(pos);
-		}
-		
-		public static boolean isValidType(String type) {
-			try {ConditionType.valueOf(type);} catch (Exception e) {return false;}
-			return true;
-		}
-		
-		public boolean fullfilled(InteritusChunkGenerator gen, BlockPos origin) {
-			this.pos.reset(origin);
-			switch (type) {
-			case inGround: return gen.isGround(pos);
-			case inWater: return gen.getBlockState(pos).getMaterial()==Material.WATER;
-			case inStone: return gen.getBlockState(pos).getBlock()==Blocks.STONE;
-			case inAir: return gen.getBlockState(pos).getMaterial()==Material.AIR;
-			case overSurface: return pos.getY()>gen.getHeight(pos);
-			default: return false;
-			}
-		}
-		
-		public Condition toAbsolute(BlockPos structurePos) {
-			this.pos.reset();
-			return new Condition(this.type, this.pos.varSubtract(structurePos));
-		}
-
-		public Condition toRelative(BlockPos structurePos) {
-			this.pos.reset();
-			return new Condition(this.type, this.pos.varAdd(structurePos));
-		}
-
-		public NBTTagCompound writeToNbt(NBTTagCompound tag) {
-			this.pos.reset();
-			tag.setInteger("x", pos.getX());
-			tag.setInteger("y", pos.getY());
-			tag.setInteger("z", pos.getZ());
-			tag.setString("id", type.name());
-			return tag;
-		}
-		
-		public static Condition readFromNBT(NBTTagCompound tag) {
-			ConditionType type = ConditionType.valueOf(tag.getString("id"));
-			if (type==null) {throw new IllegalStateException("Failed toload condition from nbt, invalid condition type: "+tag.getString("id"));}
-			return new Condition(type, new BlockPos(tag.getInteger("x"), tag.getInteger("y"), tag.getInteger("z")));
-		}
-		
-		@Override
-		public String toString() {
-			return pos.toString()+" "+type.name();
-		}
-		
 	}
 	
 	// Loot Gen

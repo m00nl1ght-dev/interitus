@@ -12,16 +12,15 @@ import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.renderer.Tessellator;
 
-public class GuiPackStructures extends GuiScreen{
+public class GuiPackStructures extends GuiScreen {
 	
 	private GuiButton closeButton;
 	private StructureList list;
 	private final GuiScreen parent;
-	protected final StructurePackInfo packInfo;
 	private boolean tbClosed;
 	
-	public GuiPackStructures(GuiScreen parent, StructurePackInfo packInfo) {
-        this.parent = parent; this.packInfo = packInfo;
+	public GuiPackStructures(GuiScreen parent) {
+        this.parent = parent;
     }
 	
 	@Override
@@ -63,9 +62,9 @@ public class GuiPackStructures extends GuiScreen{
 			return;
 		}
 		
-		this.drawCenteredString(this.fontRenderer, "Structure List of <"+packInfo.active.name+">", this.width / 2, 10, 16777215);
+		this.drawCenteredString(this.fontRenderer, "Structure List of <"+StructurePackInfo.active.name+">", this.width / 2, 10, 16777215);
 		
-		this.list.drawScreen(mouseX, mouseY, Mouse.isButtonDown(0), partialTicks);
+		this.list.drawScreen(mouseX, mouseY, Mouse.isButtonDown(0));
 		
 		super.drawScreen(mouseX, mouseY, partialTicks);
 	}
@@ -87,7 +86,7 @@ public class GuiPackStructures extends GuiScreen{
 
 		@Override
 		protected int getElementCount() {
-			return packInfo.structures.size();
+			return StructurePackInfo.structures.size();
 		}
 		
 		@Override
@@ -101,7 +100,7 @@ public class GuiPackStructures extends GuiScreen{
 		@Override
 		protected boolean drawSlot(int slotIdx, int entryRight, int slotTop, int slotBuffer, Tessellator tess) {
 			int x = entryRight-this.w;
-			StructureInfo str = packInfo.structures.get(slotIdx);
+			StructureInfo str = StructurePackInfo.structures.get(slotIdx);
 			getFontRenderer().drawString(str.name, x+15, slotTop+5, 16777215);
 			this.drawString(fontRenderer, str.size[0]+"x"+str.size[1]+"x"+str.size[2], x+150, slotTop+5, 16777215);
 			this.drawString(fontRenderer, str.genTasks+" tasks", x+270, slotTop+5, 16777215);
@@ -110,9 +109,9 @@ public class GuiPackStructures extends GuiScreen{
 					tbClosed = true;
 				}
 			}
-			if (this.drawButton(mc, x+343, slotTop-1, 17, 17, !packInfo.active.read_only, this.isHovering, "X")) {
+			if (this.drawButton(mc, x+343, slotTop-1, 17, 17, !StructurePackInfo.active.read_only, this.isHovering, "X")) {
 				if (!CDefaultPackage.packGuiAction(5, str.name, "")) {return false;}
-				return packInfo.structures.remove(slotIdx)!=null;
+				return StructurePackInfo.structures.remove(slotIdx)!=null;
 			}
 			return false;
 		}

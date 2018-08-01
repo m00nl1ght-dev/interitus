@@ -16,7 +16,6 @@ import m00nl1ght.interitus.block.tileentity.TileEntityAdvStructure;
 import m00nl1ght.interitus.block.tileentity.TileEntityAdvStructure.LootEntryPrimer;
 import m00nl1ght.interitus.block.tileentity.TileEntityAdvStructure.LootGenPrimer;
 import m00nl1ght.interitus.network.CDefaultPackage;
-import m00nl1ght.interitus.structures.StructurePackInfo;
 
 public class GuiEditLootEntry extends GuiScreen {
 	
@@ -26,10 +25,9 @@ public class GuiEditLootEntry extends GuiScreen {
 	private LootGenList list;
 	private final GuiStructureData parent;
 	private final LootEntryPrimer primer;
-	private final StructurePackInfo packInfo;
 	
-	public GuiEditLootEntry(TileEntityAdvStructure te, GuiStructureData parent, LootEntryPrimer primer, StructurePackInfo packInfo) {
-        this.tileStructure = te; this.parent = parent; this.primer = primer; this.packInfo = packInfo;
+	public GuiEditLootEntry(TileEntityAdvStructure te, GuiStructureData parent, LootEntryPrimer primer) {
+        this.tileStructure = te; this.parent = parent; this.primer = primer;
         this.decimalFormat.setDecimalFormatSymbols(new DecimalFormatSymbols(Locale.US));
     }
 	
@@ -76,7 +74,7 @@ public class GuiEditLootEntry extends GuiScreen {
 		
 		this.drawCenteredString(this.fontRenderer, parent==null?"Create Loot Entry":"Edit Loot Entry", this.width / 2, 10, 16777215);
 		
-		this.list.drawScreen(mouseX, mouseY, Mouse.isButtonDown(0), partialTicks);
+		this.list.drawScreen(mouseX, mouseY, Mouse.isButtonDown(0));
 		
 		super.drawScreen(mouseX, mouseY, partialTicks);
 	}
@@ -109,7 +107,7 @@ public class GuiEditLootEntry extends GuiScreen {
 			if (this.drawButton(mc, x+343, relativeY-1, 17, 17, primer.gens().size()<16, true, "+")) {
 				LootGenPrimer p = new LootGenPrimer(1, "undefined");
 				primer.gens().add(p);
-				mc.displayGuiScreen(new GuiEditLootGen(tileStructure, GuiEditLootEntry.this, p, packInfo));
+				mc.displayGuiScreen(new GuiEditLootGen(tileStructure, GuiEditLootEntry.this, p));
 			}
 		}
 
@@ -120,7 +118,7 @@ public class GuiEditLootEntry extends GuiScreen {
 			getFontRenderer().drawString(gen.list(), x+15, slotTop+5, 16777215);
 			this.drawCenteredString(fontRenderer, ""+gen.amount(), x+210, slotTop+5, 16777215);
 			if (this.drawButton(mc, x+120, slotTop-1, 17, 17, true, this.isHovering, "...")) {
-				mc.displayGuiScreen(new GuiEditLootGen(tileStructure, GuiEditLootEntry.this, gen, packInfo));
+				mc.displayGuiScreen(new GuiEditLootGen(tileStructure, GuiEditLootEntry.this, gen));
 			}
 			if (this.drawButton(mc, x+180, slotTop-1, 17, 17, gen.amount()>0, this.isHovering, "-")) {
 				gen.setAmount(gen.amount()-1);

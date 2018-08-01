@@ -3,7 +3,6 @@ package m00nl1ght.interitus;
 import m00nl1ght.interitus.block.tileentity.TileEntityAdvStructure;
 import m00nl1ght.interitus.block.tileentity.TileEntityAdvStructure.LootEntryPrimer;
 import m00nl1ght.interitus.block.tileentity.TileEntitySummoner;
-import m00nl1ght.interitus.structures.StructurePackInfo;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.text.translation.I18n;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
@@ -53,7 +52,7 @@ public class ServerProxy implements IProxy {
 	}
 
 	@Override
-	public void displayAdvStructScreen(TileEntityAdvStructure te, StructurePackInfo packInfo) {
+	public void displayAdvStructScreen(TileEntityAdvStructure te) {
 		throw new UnsupportedOperationException("no ui on server side");
 	}
 
@@ -63,22 +62,27 @@ public class ServerProxy implements IProxy {
 	}
 
 	@Override
-	public void displayStructureDataScreen(TileEntityAdvStructure te, StructurePackInfo packInfo) {
+	public void displayStructureDataScreen(TileEntityAdvStructure te) {
 		throw new UnsupportedOperationException("no ui on server side");
 	}
 
 	@Override
-	public void displayStructureLootScreen(TileEntityAdvStructure te, LootEntryPrimer entry, StructurePackInfo packInfo) {
+	public void displayStructureLootScreen(TileEntityAdvStructure te, LootEntryPrimer entry) {
 		throw new UnsupportedOperationException("no ui on server side");
 	}
 
 	@Override
-	public void displayAdvStructScreen(StructurePackInfo packInfo) {
+	public void displayAdvStructScreen() {
 		throw new UnsupportedOperationException("no ui on server side");
 	}
 
 	@Override
 	public void displayGenTasksScreen(NBTTagCompound nbt, String struct) {
+		throw new UnsupportedOperationException("no ui on server side");
+	}
+
+	@Override
+	public void displayCondTypeScreen(NBTTagCompound tag, String type) {
 		throw new UnsupportedOperationException("no ui on server side");
 	}
 

@@ -24,10 +24,9 @@ public class GuiEditLootGen extends GuiScreen {
 	private LootListList list;
 	private final GuiEditLootEntry parent;
 	private final LootGenPrimer primer;
-	private final StructurePackInfo packInfo;
 	
-	public GuiEditLootGen(TileEntityAdvStructure te, GuiEditLootEntry parent, LootGenPrimer primer, StructurePackInfo packInfo) {
-        this.tileStructure = te; this.parent = parent; this.primer = primer; this.packInfo = packInfo;
+	public GuiEditLootGen(TileEntityAdvStructure te, GuiEditLootEntry parent, LootGenPrimer primer) {
+        this.tileStructure = te; this.parent = parent; this.primer = primer;
         this.decimalFormat.setDecimalFormatSymbols(new DecimalFormatSymbols(Locale.US));
     }
 	
@@ -38,12 +37,12 @@ public class GuiEditLootGen extends GuiScreen {
         this.buttonList.clear();
         this.closeButton = this.addButton(new GuiButton(0, this.width / 2 - 75, 305, 150, 20, "Select"));
         this.list = new LootListList(this.width / 2 - 90, 50, 180, 250, 20);
-        for (int i=0; i<packInfo.lootlists.size(); i++) {
-        	if (primer.list().equals(packInfo.lootlists.get(i))) {
+        for (int i=0; i<StructurePackInfo.lootlists.size(); i++) {
+        	if (primer.list().equals(StructurePackInfo.lootlists.get(i))) {
         		this.list.selectedIndex=i; break;
         	}
         }
-        if (this.list.selectedIndex<0 && !packInfo.lootlists.isEmpty()) {this.list.selectedIndex=0;}
+        if (this.list.selectedIndex<0 && !StructurePackInfo.lootlists.isEmpty()) {this.list.selectedIndex=0;}
 	}
     
     @Override
@@ -57,7 +56,7 @@ public class GuiEditLootGen extends GuiScreen {
 		if (button.enabled) {
 			if (button.id == 0) {
 				if (this.list.isSelectionValid()) {
-					this.primer.setList(packInfo.lootlists.get(this.list.selectedIndex));
+					this.primer.setList(StructurePackInfo.lootlists.get(this.list.selectedIndex));
 				}
 				this.mc.displayGuiScreen(parent);
 			}
@@ -77,7 +76,7 @@ public class GuiEditLootGen extends GuiScreen {
 		
 		this.drawCenteredString(this.fontRenderer, "Choose Loot List", this.width / 2, 10, 16777215);
 		
-		this.list.drawScreen(mouseX, mouseY, Mouse.isButtonDown(0), partialTicks);
+		this.list.drawScreen(mouseX, mouseY, Mouse.isButtonDown(0));
 		
 		super.drawScreen(mouseX, mouseY, partialTicks);
 	}
@@ -99,13 +98,13 @@ public class GuiEditLootGen extends GuiScreen {
 
 		@Override
 		protected int getElementCount() {
-			return packInfo.lootlists.size();
+			return StructurePackInfo.lootlists.size();
 		}
 
 		@Override
 		protected boolean drawSlot(int slotIdx, int entryRight, int slotTop, int slotBuffer, Tessellator tess) {
 			int x = entryRight-this.w;
-			String name = packInfo.lootlists.get(slotIdx);
+			String name = StructurePackInfo.lootlists.get(slotIdx);
 			getFontRenderer().drawString(name, x+15, slotTop+5, 16777215);
 			return false;
 		}

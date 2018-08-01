@@ -17,11 +17,10 @@ public class GuiCreatePack extends GuiScreen {
 	private GuiTextField nameField;
 	private PackInfo from;
 	private GuiScreen parent;
-	private StructurePackInfo packInfo;
 	private String info = "";
 	
-	public GuiCreatePack(StructurePackInfo packInfo, PackInfo from, GuiScreen parent) {
-		this.from=from; this.parent=parent; this.packInfo = packInfo;
+	public GuiCreatePack(PackInfo from, GuiScreen parent) {
+		this.from=from; this.parent=parent;
 	}
 	
 	@Override
@@ -56,12 +55,12 @@ public class GuiCreatePack extends GuiScreen {
 					info="Invalid name: Name is empty.";
 					return;
 				}
-				if (packInfo.packExists(name)) {
+				if (StructurePackInfo.packExists(name)) {
 					info="Invalid name: The structure pack <"+name+"> already exists.";
 					return;
 				}
 				if (CDefaultPackage.packGuiAction(3, name, from==null?"":from.name)) {
-					packInfo.packs.add(new PackInfo(name, from));
+					StructurePackInfo.packs.add(new PackInfo(name, from));
 					this.mc.displayGuiScreen(parent);
 					info="";
 					return;

@@ -6,6 +6,7 @@ import java.text.DecimalFormatSymbols;
 import java.util.List;
 import java.util.Locale;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;
@@ -36,12 +37,10 @@ public class GuiEditAdvStructure extends GuiScreen {
     private GuiEditableDropdown nameEdit;
     private final List<GuiTextField> tabOrder = Lists.<GuiTextField>newArrayList();
     private final DecimalFormat decimalFormat = new DecimalFormat("0.0###");
-    public final StructurePackInfo packInfo;
 	private boolean tbClosed;
 
-    public GuiEditAdvStructure(TileEntityAdvStructure te, StructurePackInfo packInfo) {
+    public GuiEditAdvStructure(TileEntityAdvStructure te) {
         this.tileStructure = te;
-        this.packInfo = packInfo;
         this.decimalFormat.setDecimalFormatSymbols(new DecimalFormatSymbols(Locale.US));
     }
     
@@ -66,7 +65,7 @@ public class GuiEditAdvStructure extends GuiScreen {
         this.buttonList.clear();
         this.doneButton = this.addButton(new GuiButton(0, this.width / 2 - 4 - 150, 210, 150, 20, I18n.format("gui.done")));
         this.saveButton = this.addButton(new GuiButton(9, this.width / 2 + 4 + 100, 185, 50, 20, I18n.format("structure_block.button.save")));
-        this.saveButton.enabled = !packInfo.active.read_only;
+        this.saveButton.enabled = !StructurePackInfo.active.read_only;
         this.loadButton = this.addButton(new GuiButton(10, this.width / 2 + 4 + 100, 185, 50, 20, I18n.format("structure_block.button.load")));
         this.modeButton = this.addButton(new GuiButton(18, this.width / 2 + 4, 210, 150, 20, "MODE"));
         this.detectSizeButton = this.addButton(new GuiButton(19, this.width / 2 + 4 + 100, 80, 50, 20, I18n.format("structure_block.button.detect_size")));
@@ -85,7 +84,7 @@ public class GuiEditAdvStructure extends GuiScreen {
         this.rotate270DegressButton = this.addButton(new GuiButton(14, this.width / 2 + 1 + 40 + 1 + 20, 185, 40, 20, "270"));
         this.packEdit = new GuiTextField(20, this.fontRenderer, this.width / 2 - 152, 40, 150, 20);
         this.packEdit.setMaxStringLength(32);
-        this.packEdit.setText(this.packInfo.active.name);
+        this.packEdit.setText(StructurePackInfo.active.name);
         this.tabOrder.add(this.packEdit);
         this.nameEdit = new NameDropdown(this.fontRenderer, 150, 20, 100);
         this.nameEdit.setMaxStringLength(32);
@@ -190,7 +189,7 @@ public class GuiEditAdvStructure extends GuiScreen {
 				CDefaultPackage.requestAction(this.tileStructure, 2, 0, 0);
 			} else if (button.id == 27) {
 				this.sendToServer(-1); // untested
-				this.mc.displayGuiScreen(new GuiStructureData(this.tileStructure, this, packInfo));
+				this.mc.displayGuiScreen(new GuiStructureData(this.tileStructure, this));
 			} else if (button.id == 28) { // choose pack
 				this.sendToServer(5);
 				this.tbClosed = true;
@@ -380,9 +379,9 @@ public class GuiEditAdvStructure extends GuiScreen {
 	@Override
 	protected void keyTyped(char typedChar, int keyCode) throws IOException {
 		if (this.tbClosed) {
-//			if (keyCode == 1) {
-//				Minecraft.getMinecraft().displayGuiScreen(null);//TODO not shure about this
-//			}
+			if (keyCode == 1) {
+				Minecraft.getMinecraft().displayGuiScreen(null);
+			}
 			return;
 		}
 		if (this.tileStructure.getMode()!=Mode.DATA && isValidCharacterForName(typedChar, keyCode)) {
@@ -522,7 +521,7 @@ public class GuiEditAdvStructure extends GuiScreen {
 			this.sizeZEdit.drawTextBox();
 			this.drawString(this.fontRenderer, this.tileStructure.getConditions().size()+" conditions", this.width / 2 - 22, 131, 10526880);
 			this.drawString(this.fontRenderer, this.tileStructure.getLoot().size()+" loot entries", this.width / 2 - 22, 141, 10526880);
-			if (packInfo.active.read_only) {
+			if (StructurePackInfo.active.read_only) {
 				this.drawString(this.fontRenderer, "Unable to save structures, the active pack is read-only.", this.width / 2 - 4 - 146, 155, 16777120);
 			}
 		}
@@ -550,12 +549,12 @@ public class GuiEditAdvStructure extends GuiScreen {
 
 		@Override
 		protected int getElementCount() {
-			return packInfo.structures.size();
+			return StructurePackInfo.structures.size();
 		}
 
 		@Override
 		protected String getElement(int id) {
-			return packInfo.structures.get(id).name;
+			return StructurePackInfo.structures.get(id).name;
 		}
 		
 	}

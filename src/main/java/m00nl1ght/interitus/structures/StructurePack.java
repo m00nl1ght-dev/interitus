@@ -50,6 +50,7 @@ public class StructurePack implements IDebugObject {
 	
 	final Map<String, Structure> structures = Maps.<String, Structure>newHashMap();
 	final Map<String, LootList> loot = new HashMap<String, LootList>();
+	final Map<String, ConditionType> cond_types = new HashMap<String, ConditionType>();
 	public final RegistryMappings mappings = new RegistryMappings();
 	public final String name;
 	boolean read_only;
@@ -130,6 +131,7 @@ public class StructurePack implements IDebugObject {
 		NBTTagCompound nbtInfo = null, nbtMappings = null; 
 		HashMap<String, NBTTagCompound> struct = new HashMap<String, NBTTagCompound>();
 		HashMap<String, NBTTagCompound> loot = new HashMap<String, NBTTagCompound>();
+		HashMap<String, NBTTagCompound> cond = new HashMap<String, NBTTagCompound>();
 		
 		ZipEntry zipEntry = zip.getNextEntry();
         while (zipEntry != null) {
@@ -142,6 +144,8 @@ public class StructurePack implements IDebugObject {
             	struct.put(entry.substring(11), CompressedStreamTools.read(data));
             } else if (entry.startsWith("loot/")) {
             	loot.put(entry.substring(5), CompressedStreamTools.read(data));
+            } else if (entry.startsWith("condition/")) {
+            	cond.put(entry.substring(10), CompressedStreamTools.read(data));
             } else {
             	Interitus.logger.warn("Found unknown file in structure pack: "+entry);
             }
@@ -167,6 +171,12 @@ public class StructurePack implements IDebugObject {
 			for (Map<Biome, ArrayList<WorldGenTask>> map : genList.values()) {
 				map.clear();
 			}
+		}
+		
+		this.cond_types.clear();
+		for (Entry<String, NBTTagCompound> entry : cond.entrySet()) {
+			ConditionType type = ConditionType.build(entry.getKey(), entry.getValue(), this);
+			this.cond_types.put(type.getName(), type);
 		}
 		
 		this.loot.clear();
@@ -211,6 +221,10 @@ public class StructurePack implements IDebugObject {
 			NBTTagCompound tag = loot.saveToNBT(new NBTTagCompound());
 			this.nbtToZip(tag, zip, data, "loot/"+loot.name);
 		}
+		for (ConditionType type : this.cond_types.values()) {
+			NBTTagCompound tag = ConditionType.save(type, this);
+			this.nbtToZip(tag, zip, data, "condition/"+type.getName());
+		}
 		NBTTagCompound mappingsTag = this.mappings.save();
 		this.nbtToZip(mappingsTag, zip, data, "mappings");
 		
@@ -251,6 +265,7 @@ public class StructurePack implements IDebugObject {
 		this.loaded = false;
 		this.loot.clear();
 		this.structures.clear();
+		this.cond_types.clear();
 		for (Map<Biome, ArrayList<WorldGenTask>> map : genTasks.values()) {
 			map.clear();
 		}
@@ -318,6 +333,17 @@ public class StructurePack implements IDebugObject {
 		return true;
 	}
 	
+	public static ConditionType getConditionType(String name) {
+		return current.cond_types.get(name);
+	}
+	
+	public boolean deleteConditionType(String name) {
+		if (this.read_only) {return false;}
+		if (this.cond_types.remove(name)==null) {return false;};
+		StructurePackInfo.markDirty();
+		return true;
+	}
+	
 	public static NBTTagCompound getGenTaskClientTag(Structure struct) {
 		NBTTagCompound tag = new NBTTagCompound();
 		NBTTagList list = new NBTTagList();
@@ -360,6 +386,10 @@ public class StructurePack implements IDebugObject {
 			}
 		}
 		StructurePackInfo.markDirty();
+	}
+	
+	public static void updateCondType(String ct, NBTTagCompound tag) {
+		current.cond_types.put(ct, ConditionType.build(ct, tag, null));
 	}
 	
 	public void setDescription(String text) {
@@ -442,6 +472,7 @@ public class StructurePack implements IDebugObject {
 			pack.author = player.getName();
 			pack.description = "";
 			pack.loaded = true;
+			pack.cond_types.put(ConditionType.IN_AIR.getName(), ConditionType.IN_AIR);
 			try {
 				if (!pack.save()) {
 					throw new IllegalStateException("failed to save new pack!");

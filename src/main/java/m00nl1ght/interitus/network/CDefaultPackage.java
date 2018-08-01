@@ -5,6 +5,8 @@ import io.netty.buffer.Unpooled;
 import m00nl1ght.interitus.Interitus;
 import m00nl1ght.interitus.block.tileentity.TileEntityAdvStructure;
 import m00nl1ght.interitus.block.tileentity.TileEntitySummoner;
+import m00nl1ght.interitus.client.ConditionTypeClient;
+import m00nl1ght.interitus.structures.ConditionType;
 import m00nl1ght.interitus.structures.Structure;
 import m00nl1ght.interitus.structures.StructurePack;
 import net.minecraft.block.state.IBlockState;
@@ -64,6 +66,32 @@ public class CDefaultPackage implements IMessage {
 
     public PacketBuffer getBufferData() {
         return this.data;
+    }
+    
+    public static boolean openCondType(String type) {
+    	try {
+			PacketBuffer packetbuffer = new PacketBuffer(Unpooled.buffer());
+			packetbuffer.writeString(type);
+			packetbuffer.writeBoolean(!ConditionTypeClient.isMaterialListPopulated());
+			ModNetwork.INSTANCE.sendToServer(new CDefaultPackage("OpenCondType", packetbuffer));
+			return true;
+		} catch (Exception exception) {
+			Interitus.logger.warn("Failed to send cond type open request: ", exception);
+			return false;
+		}
+    }
+    
+    public static boolean updateCondType(NBTTagCompound tag, String ct) {
+    	try {
+			PacketBuffer packetbuffer = new PacketBuffer(Unpooled.buffer());
+			packetbuffer.writeString(ct);
+			packetbuffer.writeCompoundTag(tag);
+			ModNetwork.INSTANCE.sendToServer(new CDefaultPackage("CondType", packetbuffer));
+			return true;
+		} catch (Exception exception) {
+			Interitus.logger.warn("Failed to send cond type packet: ", exception);
+			return false;
+		}
     }
     
     public static boolean openGenTasks(String struct) {
@@ -176,6 +204,18 @@ public class CDefaultPackage implements IMessage {
 					serverPlayer.getServerWorld().addScheduledTask(() -> {
 						if (!serverPlayer.canUseCommandBlock()) { return; }
 						this.procOpenTasks(serverPlayer, p.getBufferData());
+					});
+					break;
+				case "OpenCondType":
+					serverPlayer.getServerWorld().addScheduledTask(() -> {
+						if (!serverPlayer.canUseCommandBlock()) { return; }
+						this.procOpenCondType(serverPlayer, p.getBufferData());
+					});
+					break;
+				case "CondType":
+					serverPlayer.getServerWorld().addScheduledTask(() -> {
+						if (!serverPlayer.canUseCommandBlock()) { return; }
+						this.procCondType(serverPlayer, p.getBufferData());
 					});
 					break;
 				default:
@@ -390,6 +430,17 @@ public class CDefaultPackage implements IMessage {
 							player.sendMessage(new TextComponentString("Failed to remove loot list <"+param0+">."));
 						}
 						return;
+					case 9: // delete condition type
+						if (StructurePack.get().isReadOnly()) {
+							player.sendMessage(new TextComponentString("Failed to delete condition type: Pack is read-only!"));
+							return;
+						}
+						if (StructurePack.get().deleteConditionType(param0)) {
+							player.sendMessage(new TextComponentString("Removed condition type <"+param0+"> from active pack."));
+						} else {
+							player.sendMessage(new TextComponentString("Failed to remove condition type <"+param0+">."));
+						}
+						return;
 					default:
 						throw new IllegalStateException("invalid action id");
 				}
@@ -421,6 +472,30 @@ public class CDefaultPackage implements IMessage {
 				SDefaultPackage.sendGenTaskGui(serverPlayer, str);
 			} catch (Exception e) {
 				Interitus.logger.error("Couldn't proc gen task open req: ", e);
+			}
+		}
+		
+		private void procCondType(EntityPlayerMP serverPlayer, PacketBuffer data) {
+			try {
+				if (!StructurePack.canEdit(serverPlayer)) {throw new IllegalStateException("another player is editing the pack");}
+				String ct = data.readString(1000);
+				NBTTagCompound tag = data.readCompoundTag();
+				if (tag == null) {throw new IllegalStateException("no nbt tag");}
+				StructurePack.updateCondType(ct, tag);
+			} catch (Exception e) {
+				Interitus.logger.error("Couldn't proc cond type update: ", e);
+			}
+		}
+		
+		private void procOpenCondType(EntityPlayerMP serverPlayer, PacketBuffer data) {
+			try {
+				String type = data.readString(1000);
+				boolean reqMaterials = data.readBoolean();
+				ConditionType ct = StructurePack.getConditionType(type);
+				if (ct==null) {throw new IllegalStateException("condition type not found");}
+				SDefaultPackage.sendCondTypeGui(serverPlayer, ct, reqMaterials);
+			} catch (Exception e) {
+				Interitus.logger.error("Couldn't proc cond type open req: ", e);
 			}
 		}
 		

@@ -2,6 +2,7 @@ package m00nl1ght.interitus.world;
 
 import java.util.List;
 
+import m00nl1ght.interitus.Interitus;
 import net.minecraft.entity.EnumCreatureType;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
@@ -12,6 +13,7 @@ import net.minecraft.world.gen.IChunkGenerator;
 public class InteritusChunkGenWrapper extends InteritusChunkGenerator {
 	
 	private final IChunkGenerator wrapped;
+	private boolean populating;
 	
 	public InteritusChunkGenWrapper(World world, IChunkGenerator wrapped) {
 		super(world); this.wrapped = wrapped;
@@ -24,7 +26,18 @@ public class InteritusChunkGenWrapper extends InteritusChunkGenerator {
 
 	@Override
 	public void populate(int x, int z) {
+		if (populating) {
+			Interitus.logger.warn("The wrapped chunk generator " + wrapped.getClass().getSimpleName() + " for dimension " + world.provider.getDimension() + " caused cascading world gen lag at x " + x + " z " + z);
+			if (Interitus.config.debugCascadingLag) {
+				Interitus.logger.debug("Stacktrace for cascading gen lag: ");
+				for (StackTraceElement ste : Thread.currentThread().getStackTrace()) {
+					Interitus.logger.debug(ste);
+				}
+			}
+		}
+		populating=true;
 		wrapped.populate(x, z);
+		populating=false;
 		this.structures.place(x, z);
 	}
 

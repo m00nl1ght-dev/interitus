@@ -7,6 +7,7 @@ import org.apache.logging.log4j.Logger;
 import m00nl1ght.interitus.block.ModBlock;
 import m00nl1ght.interitus.item.ModItem;
 import m00nl1ght.interitus.network.ModNetwork;
+import m00nl1ght.interitus.structures.ConditionType;
 import m00nl1ght.interitus.structures.StructurePack;
 import m00nl1ght.interitus.util.InteritusProfiler;
 import m00nl1ght.interitus.util.ModConfig;
@@ -56,6 +57,7 @@ public class Interitus {
     	ModBlock.initTileEntities();
     	ModItem.applyItemSettings();
     	ModNetwork.init();
+    	ConditionType.init();
         proxy.init(e);
     }
 

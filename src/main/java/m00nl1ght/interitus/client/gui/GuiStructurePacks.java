@@ -17,13 +17,8 @@ public class GuiStructurePacks extends GuiScreen {
 	
 	private GuiButton closeButton, addButton;
 	private PackList list;
-	private final StructurePackInfo packInfo;
 	private boolean saved = false;
 	private PackInfo toBeDeleted;
-
-	public GuiStructurePacks(StructurePackInfo packInfo) {
-		this.packInfo = packInfo;
-	}
 
 	@Override
 	public void initGui() {
@@ -46,7 +41,7 @@ public class GuiStructurePacks extends GuiScreen {
 				CDefaultPackage.packGuiAction(0, "", "");
 				this.mc.displayGuiScreen(null);
 			} else if (button.id == 1) {
-				this.mc.displayGuiScreen(new GuiCreatePack(packInfo, null, this));
+				this.mc.displayGuiScreen(new GuiCreatePack(null, this));
 			}
 		}
 	}
@@ -65,7 +60,7 @@ public class GuiStructurePacks extends GuiScreen {
 		this.drawCenteredString(this.fontRenderer, "Structure Packs", this.width / 2, 10, 16777215);
 		this.drawString(this.fontRenderer, "Active Pack", this.width / 2 - 177, 24, 16777215);
 		this.drawString(this.fontRenderer, "Available Packs", this.width / 2 - 177, 89, 16777215);
-		this.list.drawScreen(mouseX, mouseY, Mouse.isButtonDown(0), partialTicks);
+		this.list.drawScreen(mouseX, mouseY, Mouse.isButtonDown(0));
 		
 		super.drawScreen(mouseX, mouseY, partialTicks);
 	}
@@ -89,11 +84,11 @@ public class GuiStructurePacks extends GuiScreen {
 			}
 		}
 		if (this.list.drawButton(mc, x+260-7, y+18, 50, 18, true, true, "Edit")) {
-			Minecraft.getMinecraft().displayGuiScreen(new GuiEditStructurePack(this, packInfo));
+			Minecraft.getMinecraft().displayGuiScreen(new GuiEditStructurePack(this));
 			return false;
 		}
 		if (this.list.drawButton(mc, x+310-7, y+18, 50, 18, true, true, "Copy")) {
-			Minecraft.getMinecraft().displayGuiScreen(new GuiCreatePack(packInfo, pack, this));
+			Minecraft.getMinecraft().displayGuiScreen(new GuiCreatePack(pack, this));
 			return false;
 		}
 		return false;
@@ -116,7 +111,7 @@ public class GuiStructurePacks extends GuiScreen {
 			Minecraft.getMinecraft().displayGuiScreen(new GuiConfirm(this, "Do you really want to delete the pack <"+pack.name+">?", "", "Cancel", "Confirm", this::confirmCallback));
 		}
 		if (this.list.drawButton(mc, x+310, y+17, 50, 18, true, isHovering, "Copy")) {
-			Minecraft.getMinecraft().displayGuiScreen(new GuiCreatePack(packInfo, pack, this));
+			Minecraft.getMinecraft().displayGuiScreen(new GuiCreatePack(pack, this));
 			return false;
 		}
 		return false;
@@ -125,7 +120,7 @@ public class GuiStructurePacks extends GuiScreen {
 	public boolean confirmCallback(int i) {
 		if (i==1 && toBeDeleted!=null) {
 			if (CDefaultPackage.packGuiAction(2, toBeDeleted.name, "")) {
-				this.packInfo.packs.remove(toBeDeleted);
+				StructurePackInfo.packs.remove(toBeDeleted);
 			}
 		}
 		toBeDeleted = null;
@@ -149,7 +144,7 @@ public class GuiStructurePacks extends GuiScreen {
 
 		@Override
 		protected int getElementCount() {
-			return packInfo.packs.size();
+			return StructurePackInfo.packs.size();
 		}
 
 		@Override
@@ -162,12 +157,12 @@ public class GuiStructurePacks extends GuiScreen {
 		@Override
 		protected boolean drawSlot(int slotIdx, int entryRight, int slotTop, int slotBuffer, Tessellator tess) {
 			int x = entryRight - this.w;
-			return drawPack(packInfo.packs.get(slotIdx), x, slotTop, this.isHovering);
+			return drawPack(StructurePackInfo.packs.get(slotIdx), x, slotTop, this.isHovering);
 		}
 
 		@Override
 		protected void drawExtra() {
-			drawActivePack(packInfo.active, width / 2 - 180, 35);
+			drawActivePack(StructurePackInfo.active, width / 2 - 180, 35);
 		}
 
 	}

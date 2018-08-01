@@ -14,13 +14,11 @@ import net.minecraft.client.gui.GuiTextField;
 public class GuiEditStructurePack extends GuiScreen {
 	
 	private final GuiScreen parent;
-	private GuiButton doneButton, structuresButton, lootButton, signButton;
+	private GuiButton doneButton, structuresButton, lootButton, condButton, signButton;
 	private GuiTextField nameField;
-	private final StructurePackInfo packInfo;
 	
-	public GuiEditStructurePack(GuiScreen parent, StructurePackInfo packInfo) {
+	public GuiEditStructurePack(GuiScreen parent) {
 		this.parent=parent;
-		this.packInfo=packInfo;
 	}
 	
 	@Override
@@ -33,14 +31,15 @@ public class GuiEditStructurePack extends GuiScreen {
 		Keyboard.enableRepeatEvents(true);
 		this.buttonList.clear();
 		this.doneButton = this.addButton(new GuiButton(0, this.width / 2 - 75, 305, 150, 20, "Done"));
-		this.structuresButton = this.addButton(new GuiButton(1, this.width / 2 - 154, 200, 150, 20, "Structures"));
-		this.lootButton = this.addButton(new GuiButton(2, this.width / 2 - 154, 230, 150, 20, "Loot Lists"));
-		this.signButton = this.addButton(new GuiButton(3, this.width / 2 - 154, 260, 150, 20, "Sign this pack"));
-		this.signButton.enabled = !packInfo.active.read_only;
-		this.nameField = new GuiTextField(2, this.fontRenderer, this.width / 2 - 154, 100, 300, 20);
+		this.structuresButton = this.addButton(new GuiButton(1, this.width / 2 - 154, 150, 150, 20, "Structures"));
+		this.lootButton = this.addButton(new GuiButton(2, this.width / 2 - 154, 180, 150, 20, "Loot Lists"));
+		this.condButton = this.addButton(new GuiButton(4, this.width / 2 - 154, 210, 150, 20, "Conditions"));
+		this.signButton = this.addButton(new GuiButton(3, this.width / 2 - 154, 80, 150, 20, "Sign this pack"));
+		this.signButton.enabled = !StructurePackInfo.active.read_only;
+		this.nameField = new GuiTextField(2, this.fontRenderer, this.width / 2 - 154, 50, 300, 20);
         this.nameField.setMaxStringLength(40);
-        this.nameField.setText(packInfo.active.description);
-        this.nameField.setEnabled(!packInfo.active.read_only);
+        this.nameField.setText(StructurePackInfo.active.description);
+        this.nameField.setEnabled(!StructurePackInfo.active.read_only);
 	}
 
 	@Override
@@ -56,20 +55,23 @@ public class GuiEditStructurePack extends GuiScreen {
 				this.mc.displayGuiScreen(parent);
 			} else if (button.id == 1) {
 				sendDescription();
-				this.mc.displayGuiScreen(new GuiPackStructures(this, packInfo));
+				this.mc.displayGuiScreen(new GuiPackStructures(this));
 			} else if (button.id == 2) {
 				sendDescription();
-				this.mc.displayGuiScreen(new GuiPackLootLists(this, packInfo));
+				this.mc.displayGuiScreen(new GuiPackLootLists(this));
 			} else if (button.id == 3) {
 				sendDescription();
-				Minecraft.getMinecraft().displayGuiScreen(new GuiConfirm(this, "Do you really want to sign the pack <"+packInfo.active.name+">?", "A signed pack can no longer be edited.", "Cancel", "Confirm", this::confirmCallback));
+				this.mc.displayGuiScreen(new GuiConfirm(this, "Do you really want to sign the pack <"+StructurePackInfo.active.name+">?", "A signed pack can no longer be edited.", "Cancel", "Confirm", this::confirmCallback));
+			} else if (button.id == 4) {
+				sendDescription();
+				this.mc.displayGuiScreen(new GuiPackConditions(this));
 			}
 		}
 	}
 	
 	private void sendDescription() {
-		if (!packInfo.active.description.equals(nameField.getText()) && CDefaultPackage.packGuiAction(6, nameField.getText(), "")) {
-			packInfo.active.description = nameField.getText();
+		if (!StructurePackInfo.active.description.equals(nameField.getText()) && CDefaultPackage.packGuiAction(6, nameField.getText(), "")) {
+			StructurePackInfo.active.description = nameField.getText();
 		}
 	}
 	
@@ -78,8 +80,8 @@ public class GuiEditStructurePack extends GuiScreen {
 			if (CDefaultPackage.packGuiAction(7, "", "")) {
 				this.signButton.enabled = false;
 				this.nameField.setEnabled(false);
-				packInfo.active.read_only = true;
-				packInfo.active.author = Minecraft.getMinecraft().player.getName();
+				StructurePackInfo.active.read_only = true;
+				StructurePackInfo.active.author = Minecraft.getMinecraft().player.getName();
 			}
 		}
 		return true;
@@ -107,11 +109,11 @@ public class GuiEditStructurePack extends GuiScreen {
 	public void drawScreen(int mouseX, int mouseY, float partialTicks) {
 		this.drawDefaultBackground();
 
-		this.drawCenteredString(this.fontRenderer, "Edit Structure Pack <"+packInfo.active.name+">", this.width / 2, 10, 16777215);
-		this.drawString(this.fontRenderer, "Description", this.width / 2 - 154, 84, 16777215);
+		this.drawCenteredString(this.fontRenderer, "Edit Structure Pack <"+StructurePackInfo.active.name+">", this.width / 2, 10, 16777215);
+		this.drawString(this.fontRenderer, "Description", this.width / 2 - 152, 38, 16777215);
 		this.nameField.drawTextBox();
-		if (packInfo.active.read_only) this.drawString(this.fontRenderer,"This pack is read-only.", this.width / 2 - 154, 140, 16777215);
-		this.drawString(this.fontRenderer,"Created by "+(packInfo.active.author.isEmpty()?"Unknown":packInfo.active.author), this.width / 2 - 154, 160, 16777215);
+		if (StructurePackInfo.active.read_only) this.drawString(this.fontRenderer,"This pack is read-only.", this.width / 2 - 154, 90, 16777215);
+		this.drawString(this.fontRenderer,"Created by "+(StructurePackInfo.active.author.isEmpty()?"Unknown":StructurePackInfo.active.author), this.width / 2 - 154, 110, 16777215);
 		
 		super.drawScreen(mouseX, mouseY, partialTicks);
 	}

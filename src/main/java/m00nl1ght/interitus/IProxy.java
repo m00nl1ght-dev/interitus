@@ -3,7 +3,6 @@ package m00nl1ght.interitus;
 import m00nl1ght.interitus.block.tileentity.TileEntityAdvStructure;
 import m00nl1ght.interitus.block.tileentity.TileEntityAdvStructure.LootEntryPrimer;
 import m00nl1ght.interitus.block.tileentity.TileEntitySummoner;
-import m00nl1ght.interitus.structures.StructurePackInfo;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
@@ -28,16 +27,18 @@ public interface IProxy {
     
     public String localize(String unlocalized, Object... args);
     
-	public void displayAdvStructScreen(TileEntityAdvStructure te, StructurePackInfo packInfo);
+	public void displayAdvStructScreen(TileEntityAdvStructure te);
 
 	public void displaySummonerScreen(TileEntitySummoner te);
 	
-	public void displayStructureDataScreen(TileEntityAdvStructure te, StructurePackInfo packInfo);
+	public void displayStructureDataScreen(TileEntityAdvStructure te);
 	
-	public void displayStructureLootScreen(TileEntityAdvStructure te, LootEntryPrimer entry, StructurePackInfo packInfo);
+	public void displayStructureLootScreen(TileEntityAdvStructure te, LootEntryPrimer entry);
 
-	public void displayAdvStructScreen(StructurePackInfo packInfo);
+	public void displayAdvStructScreen();
 	
 	public void displayGenTasksScreen(NBTTagCompound nbt, String struct);
+
+	public void displayCondTypeScreen(NBTTagCompound tag, String type);
 
 }

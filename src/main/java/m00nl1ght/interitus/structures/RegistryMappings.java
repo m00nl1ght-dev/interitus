@@ -26,9 +26,18 @@ public class RegistryMappings {
 		}
 		return id;
 	}
+	
+	public int idFor(Block block) {
+		IBlockState state = block.getDefaultState();
+		return idFor(state);
+	}
 
 	public IBlockState get(int id) {
 		return data.get(id);
+	}
+
+	public Block getBlock(int id) {
+		return data.get(id).getBlock();
 	}
 	
 	public int idForBiome(Biome biome) {

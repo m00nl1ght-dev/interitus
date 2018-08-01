@@ -14,7 +14,6 @@ import com.google.common.base.Predicate;
 import m00nl1ght.interitus.Interitus;
 import m00nl1ght.interitus.block.tileentity.TileEntityAdvStructure.LootEntryPrimer;
 import m00nl1ght.interitus.block.tileentity.TileEntityAdvStructure.LootGenPrimer;
-import m00nl1ght.interitus.structures.BlockRegionStorage.Condition;
 import m00nl1ght.interitus.structures.BlockRegionStorage.EntityInfo;
 import m00nl1ght.interitus.structures.BlockRegionStorage.LootGen;
 import m00nl1ght.interitus.util.VarBlockPos;
@@ -201,7 +200,7 @@ public class Structure {
 	
     public boolean checkConditions(InteritusChunkGenerator gen, BlockPos pos) {
 		for (Condition cond : storage.getConditions()) {
-			if (!cond.fullfilled(gen, pos)) {
+			if (!cond.apply(gen, pos)) {
 				return false;
 			}
 		}

@@ -4,20 +4,21 @@ import m00nl1ght.interitus.block.ModBlock;
 import m00nl1ght.interitus.block.tileentity.TileEntityAdvStructure;
 import m00nl1ght.interitus.block.tileentity.TileEntitySummoner;
 import m00nl1ght.interitus.block.tileentity.TileEntityAdvStructure.LootEntryPrimer;
+import m00nl1ght.interitus.client.ConditionTypeClient;
 import m00nl1ght.interitus.client.GenTaskClient;
 import m00nl1ght.interitus.client.gui.GuiEditAdvStructure;
+import m00nl1ght.interitus.client.gui.GuiEditCondType;
 import m00nl1ght.interitus.client.gui.GuiEditLootEntry;
 import m00nl1ght.interitus.client.gui.GuiEditSummoner;
 import m00nl1ght.interitus.client.gui.GuiGenTasks;
-import m00nl1ght.interitus.client.gui.GuiPackStructures;
 import m00nl1ght.interitus.client.gui.GuiStructureData;
 import m00nl1ght.interitus.client.gui.GuiStructurePacks;
 import m00nl1ght.interitus.item.ModItem;
-import m00nl1ght.interitus.structures.StructurePackInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraftforge.client.event.ModelRegistryEvent;
+import net.minecraftforge.event.world.WorldEvent;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
@@ -47,6 +48,7 @@ public class ClientProxy implements IProxy {
 	public void postInit(FMLPostInitializationEvent e) {
 		ModBlock.initTileEntityRenderers();
 		GenTaskClient.initBiomes();
+		ConditionTypeClient.initBlocks();
 	}
 
 	@Override
@@ -68,6 +70,13 @@ public class ClientProxy implements IProxy {
 	public static void registerModels(ModelRegistryEvent event) {
 		ModItem.initModels(event);
 	}
+	
+	@SubscribeEvent
+	public static void onWorldUnload(WorldEvent.Unload event) {
+		if (event.getWorld().provider.getDimension()==0) {
+			ConditionTypeClient.clearMaterialList();
+		}
+	}
 
 	@Override
 	public String localize(String unlocalized, Object... args) {
@@ -75,8 +84,8 @@ public class ClientProxy implements IProxy {
 	}
 	
 	@Override
-	public void displayAdvStructScreen(TileEntityAdvStructure te, StructurePackInfo packInfo) {
-		Minecraft.getMinecraft().displayGuiScreen(new GuiEditAdvStructure(te, packInfo));
+	public void displayAdvStructScreen(TileEntityAdvStructure te) {
+		Minecraft.getMinecraft().displayGuiScreen(new GuiEditAdvStructure(te));
 	}
 	
 	@Override
@@ -85,25 +94,28 @@ public class ClientProxy implements IProxy {
 	}
 	
 	@Override
-	public void displayStructureDataScreen(TileEntityAdvStructure te, StructurePackInfo packInfo) {
-		Minecraft.getMinecraft().displayGuiScreen(new GuiStructureData(te, null, packInfo));
+	public void displayStructureDataScreen(TileEntityAdvStructure te) {
+		Minecraft.getMinecraft().displayGuiScreen(new GuiStructureData(te, null));
 	}
 	
 	@Override
-	public void displayStructureLootScreen(TileEntityAdvStructure te, LootEntryPrimer entry, StructurePackInfo packInfo) {
-		Minecraft.getMinecraft().displayGuiScreen(new GuiEditLootEntry(te, null, entry, packInfo));
+	public void displayStructureLootScreen(TileEntityAdvStructure te, LootEntryPrimer entry) {
+		Minecraft.getMinecraft().displayGuiScreen(new GuiEditLootEntry(te, null, entry));
 	}
 
 	@Override
-	public void displayAdvStructScreen(StructurePackInfo packInfo) {
-		Minecraft.getMinecraft().displayGuiScreen(new GuiStructurePacks(packInfo));
+	public void displayAdvStructScreen() {
+		Minecraft.getMinecraft().displayGuiScreen(new GuiStructurePacks());
 	}
 	
 	@Override
 	public void displayGenTasksScreen(NBTTagCompound nbt, String struct) {
-		if (Minecraft.getMinecraft().currentScreen instanceof GuiPackStructures) {
-			Minecraft.getMinecraft().displayGuiScreen(new GuiGenTasks((GuiPackStructures) Minecraft.getMinecraft().currentScreen, struct, nbt));
-		}
+		Minecraft.getMinecraft().displayGuiScreen(new GuiGenTasks(Minecraft.getMinecraft().currentScreen, struct, nbt));
+	}
+
+	@Override
+	public void displayCondTypeScreen(NBTTagCompound tag, String type) {
+		Minecraft.getMinecraft().displayGuiScreen(new GuiEditCondType(Minecraft.getMinecraft().currentScreen, type, tag));
 	}
 
 }

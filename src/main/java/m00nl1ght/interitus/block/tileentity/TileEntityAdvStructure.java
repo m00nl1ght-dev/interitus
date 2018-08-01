@@ -15,14 +15,14 @@ import m00nl1ght.interitus.block.BlockAdvStructure;
 import m00nl1ght.interitus.item.ItemStructureDataTool;
 import m00nl1ght.interitus.item.ModItem;
 import m00nl1ght.interitus.network.SDefaultPackage;
+import m00nl1ght.interitus.structures.Condition;
 import m00nl1ght.interitus.structures.Structure;
+import m00nl1ght.interitus.structures.Structure.StructureData;
 import m00nl1ght.interitus.structures.StructurePack;
 import m00nl1ght.interitus.structures.StructurePackInfo;
 import m00nl1ght.interitus.structures.StructurePositionMap;
 import m00nl1ght.interitus.util.Toolkit;
 import m00nl1ght.interitus.util.VarBlockPos;
-import m00nl1ght.interitus.structures.BlockRegionStorage.Condition;
-import m00nl1ght.interitus.structures.Structure.StructureData;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.EntityLivingBase;
@@ -593,7 +593,7 @@ public class TileEntityAdvStructure extends TileEntity {
 		conditions.clear();
 		NBTTagList nbtConditions = compound.getTagList("conditions", 10);
         for (int c = 0; c < nbtConditions.tagCount(); ++c) {
-            conditions.add(Condition.readFromNBT(nbtConditions.getCompoundTagAt(c)));
+            conditions.add(Condition.readFromNBT(StructurePack.get(), nbtConditions.getCompoundTagAt(c)));
         }
         
         loot.clear();

@@ -4,6 +4,8 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import m00nl1ght.interitus.Interitus;
 import m00nl1ght.interitus.block.tileentity.TileEntityAdvStructure;
+import m00nl1ght.interitus.client.ConditionTypeClient;
+import m00nl1ght.interitus.structures.ConditionType;
 import m00nl1ght.interitus.structures.Structure;
 import m00nl1ght.interitus.structures.StructurePack;
 import m00nl1ght.interitus.structures.StructurePackInfo;
@@ -63,6 +65,22 @@ public class SDefaultPackage implements IMessage {
         return this.data;
     }
     
+    public static void sendCondTypeGui(EntityPlayerMP player, ConditionType type, boolean reqMaterials) {
+    	try {
+			PacketBuffer packetbuffer = new PacketBuffer(Unpooled.buffer());
+			packetbuffer.writeString(type.getName());
+			packetbuffer.writeCompoundTag(ConditionType.save(type, null));
+			if (reqMaterials) {
+				NBTTagCompound matTag = new NBTTagCompound();
+				ConditionType.writeMaterialList(matTag);
+				packetbuffer.writeCompoundTag(matTag);
+			}
+			ModNetwork.INSTANCE.sendTo(new SDefaultPackage("CondTypeGui", packetbuffer), player);
+		} catch (Exception exception) {
+			Interitus.logger.warn("Could not send cond type gui packet", exception);
+		}
+    }
+    
     public static void sendGenTaskGui(EntityPlayerMP player, Structure struct) {
     	try {
 			PacketBuffer packetbuffer = new PacketBuffer(Unpooled.buffer());
@@ -70,7 +88,7 @@ public class SDefaultPackage implements IMessage {
 			packetbuffer.writeCompoundTag(StructurePack.getGenTaskClientTag(struct));
 			ModNetwork.INSTANCE.sendTo(new SDefaultPackage("GenTaskGui", packetbuffer), player);
 		} catch (Exception exception) {
-			Interitus.logger.warn("Could not send structure pack gui packet", exception);
+			Interitus.logger.warn("Could not send gen task gui packet", exception);
 		}
     }
     
@@ -149,6 +167,11 @@ public class SDefaultPackage implements IMessage {
 						this.procGenTaskGui(p.getBufferData());
 					});
 					break;
+				case "CondTypeGui":
+					Minecraft.getMinecraft().addScheduledTask(() -> {
+						this.procCondTypeGui(p.getBufferData());
+					});
+					break;
 				default:
 					throw new IllegalStateException("Unknown SDefaultPacket channel: "+p.getChannelName());
 			}
@@ -159,7 +182,8 @@ public class SDefaultPackage implements IMessage {
 			try {
 				NBTTagCompound tag = data.readCompoundTag();
 				if (tag == null) {throw new IllegalStateException("no pack info");}
-				Interitus.proxy.displayAdvStructScreen(StructurePackInfo.fromNBT(tag));
+				StructurePackInfo.fromNBT(tag);
+				Interitus.proxy.displayAdvStructScreen();
 			} catch (Exception exception1) {
 				Interitus.logger.error("Couldn't proc structure pack gui", exception1);
 			}			
@@ -172,7 +196,8 @@ public class SDefaultPackage implements IMessage {
 				NBTTagCompound tag = data.readCompoundTag();
 				if (tag == null) {throw new IllegalStateException("no pack info");}
 				if (tileentity1 instanceof TileEntityAdvStructure) {
-					Interitus.proxy.displayAdvStructScreen((TileEntityAdvStructure) tileentity1, StructurePackInfo.fromNBT(tag));
+					StructurePackInfo.fromNBT(tag);
+					Interitus.proxy.displayAdvStructScreen((TileEntityAdvStructure) tileentity1);
 				}
 			} catch (Exception exception1) {
 				Interitus.logger.error("Couldn't proc structure data gui", exception1);
@@ -186,7 +211,8 @@ public class SDefaultPackage implements IMessage {
 				NBTTagCompound tag = data.readCompoundTag();
 				if (tag == null) {throw new IllegalStateException("no pack info");}
 				if (tileentity1 instanceof TileEntityAdvStructure) {
-					Interitus.proxy.displayStructureDataScreen((TileEntityAdvStructure) tileentity1, StructurePackInfo.fromNBT(tag));
+					StructurePackInfo.fromNBT(tag);
+					Interitus.proxy.displayStructureDataScreen((TileEntityAdvStructure) tileentity1);
 				}
 			} catch (Exception exception1) {
 				Interitus.logger.error("Couldn't proc structure data gui", exception1);
@@ -202,7 +228,8 @@ public class SDefaultPackage implements IMessage {
 				TileEntity tileentity1 = Minecraft.getMinecraft().world.getTileEntity(blockpos);
 				if (tileentity1 instanceof TileEntityAdvStructure) {
 					TileEntityAdvStructure te = (TileEntityAdvStructure) tileentity1;
-					Interitus.proxy.displayStructureLootScreen(te, te.getLootOrNew(target), StructurePackInfo.fromNBT(tag));
+					StructurePackInfo.fromNBT(tag);
+					Interitus.proxy.displayStructureLootScreen(te, te.getLootOrNew(target));
 				}
 			} catch (Exception exception1) {
 				Interitus.logger.error("Couldn't proc structure loot gui", exception1);
@@ -217,6 +244,25 @@ public class SDefaultPackage implements IMessage {
 				Interitus.proxy.displayGenTasksScreen(tag, struct);
 			} catch (Exception exception1) {
 				Interitus.logger.error("Couldn't proc gen task gui", exception1);
+			}			
+		}
+		
+		private void procCondTypeGui(PacketBuffer data) {
+			try {
+				String type = data.readString(1000);
+				NBTTagCompound tag = data.readCompoundTag();
+				if (tag == null) {throw new IllegalStateException("no cond info");}
+				try {
+					NBTTagCompound tag0 = data.readCompoundTag();
+					if (tag0!=null) {
+						ConditionTypeClient.setMaterialList(tag0);
+					}
+				} catch (Exception e) {
+					Interitus.logger.error("Failed to read material list: ", e);
+				}
+				Interitus.proxy.displayCondTypeScreen(tag, type);
+			} catch (Exception exception1) {
+				Interitus.logger.error("Couldn't proc cond type gui", exception1);
 			}			
 		}
 		

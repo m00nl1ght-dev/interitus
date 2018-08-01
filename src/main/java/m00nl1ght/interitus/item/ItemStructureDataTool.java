@@ -5,8 +5,9 @@ import java.util.List;
 import javax.annotation.Nullable;
 
 import m00nl1ght.interitus.block.tileentity.TileEntityAdvStructure;
-import m00nl1ght.interitus.structures.BlockRegionStorage.Condition;
-import m00nl1ght.interitus.structures.BlockRegionStorage.ConditionType;
+import m00nl1ght.interitus.structures.Condition;
+import m00nl1ght.interitus.structures.ConditionType;
+import m00nl1ght.interitus.structures.StructurePack;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.creativetab.CreativeTabs;
@@ -65,12 +66,13 @@ public class ItemStructureDataTool extends Item {
 				return EnumActionResult.FAIL;
 			}
 		} else {
-			ConditionType mode = this.getMode(stack, ConditionType.inGround);
-			int i = mode.ordinal()+1;
-			if (i >= ConditionType.values().length) {i=0;}
-			mode = ConditionType.values()[i];
-			this.setMode(stack, mode);
-			player.sendStatusMessage(new TextComponentString("Condition Type: "+mode.name()), true);
+			// TODO UI list to choose condition type
+//			ConditionType mode = this.getMode(stack, ConditionType.inGround);
+//			int i = mode.ordinal()+1;
+//			if (i >= ConditionType.values().length) {i=0;}
+//			mode = ConditionType.values()[i];
+//			this.setMode(stack, mode);
+//			player.sendStatusMessage(new TextComponentString("Condition Type: "+mode.name()), true);
 			return EnumActionResult.SUCCESS;
 		}
     }
@@ -84,7 +86,12 @@ public class ItemStructureDataTool extends Item {
 		}
 		TileEntityAdvStructure te = this.getTileEntity(player, stack);
 		if (te==null) {return;}
-		te.getConditions().add(new Condition(this.getMode(stack, ConditionType.inGround), pos));
+		ConditionType type = this.getMode(stack);
+		if (type==null) {
+			//TODO show UI to choose condition type
+			return;
+		}
+		te.getConditions().add(new Condition(type, pos, this.getNegated(stack)));
 		te.markDirtyFlagged();
 		player.sendStatusMessage(new TextComponentString("Added new condition at "+pos.toString()), false);
     }
@@ -141,16 +148,18 @@ public class ItemStructureDataTool extends Item {
 		buffer.writeInt(tag.getInteger("z"));
 	}
 	
-	public static ConditionType getMode(ItemStack stack, ConditionType def) {
-		if (stack.isEmpty()) {return def;}
+	public static ConditionType getMode(ItemStack stack) {
+		if (stack.isEmpty()) {return null;}
 		NBTTagCompound tag = stack.getTagCompound();
-		if (tag==null) {return def;}
-		try {
-			return ConditionType.valueOf(tag.getString("mode"));
-		} catch (Exception e) {
-			return def;
-		}
-		
+		if (tag==null) {return null;}
+		return StructurePack.get().getConditionType(tag.getString("mode"));
+	}
+	
+	public static boolean getNegated(ItemStack stack) {
+		if (stack.isEmpty()) {return false;}
+		NBTTagCompound tag = stack.getTagCompound();
+		if (tag==null) {return false;}
+		return tag.getBoolean("n");
 	}
 	
 	public static NBTTagCompound addTagForPos(NBTTagCompound tagIn, BlockPos pos) {
@@ -168,7 +177,7 @@ public class ItemStructureDataTool extends Item {
 			tag = new NBTTagCompound();
 			stack.setTagCompound(tag);
 		}
-		tag.setString("mode", mode.name());
+		tag.setString("mode", mode.getName());
 	}
 	
 	public static ItemStack getItemForPos(BlockPos pos) {

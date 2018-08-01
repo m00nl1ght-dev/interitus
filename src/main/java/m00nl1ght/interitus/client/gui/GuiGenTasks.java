@@ -8,6 +8,7 @@ import org.lwjgl.input.Mouse;
 
 import m00nl1ght.interitus.client.GenTaskClient;
 import m00nl1ght.interitus.network.CDefaultPackage;
+import m00nl1ght.interitus.structures.StructurePackInfo;
 import m00nl1ght.interitus.structures.StructurePackInfo.StructureInfo;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.GuiButton;
@@ -20,13 +21,13 @@ public class GuiGenTasks extends GuiScreen {
 	
 	private GuiButton closeButton, addButton;
 	private GenTaskList list;
-	private final GuiPackStructures parent;
+	private final GuiScreen parent;
 	private final String struct;
 	private final ArrayList<GenTaskClient> tasks = new ArrayList<GenTaskClient>();
 	private final boolean read_only;
 	
-	public GuiGenTasks(GuiPackStructures parent, String struct, NBTTagCompound nbt) {
-        this.parent = parent; this.read_only = parent.packInfo.active.read_only; this.struct = struct;
+	public GuiGenTasks(GuiScreen currentScreen, String struct, NBTTagCompound nbt) {
+        this.parent = currentScreen; this.read_only = StructurePackInfo.active.read_only; this.struct = struct;
         NBTTagList list = nbt.getTagList("u", 10);
         for (int i = 0; i < list.tagCount(); i++) {
         	tasks.add(GenTaskClient.build(list.getCompoundTagAt(i)));
@@ -60,7 +61,7 @@ public class GuiGenTasks extends GuiScreen {
 		if (button.enabled && !GuiDropdown.isOpen()) {
 			if (button.id == 0) {
 				if (read_only || CDefaultPackage.updateGenTasks(getUpdateTag(), struct)) {
-					for (StructureInfo str : parent.packInfo.structures) {
+					for (StructureInfo str : StructurePackInfo.structures) {
 						if (str.name.equals(struct)) {str.genTasks=tasks.size(); break;}
 					}
 					this.mc.displayGuiScreen(parent);
@@ -98,7 +99,7 @@ public class GuiGenTasks extends GuiScreen {
 		
 		this.drawCenteredString(this.fontRenderer, "Worldgen tasks for <"+struct+">", this.width / 2, 10, 16777215);
 		
-		this.list.drawScreen(mouseX, mouseY, mBtn, partialTicks);
+		this.list.drawScreen(mouseX, mouseY, mBtn);
 		
 		super.drawScreen(mouseX, mouseY, partialTicks);
 		GuiDropdown.drawDropdown(mouseX, mouseY, mBtn);
