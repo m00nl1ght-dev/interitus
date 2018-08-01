@@ -22,6 +22,7 @@ public abstract class ConditionType {
 	static {
 		registerType(ConditionMaterialSet.class);
 		registerType(ConditionBlockSet.class);
+		registerType(ConditionHeight.class);
 	}
 	
 	private String name;
@@ -190,6 +191,38 @@ public abstract class ConditionType {
 		@Override
 		public String getType() {
 			return "blockSet";
+		}
+		
+	}
+	
+	public static class ConditionHeight extends ConditionType {
+		
+		private int min, max;
+		
+		public ConditionHeight() {}
+		public ConditionHeight(String name) {super(name);}
+
+		@Override
+		protected void writeToNBT(NBTTagCompound tag, StructurePack pack) {
+			tag.setInteger("min", min);
+			tag.setInteger("max", max);
+		}
+
+		@Override
+		protected void readFromNBT(NBTTagCompound tag, StructurePack pack) {
+			min = tag.getInteger("min");
+			max = tag.getInteger("max");
+		}
+
+		@Override
+		public boolean apply(InteritusChunkGenerator gen, VarBlockPos pos) {
+			int h = gen.getGroundHeight(gen.getChunk(pos.chunkX(), pos.chunkZ()), pos.inChunkX(), pos.inChunkZ()) - pos.getY();
+			return h>=min && h<=max;
+		}
+
+		@Override
+		public String getType() {
+			return "groundHeight";
 		}
 		
 	}

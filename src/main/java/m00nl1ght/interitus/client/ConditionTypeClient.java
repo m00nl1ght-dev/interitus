@@ -3,8 +3,12 @@ package m00nl1ght.interitus.client;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import com.google.common.primitives.Ints;
+
 import m00nl1ght.interitus.client.gui.GuiDropdown;
 import m00nl1ght.interitus.client.gui.GuiList;
+import m00nl1ght.interitus.client.gui.GuiTextBox;
+import m00nl1ght.interitus.util.Toolkit;
 import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
@@ -22,6 +26,7 @@ public abstract class ConditionTypeClient {
 	static {
 		registerType(ConditionMaterialSetClient.class);
 		registerType(ConditionBlockSetClient.class);
+		registerType(ConditionHeightClient.class);
 	}
 	
 	private String name = "";
@@ -304,6 +309,52 @@ public abstract class ConditionTypeClient {
 				return blockList.size();
 			}
 			
+		}
+		
+	}
+	
+	public static class ConditionHeightClient extends ConditionTypeClient {
+		
+		private GuiTextBox min, max;
+		
+		public ConditionHeightClient() {}
+		public ConditionHeightClient(String name) {super(name);}
+		
+		@Override
+		public ConditionTypeClient init(int x, int y, FontRenderer renderer) {
+			min = new GuiTextBox(renderer, 50, 20);
+			min.setValidator(Toolkit.INT_VALIDATOR);
+			max = new GuiTextBox(renderer, 50, 20);
+			max.setValidator(Toolkit.INT_VALIDATOR);
+			return super.init(x, y, renderer);
+		}
+		
+		@Override
+		public ConditionTypeClient drawGui(int mX, int mY, boolean clicked, FontRenderer fontRenderer) {
+			fontRenderer.drawStringWithShadow("min", x, y, 14737632);
+			min.drawTextBox(x+105, y+10, mX, mY, clicked);
+			fontRenderer.drawStringWithShadow("max", x, y + 25, 14737632);
+			max.drawTextBox(x+255, y+35, mX, mY, clicked);
+			return super.drawGui(mX, mY, clicked, fontRenderer);
+		}
+
+		@Override
+		protected void writeToNBT(NBTTagCompound tag) {
+			Integer i1 = Ints.tryParse(min.getText());
+			Integer i2 = Ints.tryParse(max.getText());
+			tag.setInteger("min", i1==null?0:i1);
+			tag.setInteger("max", i2==null?0:i2);
+		}
+
+		@Override
+		protected void readFromNBT(NBTTagCompound tag) {
+			min.setText(""+tag.getInteger("min"));
+			max.setText(""+tag.getInteger("max"));
+		}
+
+		@Override
+		public String getType() {
+			return "groundHeight";
 		}
 		
 	}
