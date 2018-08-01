@@ -40,6 +40,13 @@ public final class Toolkit {
 			return input.isEmpty() || Ints.tryParse(input)!=null;
 		}
 	};
+	
+	public static final Predicate<String> INT_VALIDATOR_P = new Predicate<String>() {
+		@Override
+		public boolean apply(String input) {
+			return input.isEmpty() || input.equals("-") || Ints.tryParse(input)!=null;
+		}
+	};
 
 	public static void serverBroadcastMsg(String message) {
 		MinecraftServer minecraftserver = FMLCommonHandler.instance().getMinecraftServerInstance();

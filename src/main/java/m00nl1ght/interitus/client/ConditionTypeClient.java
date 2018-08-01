@@ -315,6 +315,7 @@ public abstract class ConditionTypeClient {
 	
 	public static class ConditionHeightClient extends ConditionTypeClient {
 		
+		private int minV, maxV;
 		private GuiTextBox min, max;
 		
 		public ConditionHeightClient() {}
@@ -323,19 +324,33 @@ public abstract class ConditionTypeClient {
 		@Override
 		public ConditionTypeClient init(int x, int y, FontRenderer renderer) {
 			min = new GuiTextBox(renderer, 50, 20);
-			min.setValidator(Toolkit.INT_VALIDATOR);
+			min.setValidator(Toolkit.INT_VALIDATOR_P);
+			min.setText(""+minV);
 			max = new GuiTextBox(renderer, 50, 20);
-			max.setValidator(Toolkit.INT_VALIDATOR);
+			max.setValidator(Toolkit.INT_VALIDATOR_P);
+			max.setText(""+maxV);
 			return super.init(x, y, renderer);
 		}
 		
 		@Override
 		public ConditionTypeClient drawGui(int mX, int mY, boolean clicked, FontRenderer fontRenderer) {
-			fontRenderer.drawStringWithShadow("min", x, y, 14737632);
-			min.drawTextBox(x+105, y+10, mX, mY, clicked);
-			fontRenderer.drawStringWithShadow("max", x, y + 25, 14737632);
-			max.drawTextBox(x+255, y+35, mX, mY, clicked);
+			fontRenderer.drawStringWithShadow("min", x, y + 40, 14737632);
+			min.drawTextBox(x, y + 50, mX, mY, clicked);
+			fontRenderer.drawStringWithShadow("max", x, y + 75, 14737632);
+			max.drawTextBox(x, y + 85, mX, mY, clicked);
 			return super.drawGui(mX, mY, clicked, fontRenderer);
+		}
+		
+		@Override
+		public void updateGui() {
+			min.updateCursorCounter();
+			max.updateCursorCounter();
+		}
+
+		@Override
+		public void keyTyped(char typedChar, int keyCode) {
+			min.textboxKeyTyped(typedChar, keyCode);
+			max.textboxKeyTyped(typedChar, keyCode);
 		}
 
 		@Override
@@ -348,8 +363,8 @@ public abstract class ConditionTypeClient {
 
 		@Override
 		protected void readFromNBT(NBTTagCompound tag) {
-			min.setText(""+tag.getInteger("min"));
-			max.setText(""+tag.getInteger("max"));
+			minV = tag.getInteger("min");
+			maxV = tag.getInteger("max");
 		}
 
 		@Override
