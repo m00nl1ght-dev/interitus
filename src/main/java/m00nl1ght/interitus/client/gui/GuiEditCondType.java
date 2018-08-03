@@ -17,7 +17,7 @@ public class GuiEditCondType extends GuiScreen {
 	
 	private final GuiScreen parent;
 	private ConditionTypeClient type;
-	private GuiButton doneButton;
+	private GuiButton doneButton, cancelButton;
 	private GuiTextField nameField;
 	private final boolean newtype;
 	private String warning = "";
@@ -44,7 +44,8 @@ public class GuiEditCondType extends GuiScreen {
 		Keyboard.enableRepeatEvents(true);
 		this.type.init(this.width / 2 - 154, 80, fontRenderer);
 		this.buttonList.clear();
-		this.doneButton = this.addButton(new GuiButton(0, this.width / 2 - 75, 305, 150, 20, "Done"));
+		this.doneButton = this.addButton(new GuiButton(0, this.width / 2 + 4, 305, 150, 20, "Done"));
+		this.cancelButton = this.addButton(new GuiButton(1, this.width / 2 - 4 - 150, 305, 150, 20, "Cancel"));
 		this.nameField = new GuiTextField(2, this.fontRenderer, this.width / 2 - 154, 50, 300, 20);
         this.nameField.setMaxStringLength(20);
         this.nameField.setEnabled(newtype);
@@ -77,6 +78,8 @@ public class GuiEditCondType extends GuiScreen {
 				}
 				CDefaultPackage.updateCondType(ConditionTypeClient.save(type), name);
 				this.mc.displayGuiScreen(parent);
+			} else if (button.id == 1) {
+				this.mc.displayGuiScreen(parent);
 			}
 		}
 	}
@@ -84,7 +87,7 @@ public class GuiEditCondType extends GuiScreen {
 	@Override
 	protected void keyTyped(char typedChar, int keyCode) throws IOException {
 		if (keyCode == 1) {
-			this.actionPerformed(this.doneButton);
+			this.actionPerformed(this.cancelButton);
 			return;
 		}
 		if (this.nameField.getVisible()) {
@@ -110,7 +113,7 @@ public class GuiEditCondType extends GuiScreen {
 		this.drawString(this.fontRenderer, warning.isEmpty()?"Name":warning, this.width / 2 - 152, 38, 16777215);
 		this.nameField.drawTextBox();
 		
-		this.type = this.type.drawGui(mouseX, mouseY, mBtn && !GuiDropdown.isOpen(), this.fontRenderer);
+		this.type = this.type.drawGui(mouseX, mouseY, mBtn && !GuiDropdown.mState && !GuiDropdown.isOpen(), this.fontRenderer);
 		
 		super.drawScreen(mouseX, mouseY, partialTicks);
 		GuiDropdown.drawDropdown(mouseX, mouseY, mBtn);

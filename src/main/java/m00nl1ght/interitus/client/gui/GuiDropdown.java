@@ -26,7 +26,7 @@ public abstract class GuiDropdown extends Gui {
     protected boolean isEnabled = true, isOpenable = false;
     protected int enabledColor = 14737632;
     protected int disabledColor = 7368816;
-    protected static boolean mState;
+    public static boolean mState;
     
     protected int wBtn = 0;
     protected final int slotHeight = 15;
@@ -93,9 +93,9 @@ public abstract class GuiDropdown extends Gui {
 	}
 	
 	public static void drawCheckbox(int x, int y, int w, int h, boolean checked) {
-		drawRect(x - 1, y - 1, x + w + 1, y + h + 1, -6250336);
-        drawRect(x, y, x + w, y + h, -16777216);
-        if (checked) drawRect(x + 3, y + 3, x + w - 3, y + h - 3, -6250336);
+		Gui.drawRect(x - 1, y - 1, x + w + 1, y + h + 1, -6250336);
+        Gui.drawRect(x, y, x + w, y + h, -16777216);
+        if (checked) Gui.drawRect(x + 3, y + 3, x + w - 3, y + h - 3, -6250336);
 	}
 	
 	public boolean drawList(int x, int y, int mX, int mY, boolean clicked) {

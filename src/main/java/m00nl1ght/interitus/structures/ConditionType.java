@@ -18,14 +18,17 @@ public abstract class ConditionType {
 	private static final ArrayList<Material> materialList = new ArrayList<Material>();
 	
 	public static final ConditionType IN_AIR = new ConditionMaterialSet("inAir", Material.AIR);
+	public static final ConditionType UNDER_GROUND = new ConditionHeight("underGround", -255, -1);
 	
 	static {
 		registerType(ConditionMaterialSet.class);
 		registerType(ConditionBlockSet.class);
 		registerType(ConditionHeight.class);
+		registerType(ConditionCompound.class);
 	}
 	
 	private String name;
+	protected boolean negated = false;
 	
 	public ConditionType() {}
 	public ConditionType(String name) {this.name = name;}
@@ -42,6 +45,7 @@ public abstract class ConditionType {
 		NBTTagCompound tag = new NBTTagCompound();
 		cond.writeToNBT(tag, pack);
 		tag.setString("type", cond.getType());
+		tag.setBoolean("n", cond.negated);
 		return tag;
 	}
 	
@@ -56,6 +60,7 @@ public abstract class ConditionType {
 			throw new IllegalStateException("Failed to build condition type <"+type+">: ", e);
 		}
 		ct.name = name;
+		ct.negated = tag.getBoolean("n");
 		ct.readFromNBT(tag, pack);
 		return ct;
 	}
@@ -131,8 +136,8 @@ public abstract class ConditionType {
 		@Override
 		public boolean apply(InteritusChunkGenerator gen, VarBlockPos pos) {
 			Material m = gen.getBlockState(pos).getMaterial();
-			for (Material x : materials) {if (m==x) return true;}
-			return false;
+			for (Material x : materials) {if (m==x) return !negated;}
+			return negated;
 		}
 
 		@Override
@@ -148,6 +153,7 @@ public abstract class ConditionType {
 		
 		public ConditionBlockSet() {}
 		public ConditionBlockSet(String name) {super(name);}
+		public ConditionBlockSet(String name, Block... blocks) {super(name); this.blocks = blocks;}
 
 		@Override
 		protected void writeToNBT(NBTTagCompound tag, StructurePack pack) {
@@ -183,9 +189,9 @@ public abstract class ConditionType {
 		public boolean apply(InteritusChunkGenerator gen, VarBlockPos pos) {
 			Block block = gen.getBlockState(pos).getBlock();
 			for (Block b : blocks) {
-				if (block==b) {return true;}
+				if (block==b) {return !negated;}
 			}
-			return false;
+			return negated;
 		}
 
 		@Override
@@ -201,6 +207,7 @@ public abstract class ConditionType {
 		
 		public ConditionHeight() {}
 		public ConditionHeight(String name) {super(name);}
+		public ConditionHeight(String name, int min, int max) {super(name); this.min = min; this.max = max;}
 
 		@Override
 		protected void writeToNBT(NBTTagCompound tag, StructurePack pack) {
@@ -217,12 +224,57 @@ public abstract class ConditionType {
 		@Override
 		public boolean apply(InteritusChunkGenerator gen, VarBlockPos pos) {
 			int h = gen.getGroundHeight(gen.getChunk(pos.chunkX(), pos.chunkZ()), pos.inChunkX(), pos.inChunkZ()) - pos.getY();
-			return h>=min && h<=max;
+			return negated?(h<min && h>max):(h>=min && h<=max);
 		}
 
 		@Override
 		public String getType() {
 			return "groundHeight";
+		}
+		
+	}
+	
+	public static class ConditionCompound extends ConditionType {
+		
+		private ConditionType[] conds;
+		
+		public ConditionCompound() {}
+		public ConditionCompound(String name) {super(name);}
+		public ConditionCompound(String name, ConditionType... conds) {super(name); this.conds = conds;}
+
+		@Override
+		protected void writeToNBT(NBTTagCompound tag, StructurePack pack) {
+			NBTTagList list = new NBTTagList();
+			for (int i = 0; i < conds.length; i++) {
+				list.appendTag(new NBTTagString(conds[i].getName()));
+			}
+			tag.setTag("c", list);
+		}
+
+		@Override
+		protected void readFromNBT(NBTTagCompound tag, StructurePack pack) {
+			if (tag.hasKey("c")) {
+				ArrayList<ConditionType> clist = new ArrayList<ConditionType>();
+				NBTTagList list = tag.getTagList("c", 8);
+				for (int i = 0; i < list.tagCount(); i++) {
+					ConditionType c = pack.getConditionType(list.getStringTagAt(i)); // TODO ehhm... loading order?!
+					if (c!=null) {clist.add(c);}
+				}
+				conds = clist.toArray(new ConditionType[clist.size()]);
+			}
+		}
+
+		@Override
+		public boolean apply(InteritusChunkGenerator gen, VarBlockPos pos) {
+			for (int i = 0; i < conds.length; i++) {
+				if (!conds[i].apply(gen, pos)) {return negated;}
+			}
+			return !negated;
+		}
+
+		@Override
+		public String getType() {
+			return "compound";
 		}
 		
 	}

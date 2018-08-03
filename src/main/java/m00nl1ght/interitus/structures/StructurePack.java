@@ -474,6 +474,7 @@ public class StructurePack implements IDebugObject {
 			pack.description = "";
 			pack.loaded = true;
 			pack.cond_types.put(ConditionType.IN_AIR.getName(), ConditionType.IN_AIR);
+			pack.cond_types.put(ConditionType.UNDER_GROUND.getName(), ConditionType.UNDER_GROUND);
 			try {
 				if (!pack.save()) {
 					throw new IllegalStateException("failed to save new pack!");

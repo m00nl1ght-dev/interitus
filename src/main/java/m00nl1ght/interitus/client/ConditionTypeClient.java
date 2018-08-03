@@ -8,12 +8,16 @@ import com.google.common.primitives.Ints;
 import m00nl1ght.interitus.client.gui.GuiDropdown;
 import m00nl1ght.interitus.client.gui.GuiList;
 import m00nl1ght.interitus.client.gui.GuiTextBox;
+import m00nl1ght.interitus.client.gui.GuiUtils;
+import m00nl1ght.interitus.structures.ConditionType;
+import m00nl1ght.interitus.structures.StructurePackInfo;
 import m00nl1ght.interitus.util.Toolkit;
 import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
+import net.minecraft.nbt.NBTTagString;
 import net.minecraft.util.ResourceLocation;
 
 public abstract class ConditionTypeClient {
@@ -27,10 +31,12 @@ public abstract class ConditionTypeClient {
 		registerType(ConditionMaterialSetClient.class);
 		registerType(ConditionBlockSetClient.class);
 		registerType(ConditionHeightClient.class);
+		registerType(ConditionCompoundClient.class);
 	}
 	
 	private String name = "";
 	protected TypeDropdown typeDD;
+	protected boolean negated = false;
 	protected boolean type_dirty = false;
 	protected int x, y;
 	
@@ -41,6 +47,7 @@ public abstract class ConditionTypeClient {
 		NBTTagCompound tag = new NBTTagCompound();
 		cond.writeToNBT(tag);
 		tag.setString("type", cond.getType());
+		tag.setBoolean("n", cond.negated);
 		return tag;
 	}
 	
@@ -55,6 +62,7 @@ public abstract class ConditionTypeClient {
 			throw new IllegalStateException("Failed to build condition type (client) <"+type+">: ", e);
 		}
 		ct.name = name;
+		ct.negated = tag.getBoolean("n");
 		ct.readFromNBT(tag);
 		return ct;
 	}
@@ -71,6 +79,7 @@ public abstract class ConditionTypeClient {
 		ct.typeDD = from.typeDD;
 		ct.typeDD.ct = ct;
 		ct.type_dirty = false;
+		ct.negated = false;
 		ct.init(from.x, from.y, Minecraft.getMinecraft().fontRenderer);
 		return ct;
 	}
@@ -114,6 +123,10 @@ public abstract class ConditionTypeClient {
 		if (type_dirty) {
 			type_dirty = false;
 			return create(typeDD.getText(), this);
+		}
+		fontRenderer.drawStringWithShadow("Negate", x + 135, y + 23, 16777215);
+		if (GuiUtils.drawCheckbox(x + 120, y + 20, 11, 11, this.negated, mX, mY, clicked)) {
+			this.negated = !this.negated;
 		}
 		return this;
 	}
@@ -370,6 +383,85 @@ public abstract class ConditionTypeClient {
 		@Override
 		public String getType() {
 			return "groundHeight";
+		}
+		
+	}
+	
+	public static class ConditionCompoundClient extends ConditionTypeClient {
+		
+		private boolean[] states;
+		private ConditionList list;
+		
+		public ConditionCompoundClient() {}
+		public ConditionCompoundClient(String name) {super(name);}
+		
+		@Override
+		public ConditionTypeClient init(int x, int y, FontRenderer renderer) {
+			if (states==null) states = new boolean[StructurePackInfo.condtypes.size()];
+			list = new ConditionList(Minecraft.getMinecraft(), x, y + 40, 308, 180, 15);
+			return super.init(x, y, renderer);
+		}
+		
+		@Override
+		public ConditionTypeClient drawGui(int mX, int mY, boolean clicked, FontRenderer fontRenderer) {
+			list.drawScreen(mX, mY, clicked);
+			return super.drawGui(mX, mY, clicked, fontRenderer);
+		}
+
+		@Override
+		protected void writeToNBT(NBTTagCompound tag) {
+			NBTTagList list = new NBTTagList();
+			for (int i = 0; i < states.length; i++) {
+				if (states[i]) {
+					list.appendTag(new NBTTagString(StructurePackInfo.condtypes.get(i)));
+				}
+			}
+			tag.setTag("c", list);
+		}
+
+		@Override
+		protected void readFromNBT(NBTTagCompound tag) {
+			if (states==null) states = new boolean[StructurePackInfo.condtypes.size()];
+			if (tag.hasKey("c")) {
+				NBTTagList list = tag.getTagList("c", 8);
+				for (int i = 0; i < list.tagCount(); i++) {
+					int idx = StructurePackInfo.condtypes.indexOf(list.getStringTagAt(i));
+					if (idx>=0) states[idx] = true;
+				}
+			}
+		}
+
+		@Override
+		public String getType() {
+			return "compound";
+		}
+		
+		private class ConditionList extends GuiList.GuiCheckboxList {
+
+			public ConditionList(Minecraft client, int x, int y, int w, int h, int entryHeight) {
+				super(client, x, y, w, h, entryHeight);
+			}
+
+			@Override
+			protected void elementClicked(int id, boolean dclick) {
+				states[id] = !states[id];
+			}
+
+			@Override
+			protected String getElement(int id) {
+				return StructurePackInfo.condtypes.get(id);
+			}
+
+			@Override
+			protected boolean getElementState(int id) {
+				return states[id];
+			}
+
+			@Override
+			protected int getElementCount() {
+				return StructurePackInfo.condtypes.size();
+			}
+			
 		}
 		
 	}
