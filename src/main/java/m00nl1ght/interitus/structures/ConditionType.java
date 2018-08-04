@@ -3,6 +3,8 @@ package m00nl1ght.interitus.structures;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import com.google.common.collect.Lists;
+
 import m00nl1ght.interitus.util.VarBlockPos;
 import m00nl1ght.interitus.world.InteritusChunkGenerator;
 import net.minecraft.block.Block;
@@ -236,17 +238,19 @@ public abstract class ConditionType {
 	
 	public static class ConditionCompound extends ConditionType {
 		
-		private ConditionType[] conds;
+		private ArrayList<String> conds_pre;
+		private ArrayList<ConditionType> conds;
 		
 		public ConditionCompound() {}
 		public ConditionCompound(String name) {super(name);}
-		public ConditionCompound(String name, ConditionType... conds) {super(name); this.conds = conds;}
+		public ConditionCompound(String name, ConditionType... conds) {super(name); this.conds = Lists.newArrayList(conds);}
 
 		@Override
 		protected void writeToNBT(NBTTagCompound tag, StructurePack pack) {
+			if (conds==null) {this.loadConds();}
 			NBTTagList list = new NBTTagList();
-			for (int i = 0; i < conds.length; i++) {
-				list.appendTag(new NBTTagString(conds[i].getName()));
+			for (int i = 0; i < conds.size(); i++) {
+				list.appendTag(new NBTTagString(conds.get(i).getName()));
 			}
 			tag.setTag("c", list);
 		}
@@ -254,22 +258,31 @@ public abstract class ConditionType {
 		@Override
 		protected void readFromNBT(NBTTagCompound tag, StructurePack pack) {
 			if (tag.hasKey("c")) {
-				ArrayList<ConditionType> clist = new ArrayList<ConditionType>();
 				NBTTagList list = tag.getTagList("c", 8);
+				conds_pre = new ArrayList<String>();
 				for (int i = 0; i < list.tagCount(); i++) {
-					ConditionType c = pack.getConditionType(list.getStringTagAt(i)); // TODO ehhm... loading order?!
-					if (c!=null) {clist.add(c);}
+					conds_pre.add(list.getStringTagAt(i));
 				}
-				conds = clist.toArray(new ConditionType[clist.size()]);
 			}
 		}
 
 		@Override
 		public boolean apply(InteritusChunkGenerator gen, VarBlockPos pos) {
-			for (int i = 0; i < conds.length; i++) {
-				if (!conds[i].apply(gen, pos)) {return negated;}
+			if (conds==null) {this.loadConds();}
+			for (int i = 0; i < conds.size(); i++) {
+				if (!conds.get(i).apply(gen, pos)) {return negated;}
 			}
 			return !negated;
+		}
+		
+		private void loadConds() {
+			if (conds_pre!=null) {
+				conds = new ArrayList<ConditionType>(conds_pre.size());
+				for (String name : conds_pre) {
+					ConditionType cond = StructurePack.get().getConditionType(name);
+					if (cond!=null) {conds.add(cond);}
+				}
+			}
 		}
 
 		@Override

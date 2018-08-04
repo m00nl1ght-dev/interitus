@@ -9,7 +9,6 @@ import m00nl1ght.interitus.client.gui.GuiDropdown;
 import m00nl1ght.interitus.client.gui.GuiList;
 import m00nl1ght.interitus.client.gui.GuiTextBox;
 import m00nl1ght.interitus.client.gui.GuiUtils;
-import m00nl1ght.interitus.structures.ConditionType;
 import m00nl1ght.interitus.structures.StructurePackInfo;
 import m00nl1ght.interitus.util.Toolkit;
 import net.minecraft.block.Block;
@@ -391,15 +390,26 @@ public abstract class ConditionTypeClient {
 		
 		private boolean[] states;
 		private ConditionList list;
+		private ArrayList<String> conds;
 		
 		public ConditionCompoundClient() {}
 		public ConditionCompoundClient(String name) {super(name);}
 		
 		@Override
 		public ConditionTypeClient init(int x, int y, FontRenderer renderer) {
-			if (states==null) states = new boolean[StructurePackInfo.condtypes.size()];
+			this.initList();
 			list = new ConditionList(Minecraft.getMinecraft(), x, y + 40, 308, 180, 15);
 			return super.init(x, y, renderer);
+		}
+		
+		private void initList() {
+			if (states!=null) return; 
+			conds = new ArrayList<String>(StructurePackInfo.condtypes.size());
+			for (String s : StructurePackInfo.condtypes) {
+				if (s.equals(this.getName())) continue;
+				conds.add(s);
+			}
+			states = new boolean[conds.size()];
 		}
 		
 		@Override
@@ -413,7 +423,7 @@ public abstract class ConditionTypeClient {
 			NBTTagList list = new NBTTagList();
 			for (int i = 0; i < states.length; i++) {
 				if (states[i]) {
-					list.appendTag(new NBTTagString(StructurePackInfo.condtypes.get(i)));
+					list.appendTag(new NBTTagString(conds.get(i)));
 				}
 			}
 			tag.setTag("c", list);
@@ -421,11 +431,11 @@ public abstract class ConditionTypeClient {
 
 		@Override
 		protected void readFromNBT(NBTTagCompound tag) {
-			if (states==null) states = new boolean[StructurePackInfo.condtypes.size()];
+			this.initList();
 			if (tag.hasKey("c")) {
 				NBTTagList list = tag.getTagList("c", 8);
 				for (int i = 0; i < list.tagCount(); i++) {
-					int idx = StructurePackInfo.condtypes.indexOf(list.getStringTagAt(i));
+					int idx = conds.indexOf(list.getStringTagAt(i));
 					if (idx>=0) states[idx] = true;
 				}
 			}
@@ -449,7 +459,7 @@ public abstract class ConditionTypeClient {
 
 			@Override
 			protected String getElement(int id) {
-				return StructurePackInfo.condtypes.get(id);
+				return conds.get(id);
 			}
 
 			@Override
@@ -459,7 +469,7 @@ public abstract class ConditionTypeClient {
 
 			@Override
 			protected int getElementCount() {
-				return StructurePackInfo.condtypes.size();
+				return conds.size();
 			}
 			
 		}
