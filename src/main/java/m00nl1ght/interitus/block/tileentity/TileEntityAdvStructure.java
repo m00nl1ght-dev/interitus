@@ -210,7 +210,7 @@ public class TileEntityAdvStructure extends TileEntity {
     /**
      * !!! Mutable Position (VarBlockPos)
      */
-    public BlockPos getPosition() {
+    public VarBlockPos getPosition() {
         return this.position;
     }
 
@@ -221,7 +221,7 @@ public class TileEntityAdvStructure extends TileEntity {
     /**
      * !!! Mutable Size (VarBlockPos)
      */
-    public BlockPos getStructureSize() {
+    public VarBlockPos getStructureSize() {
     	return this.size;
     }
 

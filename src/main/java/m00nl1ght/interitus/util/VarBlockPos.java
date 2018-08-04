@@ -148,6 +148,13 @@ public class VarBlockPos extends BlockPos {
 		return this;
 	}
 	
+	public VarBlockPos setAdd(VarBlockPos pos1, VarBlockPos pos2, int x, int y, int z) {
+		this.x = pos1.getX() + pos2.getX() + x;
+		this.y = pos1.getY() + pos2.getY() + y;
+		this.z = pos1.getZ() + pos2.getZ() + z;
+		return this;
+	}
+	
 	public VarBlockPos setSubtract(Vec3i pos1, Vec3i pos2) {
 		this.x = pos1.getX() - pos2.getX();
 		this.y = pos1.getY() - pos2.getY();
