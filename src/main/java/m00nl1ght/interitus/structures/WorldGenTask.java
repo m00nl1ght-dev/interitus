@@ -147,11 +147,20 @@ public abstract class WorldGenTask {
 			gen.gAll++;
 			posCache.set(x * 16 + gen.random.nextInt(16), 0, z * 16 + gen.random.nextInt(16));
 			if (structure.nearOccurence(posCache, minDistance)) {gen.gRange++; return false;}
-			Chunk chunk = gen.getChunk(x, z);
-			int h = gen.getGroundHeight(chunk, posCache.inChunkX(), posCache.inChunkZ());
+			Chunk chunk = gen.world.getChunkFromChunkCoords(x, z);
+			int h = chunk.getHeightValue(posCache.inChunkX(), posCache.inChunkZ());
 			if (h<=0) {return false;}
 			posCache.setY(randomY(gen.random, h - this.hBase, this.hRange));
+			
+			//TODO \/ rework below lines \/
+			// 1 check positionmap preconditions
+			
+			// 2 check structure conditions
 			if (!structure.checkConditions(gen, posCache)) {gen.gCond++; return false;}
+			// 3 create structure
+			
+			
+			//old:
 			if (gen.getStructurePositionMap().create(new StructureData(structure, posCache.toImmutable(), Mirror.NONE, Rotation.NONE))) {
 				gen.gDone++;
 				return true;

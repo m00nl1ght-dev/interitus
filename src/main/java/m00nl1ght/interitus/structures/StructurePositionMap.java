@@ -2,6 +2,7 @@ package m00nl1ght.interitus.structures;
 
 import java.util.Map.Entry;
 
+import it.unimi.dsi.fastutil.HashCommon;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import m00nl1ght.interitus.Interitus;
 import m00nl1ght.interitus.structures.Structure.IStructureData;
@@ -19,7 +20,7 @@ import net.minecraft.world.chunk.Chunk;
 
 public class StructurePositionMap {
 
-	private final Long2ObjectOpenHashMap<IStructureData> chunks = new Long2ObjectOpenHashMap<IStructureData>(512);
+	private final StructureDataMap chunks = new StructureDataMap(256);
 	private final InteritusChunkGenerator gen;
 	private boolean finishing = false;
 	
@@ -41,6 +42,26 @@ public class StructurePositionMap {
 		}
 	}
 	
+	public boolean check(StructureData data) {
+		if (finishing) {return false;}
+		data.str.getSize(VarBlockPos.PUBLIC_CACHE, data.rotation);
+		VarBlockPos.PUBLIC_CACHE.varAdd(data.pos); 
+		int xmin = Math.min(data.pos.getX() >> 4, VarBlockPos.PUBLIC_CACHE.getX() >> 4);
+		int xmax = Math.max(data.pos.getX() >> 4, VarBlockPos.PUBLIC_CACHE.getX() >> 4);
+		int zmin = Math.min(data.pos.getZ() >> 4, VarBlockPos.PUBLIC_CACHE.getZ() >> 4);
+		int zmax = Math.max(data.pos.getZ() >> 4, VarBlockPos.PUBLIC_CACHE.getZ() >> 4);
+		
+		for (int x = xmin; x <= xmax; x++) {
+			for (int z = zmin; z <= zmax; z++) {
+				if (chunks.containsKey(Toolkit.intPairToLong(x, z))) { //TODO
+					return false;
+				}
+			}
+		}
+		
+		return true;
+	}
+	
 	public boolean create(StructureData data) {
 		if (finishing) {throw new IllegalStateException("Finishing pending structures");}
 		data.str.getSize(VarBlockPos.PUBLIC_CACHE, data.rotation);
@@ -50,13 +71,7 @@ public class StructurePositionMap {
 		int xmax = Math.max(data.pos.getX() >> 4, VarBlockPos.PUBLIC_CACHE.getX() >> 4);
 		int zmin = Math.min(data.pos.getZ() >> 4, VarBlockPos.PUBLIC_CACHE.getZ() >> 4);
 		int zmax = Math.max(data.pos.getZ() >> 4, VarBlockPos.PUBLIC_CACHE.getZ() >> 4);
-		for (int x = xmin; x <= xmax; x++) {
-			for (int z = zmin; z <= zmax; z++) {
-				if (chunks.containsKey(Toolkit.intPairToLong(x, z))) {
-					return false;
-				}
-			}
-		}
+		//TODO conditions? or not?
 		data.str.instances.add(data);
 		for (int x = xmin; x <= xmax; x++) {
 			for (int z = zmin; z <= zmax; z++) {
@@ -156,6 +171,43 @@ public class StructurePositionMap {
 				}
 			}
 		}
+	}
+	
+	private static class StructureDataMap extends Long2ObjectOpenHashMap<IStructureData> {
+		
+		public StructureDataMap(int expected) {
+			super(expected);
+		}
+
+		private int insert(final long k, final IStructureData v) {
+			int pos;
+			if (((k) == (0))) {
+				if (containsNullKey) return n;
+				containsNullKey = true;
+				pos = n;
+			} else {
+				long curr;
+				final long[] key = this.key;
+				// The starting point.
+				if (!((curr = key[pos = (int) it.unimi.dsi.fastutil.HashCommon.mix((k)) & mask]) == (0))) {
+					if (((curr) == (k))) return pos;
+					while (!((curr = key[pos = (pos + 1) & mask]) == (0)))
+						if (((curr) == (k))) return pos;
+				}
+			}
+			key[pos] = k;
+			value[pos] = v;
+			if (size++ >= maxFill) rehash(HashCommon.arraySize(size + 1, f));
+			return -1;
+		}
+
+		public IStructureData putOrAppend(final long k, final StructureData v) {
+			final int pos = insert(k, v);
+			if (pos < 0) return v;
+			value[pos] = value[pos].add(v);
+			return value[pos];
+		}
+		
 	}
 	
 }

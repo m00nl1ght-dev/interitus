@@ -14,7 +14,6 @@ import m00nl1ght.interitus.util.IDebugObject;
 import m00nl1ght.interitus.util.InteritusProfiler;
 import m00nl1ght.interitus.util.Toolkit;
 import m00nl1ght.interitus.util.VarBlockPos;
-import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.EnumCreatureType;
@@ -58,7 +57,7 @@ public abstract class InteritusChunkGenerator implements IChunkGenerator, IDebug
 		return chunk;
 	}
 	
-	protected Chunk preGenerate(int x, int z) { // thats could mess up vanilla structures though
+	protected Chunk preGenerate(int x, int z) { // TODO investigate -> thats could mess up vanilla structures though
 		Chunk chunk = generateChunk(x, z, true);
 		chunkCache.put(Toolkit.intPairToLong(x, z), chunk);
 		if (chunkCache.size()>Interitus.config.chunkCacheMaxSize) {
@@ -144,22 +143,6 @@ public abstract class InteritusChunkGenerator implements IChunkGenerator, IDebug
 				return this.preGenerate(x, z);
 			}
 		}
-	}
-	
-	public boolean isGround(BlockPos pos) {
-		Chunk chunk = this.getChunk(pos.getX() >> 4, pos.getZ() >> 4);
-		return pos.getY()<=this.getGroundHeight(chunk, pos.getX() & 15, pos.getZ() & 15);
-	}
-
-	public int getGroundHeight(Chunk chunk, int x, int z) { // TODO rework conditions?
-		int k; IBlockState block = null;
-		for (k = chunk.getHeightValue(x, z) + this.heightMapOffset; k > 0; k--) {
-			block = chunk.getBlockState(VarBlockPos.PUBLIC_CACHE.set(x, k, z));
-			if (block.getMaterial().isOpaque() && !(block.getMaterial() == Material.WOOD)) {
-				break;
-			}
-		}
-		return k;
 	}
 
 	public IBlockState getBlockState(BlockPos pos) {
