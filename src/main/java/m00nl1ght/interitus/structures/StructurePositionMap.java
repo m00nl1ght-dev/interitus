@@ -56,34 +56,43 @@ public class StructurePositionMap {
 		if (!task.isChunkSuitable(xmin, zmin, chunks.get(Toolkit.intPairToLong(xmin, zmin)))) {
 			return false;
 		}
+		
 		int sx = xmax - xmin + 1, sz = zmax - zmin + 1; // size
 		if (sx==1 && sz==1) {return true;}
-		int ox = 1, oz = 1; // offset to try
-		boolean f1 = false, f2 = false; // offset flags -> hit blocked chunk?
+		int ox = sx==1?0:1, oz = sz==1?0:1; // offset to try
+		boolean f1 = sz==1, f2 = sx==1; // offset flags -> hit blocked chunk or border?
 		IChunkProvider provider = gen.world.getChunkProvider();
-		while (true) { //TODO position logic, this may not be the correct approach because of non-quadratic structures?
-			
-			if (this.isChunkNotSuitable(provider, task, xmin + ox, zmin + oz)) {
-				//TODO
-			}
-			
+		
+		while (true) { // TODO check/test
 			if (!f1) for (int i = 0; i < ox; i++) {
-				if (this.isChunkNotSuitable(provider, task, xmin + i, zmin + oz)) {f1 = true; break;}
+				if (this.isChunkNotSuitable(provider, task, xmin + i, zmin + oz)) {oz--; f1 = true; break;}
 			}
 			if (!f2) for (int i = 0; i < oz; i++) {
-				if (this.isChunkNotSuitable(provider, task, xmin + ox, zmin + i)) {f2 = true; break;}
+				if (this.isChunkNotSuitable(provider, task, xmin + ox, zmin + i)) {ox--; f2 = true; break;}
 			}
-			
-			//if (!f1 && ox >= sx - 1) f1 = true; //hmmm...
-			//if (!f2 && oz >= sz - 1) f2 = true;
-			
-			if (f1 && f2) {
-				 //TODO ?
+			if (!f1 && !f2) {
+				if (this.isChunkNotSuitable(provider, task, xmin + ox, zmin + oz)) {
+					if (sx>sz) {
+						oz--; f1 = true;
+						if (ox < sx - 1) {ox++;} else {f2 = true;}
+					} else {
+						ox--; f2 = true;
+						if (oz < sz - 1) {oz++;} else {f1 = true;}
+					}
+				} else {
+					if (oz < sz - 1) {oz++;} else {f1 = true;}
+					if (ox < sx - 1) {ox++;} else {f2 = true;}
+				}
+			} else if (!f1) {
+				if (oz < sz - 1) {oz++;} else {f1 = true; if (f2) break;}
+			} else if (!f2) {
+				if (ox < sx - 1) {ox++;} else {f2 = true; if (f1) break;}
+			} else {
 				break;
 			}
-			
 		}
 		
+		// TODO check remaining chunks
 	}
 	
 	private boolean isChunkNotSuitable(IChunkProvider provider, WorldGenTask task, int x, int z) {
