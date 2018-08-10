@@ -294,12 +294,11 @@ public class TileEntityAdvStructure extends TileEntity {
         return this.ignoreEntities;
     }
 
-	public boolean detectSize() { // TODO check: negative size allowed?!
+	public boolean detectSize() {
 		if (this.mode != Mode.SAVE) {
 			return false;
 		} else {
 			BlockPos blockpos = this.getPos();
-			int i = 80;
 			BlockPos blockpos1 = new BlockPos(blockpos.getX() - 80, 0, blockpos.getZ() - 80);
 			BlockPos blockpos2 = new BlockPos(blockpos.getX() + 80, 255, blockpos.getZ() + 80);
 			List<TileEntityAdvStructure> list = this.getNearbyCornerBlocks(blockpos1, blockpos2);

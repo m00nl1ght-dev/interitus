@@ -38,7 +38,7 @@ public abstract class InteritusChunkGenerator implements IChunkGenerator, IDebug
 	protected final StructurePositionMap structures = new StructurePositionMap(this);
 	private boolean createStruct = true;
 	
-	public int gAll, gDone, gRange, gCond, gVstruct; // debug
+	public int gAll, gDone, gRange, gCond, gNoPos; // debug
 	
 	public InteritusChunkGenerator(World world) {
 		this.world = world;
@@ -173,7 +173,7 @@ public abstract class InteritusChunkGenerator implements IChunkGenerator, IDebug
 	@Override
 	public void debugMsg(ICommandSender sender) {
 		InteritusProfiler.send(sender, "> DIM"+this.world.provider.getDimension()+" > "+this.toString());
-		InteritusProfiler.send(sender, "struct [all: "+gAll+" ok: "+gDone+" range: "+gRange+" cond: "+gCond+" vStr: "+gVstruct+"]");
+		InteritusProfiler.send(sender, "struct [all: "+gAll+" ok: "+gDone+" range: "+gRange+" cond: "+gCond+" vStr: "+gNoPos+"]");
 		InteritusProfiler.send(sender, "chunks cached: "+chunkCache.size()+" pending: "+structures.chunkCount());
 	}
 

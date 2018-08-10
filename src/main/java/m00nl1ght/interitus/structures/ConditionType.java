@@ -225,7 +225,7 @@ public abstract class ConditionType {
 
 		@Override
 		public boolean apply(InteritusChunkGenerator gen, VarBlockPos pos) {
-			int h = gen.getGroundHeight(gen.getChunk(pos.chunkX(), pos.chunkZ()), pos.inChunkX(), pos.inChunkZ()) - pos.getY();
+			int h = gen.getChunk(pos.chunkX(), pos.chunkZ()).getHeightValue(pos.inChunkX(), pos.inChunkZ()) - pos.getY();
 			return negated?(h<min && h>max):(h>=min && h<=max);
 		}
 

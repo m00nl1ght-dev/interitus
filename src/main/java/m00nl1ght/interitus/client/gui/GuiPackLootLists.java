@@ -94,7 +94,7 @@ public class GuiPackLootLists extends GuiScreen {
 			int x = entryRight-this.w;
 			getFontRenderer().drawString(StructurePackInfo.lootlists.get(slotIdx), x+15, slotTop+5, 16777215);
 			if (this.drawButton(mc, x+300, slotTop-1, 17, 17, false, this.isHovering, "...")) {
-				//TODO
+				//TODO loot list editor
 			}
 			if (this.drawButton(mc, x+343, slotTop-1, 17, 17, !StructurePackInfo.active.read_only, this.isHovering, "X")) {
 				if (!CDefaultPackage.packGuiAction(8, StructurePackInfo.lootlists.get(slotIdx), "")) {return false;}

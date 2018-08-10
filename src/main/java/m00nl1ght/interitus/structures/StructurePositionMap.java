@@ -13,9 +13,11 @@ import m00nl1ght.interitus.world.InteritusChunkGenerator;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.nbt.NBTTagLong;
+import net.minecraft.util.Rotation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
+import net.minecraft.world.chunk.IChunkProvider;
 
 
 public class StructurePositionMap {
@@ -30,7 +32,7 @@ public class StructurePositionMap {
 	
 	public static void createDirect(World world, StructureData data) {
 		data.str.getSize(VarBlockPos.PUBLIC_CACHE, data.rotation);
-		VarBlockPos.PUBLIC_CACHE.varAdd(data.pos);
+		VarBlockPos.PUBLIC_CACHE.varAdd(data.pos).varAdd(-1, -1, -1);
 		int xmin = Math.min(data.pos.getX() >> 4, VarBlockPos.PUBLIC_CACHE.getX() >> 4);
 		int xmax = Math.max(data.pos.getX() >> 4, VarBlockPos.PUBLIC_CACHE.getX() >> 4);
 		int zmin = Math.min(data.pos.getZ() >> 4, VarBlockPos.PUBLIC_CACHE.getZ() >> 4);
@@ -42,51 +44,68 @@ public class StructurePositionMap {
 		}
 	}
 	
-	public boolean check(StructureData data) {
+	public boolean findSuitablePosition(WorldGenTask task, VarBlockPos entry_pos,  Rotation rotation) {
 		if (finishing) {return false;}
-		data.str.getSize(VarBlockPos.PUBLIC_CACHE, data.rotation);
-		VarBlockPos.PUBLIC_CACHE.varAdd(data.pos); 
-		int xmin = Math.min(data.pos.getX() >> 4, VarBlockPos.PUBLIC_CACHE.getX() >> 4);
-		int xmax = Math.max(data.pos.getX() >> 4, VarBlockPos.PUBLIC_CACHE.getX() >> 4);
-		int zmin = Math.min(data.pos.getZ() >> 4, VarBlockPos.PUBLIC_CACHE.getZ() >> 4);
-		int zmax = Math.max(data.pos.getZ() >> 4, VarBlockPos.PUBLIC_CACHE.getZ() >> 4);
+		task.getStructure().getSize(VarBlockPos.PUBLIC_CACHE, rotation);
+		VarBlockPos.PUBLIC_CACHE.varAdd(entry_pos).varAdd(-1, -1, -1);
+		int xmin = Math.min(entry_pos.getX() >> 4, VarBlockPos.PUBLIC_CACHE.getX() >> 4);
+		int xmax = Math.max(entry_pos.getX() >> 4, VarBlockPos.PUBLIC_CACHE.getX() >> 4);
+		int zmin = Math.min(entry_pos.getZ() >> 4, VarBlockPos.PUBLIC_CACHE.getZ() >> 4);
+		int zmax = Math.max(entry_pos.getZ() >> 4, VarBlockPos.PUBLIC_CACHE.getZ() >> 4);
 		
-		for (int x = xmin; x <= xmax; x++) {
-			for (int z = zmin; z <= zmax; z++) {
-				if (chunks.containsKey(Toolkit.intPairToLong(x, z))) { //TODO
-					return false;
-				}
+		if (!task.isChunkSuitable(xmin, zmin, chunks.get(Toolkit.intPairToLong(xmin, zmin)))) {
+			return false;
+		}
+		int sx = xmax - xmin + 1, sz = zmax - zmin + 1; // size
+		if (sx==1 && sz==1) {return true;}
+		int ox = 1, oz = 1; // offset to try
+		boolean f1 = false, f2 = false; // offset flags -> hit blocked chunk?
+		IChunkProvider provider = gen.world.getChunkProvider();
+		while (true) { //TODO position logic, this may not be the correct approach because of non-quadratic structures?
+			
+			if (this.isChunkNotSuitable(provider, task, xmin + ox, zmin + oz)) {
+				//TODO
 			}
+			
+			if (!f1) for (int i = 0; i < ox; i++) {
+				if (this.isChunkNotSuitable(provider, task, xmin + i, zmin + oz)) {f1 = true; break;}
+			}
+			if (!f2) for (int i = 0; i < oz; i++) {
+				if (this.isChunkNotSuitable(provider, task, xmin + ox, zmin + i)) {f2 = true; break;}
+			}
+			
+			//if (!f1 && ox >= sx - 1) f1 = true; //hmmm...
+			//if (!f2 && oz >= sz - 1) f2 = true;
+			
+			if (f1 && f2) {
+				 //TODO ?
+				break;
+			}
+			
 		}
 		
-		return true;
 	}
 	
-	public boolean create(StructureData data) {
+	private boolean isChunkNotSuitable(IChunkProvider provider, WorldGenTask task, int x, int z) {
+		return (provider.isChunkGeneratedAt(x, z) && provider.provideChunk(x, z).isTerrainPopulated()) ||
+				!task.isChunkSuitable(x, z, chunks.get(Toolkit.intPairToLong(x, z)));
+	}
+	
+	public void create(StructureData data) {
 		if (finishing) {throw new IllegalStateException("Finishing pending structures");}
 		data.str.getSize(VarBlockPos.PUBLIC_CACHE, data.rotation);
-		VarBlockPos.PUBLIC_CACHE.varAdd(data.pos); 
-		int insta=0; //debug
+		VarBlockPos.PUBLIC_CACHE.varAdd(data.pos).varAdd(-1, -1, -1); 
 		int xmin = Math.min(data.pos.getX() >> 4, VarBlockPos.PUBLIC_CACHE.getX() >> 4);
 		int xmax = Math.max(data.pos.getX() >> 4, VarBlockPos.PUBLIC_CACHE.getX() >> 4);
 		int zmin = Math.min(data.pos.getZ() >> 4, VarBlockPos.PUBLIC_CACHE.getZ() >> 4);
 		int zmax = Math.max(data.pos.getZ() >> 4, VarBlockPos.PUBLIC_CACHE.getZ() >> 4);
-		//TODO conditions? or not?
 		data.str.instances.add(data);
 		for (int x = xmin; x <= xmax; x++) {
 			for (int z = zmin; z <= zmax; z++) {
-				if (gen.world.isChunkGeneratedAt(x, z)) {
-					Chunk chunk =  gen.world.getChunkFromChunkCoords(x, z);
-					if (chunk.isTerrainPopulated()) {
-						data.str.placeInChunk(chunk, data); insta++;
-						continue;
-					}
-				}
-				chunks.put(Toolkit.intPairToLong(x, z), data);
+				chunks.putOrAppend(Toolkit.intPairToLong(x, z), data);
 			}
 		}
-		if (Interitus.config.debugWorldgen) Toolkit.serverBroadcastMsg("("+data.str.name+") created structure at "+data.pos.toString()+" (instantly "+insta+" of "+(xmax-xmin+1)*(zmax-zmin+1)+")");
-		return true;
+		if (Interitus.config.debugWorldgen) Toolkit.serverBroadcastMsg("("+data.str.name+") created structure at "+data.pos.toString()+" ("+(xmax-xmin+1)*(zmax-zmin+1)+" chunks)");
 	}
 	
 	public boolean place(Chunk chunk) {

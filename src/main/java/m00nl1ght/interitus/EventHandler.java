@@ -83,13 +83,13 @@ public class EventHandler {
 			if (pack == null) {
 				Interitus.logger.error("Structure pack <" + name + "> not found. Loading the default pack instead...");
 				StructurePack.loadDefault();
-				//TODO warning for glitchy structures
+				Interitus.logger.warn("Because the structure pack for this world failed to load, some structures will be unfinished/broken.");
 				return;
 			}
 			if (StructurePack.load(pack)) {
 				Interitus.logger.info("Structure pack <" + name + "> loaded successfully.");
 			} else {
-				//TODO warning for glitchy structures
+				Interitus.logger.warn("Because the structure pack for this world failed to load, some structures will be unfinished/broken.");
 			}
 			
 		}
