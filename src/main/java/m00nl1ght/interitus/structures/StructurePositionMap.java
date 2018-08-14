@@ -63,7 +63,7 @@ public class StructurePositionMap {
 		boolean f1 = sz==1, f2 = sx==1; // offset flags -> hit blocked chunk or border?
 		IChunkProvider provider = gen.world.getChunkProvider();
 		
-		while (true) { // TODO check/test
+		while (true) {
 			if (!f1) for (int i = 0; i < ox; i++) {
 				if (this.isChunkNotSuitable(provider, task, xmin + i, zmin + oz)) {oz--; f1 = true; break;}
 			}
@@ -74,25 +74,37 @@ public class StructurePositionMap {
 				if (this.isChunkNotSuitable(provider, task, xmin + ox, zmin + oz)) {
 					if (sx>sz) {
 						oz--; f1 = true;
-						if (ox < sx - 1) {ox++;} else {f2 = true;}
+						if (ox < sx - 1) {ox++;} else {break;}
 					} else {
 						ox--; f2 = true;
-						if (oz < sz - 1) {oz++;} else {f1 = true;}
+						if (oz < sz - 1) {oz++;} else {break;}
 					}
 				} else {
 					if (oz < sz - 1) {oz++;} else {f1 = true;}
-					if (ox < sx - 1) {ox++;} else {f2 = true;}
+					if (ox < sx - 1) {ox++;} else {if (f1) break; f2 = true; }
 				}
 			} else if (!f1) {
-				if (oz < sz - 1) {oz++;} else {f1 = true; if (f2) break;}
+				if (oz < sz - 1) {oz++;} else {if (f2) break; f1 = true;}
 			} else if (!f2) {
-				if (ox < sx - 1) {ox++;} else {f2 = true; if (f1) break;}
+				if (ox < sx - 1) {ox++;} else {if (f1) break; f2 = true;}
 			} else {
 				break;
 			}
 		}
+
+		for (int x = xmin - sx + ox + 1; x < xmin; x++) {
+			for (int z = zmin - sz + oz + 1; z <= zmin + oz; z++) {
+				if (this.isChunkNotSuitable(provider, task, x, z)) {return false;}
+			}
+		}
 		
-		// TODO check remaining chunks
+		for (int x = xmin; x <= xmin + ox; x++) {
+			for (int z = zmin - sz + oz + 1; z < zmin; z++) {
+				if (this.isChunkNotSuitable(provider, task, x, z)) {return false;}
+			}
+		}
+		
+		return true;
 	}
 	
 	private boolean isChunkNotSuitable(IChunkProvider provider, WorldGenTask task, int x, int z) {
