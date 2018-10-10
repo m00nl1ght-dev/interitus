@@ -24,3 +24,4 @@ gradle/*
 eclipse
 run
 build
+backup/*
