@@ -6,17 +6,6 @@ import java.text.DecimalFormatSymbols;
 import java.util.List;
 import java.util.Locale;
 
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.FontRenderer;
-import net.minecraft.client.gui.GuiButton;
-import net.minecraft.client.gui.GuiScreen;
-import net.minecraft.client.gui.GuiTextField;
-import net.minecraft.client.resources.I18n;
-import net.minecraft.util.ChatAllowedCharacters;
-import net.minecraft.util.Mirror;
-import net.minecraft.util.Rotation;
-import net.minecraft.util.math.BlockPos;
-
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 
@@ -25,10 +14,18 @@ import com.google.common.collect.Lists;
 import m00nl1ght.interitus.block.tileentity.TileEntityAdvStructure;
 import m00nl1ght.interitus.block.tileentity.TileEntityAdvStructure.Mode;
 import m00nl1ght.interitus.client.gui.GuiDropdown.GuiEditableDropdown;
-import m00nl1ght.interitus.network.CDefaultPackage;
+import m00nl1ght.interitus.network.ServerPackage;
 import m00nl1ght.interitus.structures.StructurePackInfo;
+import net.minecraft.client.gui.FontRenderer;
+import net.minecraft.client.gui.GuiButton;
+import net.minecraft.client.gui.GuiTextField;
+import net.minecraft.client.resources.I18n;
+import net.minecraft.util.ChatAllowedCharacters;
+import net.minecraft.util.Mirror;
+import net.minecraft.util.Rotation;
+import net.minecraft.util.math.BlockPos;
 
-public class GuiEditAdvStructure extends GuiScreen {
+public class GuiEditAdvStructure extends GuiEditor {
 	
     public static final int[] LEGAL_KEY_CODES = new int[] {203, 205, 14, 211, 199, 207};
     private final TileEntityAdvStructure tileStructure;
@@ -40,6 +37,7 @@ public class GuiEditAdvStructure extends GuiScreen {
 	private boolean tbClosed;
 
     public GuiEditAdvStructure(TileEntityAdvStructure te) {
+    	super(() -> {ServerPackage.sendStructUpdate(te, 0);});
         this.tileStructure = te;
         this.decimalFormat.setDecimalFormatSymbols(new DecimalFormatSymbols(Locale.US));
     }
@@ -132,6 +130,7 @@ public class GuiEditAdvStructure extends GuiScreen {
     	GuiDropdown.close();
         Keyboard.enableRepeatEvents(false);
         this.tileStructure.setAcceptUpdates(true);
+        this.onCloseEditor();
     }
     
     @Override
@@ -139,17 +138,17 @@ public class GuiEditAdvStructure extends GuiScreen {
 		if (button.enabled && !this.tbClosed && !GuiDropdown.isOpen()) {
 			if (button.id == 0) {
 				if (this.sendToServer(1)) {
-					this.mc.displayGuiScreen((GuiScreen) null);
+					this.closeSilent();
 				}
 			} else if (button.id == 9) {
 				if (this.tileStructure.getMode() == Mode.SAVE) {
 					this.sendToServer(2);
-					this.mc.displayGuiScreen((GuiScreen) null);
+					this.closeSilent();
 				}
 			} else if (button.id == 10) {
 				if (this.tileStructure.getMode() == Mode.LOAD) {
 					this.sendToServer(3);
-					this.mc.displayGuiScreen((GuiScreen) null);
+					this.closeSilent();
 				}
 			} else if (button.id == 11) {
 				this.tileStructure.setRotation(Rotation.NONE);
@@ -169,7 +168,7 @@ public class GuiEditAdvStructure extends GuiScreen {
 			} else if (button.id == 19) {
 				if (this.tileStructure.getMode() == Mode.SAVE) {
 					this.sendToServer(4);
-					this.mc.displayGuiScreen((GuiScreen) null);
+					this.closeSilent();
 				}
 			} else if (button.id == 20) {
 				this.tileStructure.setIgnoresEntities(!this.tileStructure.ignoresEntities());
@@ -181,18 +180,18 @@ public class GuiEditAdvStructure extends GuiScreen {
 				this.tileStructure.setShowBoundingBox(!this.tileStructure.showsBoundingBox());
 				this.updateToggleBoundingBox();
 			} else if (button.id == 24) {
-				CDefaultPackage.requestAction(this.tileStructure, 0, 0, 0);
+				ServerPackage.sendStructAction(this.tileStructure, 0, 0, 0);
 				this.giveToolButton.enabled=false;
 			} else if (button.id == 25) {
-				CDefaultPackage.requestAction(this.tileStructure, 1, 0, 0);
+				ServerPackage.sendStructAction(this.tileStructure, 1, 0, 0);
 			} else if (button.id == 26) {
-				CDefaultPackage.requestAction(this.tileStructure, 2, 0, 0);
+				ServerPackage.sendStructAction(this.tileStructure, 2, 0, 0);
 			} else if (button.id == 27) {
 				this.sendToServer(-1); // untested
-				this.mc.displayGuiScreen(new GuiStructureData(this.tileStructure, this));
+				this.transition(new GuiStructureData(this.tileStructure, this));
 			} else if (button.id == 28) { // choose pack
 				this.sendToServer(5);
-				this.tbClosed = true;
+				this.tbClosed = true; this.expectTransition();
 			} else if (button.id == 21) {
 				switch (this.tileStructure.getMirror()) {
 				case NONE:
@@ -365,7 +364,7 @@ public class GuiEditAdvStructure extends GuiScreen {
 		this.tileStructure.setPosition(new BlockPos(Integer.parseInt(this.posXEdit.getText()), Integer.parseInt(this.posYEdit.getText()), Integer.parseInt(this.posZEdit.getText())));
 		this.tileStructure.setSize(new BlockPos(Integer.parseInt(this.sizeXEdit.getText()), Integer.parseInt(this.sizeYEdit.getText()), Integer.parseInt(this.sizeZEdit.getText())));
 		this.tileStructure.setMetadata(this.dataEdit.getText());
-		return pendingAction>=0?CDefaultPackage.sendStructUpdatePacket(this.tileStructure, pendingAction):true;
+		return pendingAction>=0?ServerPackage.sendStructUpdate(this.tileStructure, pendingAction):true;
 	}
 
 	private int parseCoordinate(String p_189817_1_) {
@@ -379,9 +378,6 @@ public class GuiEditAdvStructure extends GuiScreen {
 	@Override
 	protected void keyTyped(char typedChar, int keyCode) throws IOException {
 		if (this.tbClosed) {
-			if (keyCode == 1) {
-				Minecraft.getMinecraft().displayGuiScreen(null);
-			}
 			return;
 		}
 		if (this.tileStructure.getMode()!=Mode.DATA && isValidCharacterForName(typedChar, keyCode)) {

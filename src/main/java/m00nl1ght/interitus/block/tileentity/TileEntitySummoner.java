@@ -10,6 +10,7 @@ import net.minecraft.entity.IEntityLivingData;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.NetworkManager;
+import net.minecraft.network.PacketBuffer;
 import net.minecraft.network.play.server.SPacketUpdateTileEntity;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumParticleTypes;
@@ -195,8 +196,16 @@ public class TileEntitySummoner extends TileEntity implements ITickable {
 		return true;
 	}
 	
-	public void setData(float playerDistance, int maxEntitiesInRange, int delayBase, int delayRange, float rangeH, float rangeVN, float rangeVP) {
-		this.playerDistance=playerDistance; this.maxEntitiesInRange=maxEntitiesInRange; this.spawnDelayBase=delayBase; this.spawnDelayRange=delayRange; this.rangeH=rangeH; this.rangeVN=rangeVN; this.rangeVP=rangeVP;
+	public boolean readFromBuffer(PacketBuffer buffer) {
+		String entID = buffer.readString(24);
+		this.playerDistance=buffer.readFloat();
+		this.maxEntitiesInRange=buffer.readInt();
+		this.spawnDelayBase=buffer.readInt();
+		this.spawnDelayRange=buffer.readInt();
+		this.rangeH=buffer.readFloat();
+		this.rangeVN=buffer.readFloat();
+		this.rangeVP=buffer.readFloat();
+		return this.setEntity(entID);
 	}
 
 }

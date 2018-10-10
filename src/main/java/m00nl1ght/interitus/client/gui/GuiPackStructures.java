@@ -1,10 +1,11 @@
 package m00nl1ght.interitus.client.gui;
 
 import java.io.IOException;
+
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 
-import m00nl1ght.interitus.network.CDefaultPackage;
+import m00nl1ght.interitus.network.ServerPackage;
 import m00nl1ght.interitus.structures.StructurePackInfo;
 import m00nl1ght.interitus.structures.StructurePackInfo.StructureInfo;
 import net.minecraft.client.gui.FontRenderer;
@@ -12,7 +13,7 @@ import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.renderer.Tessellator;
 
-public class GuiPackStructures extends GuiScreen {
+public class GuiPackStructures extends GuiEditor {
 	
 	private GuiButton closeButton;
 	private StructureList list;
@@ -20,7 +21,7 @@ public class GuiPackStructures extends GuiScreen {
 	private boolean tbClosed;
 	
 	public GuiPackStructures(GuiScreen parent) {
-        this.parent = parent;
+        super(GuiEditor.PACK_EDITOR); this.parent = parent;
     }
 	
 	@Override
@@ -34,15 +35,10 @@ public class GuiPackStructures extends GuiScreen {
 	}
     
     @Override
-    public void onGuiClosed() {
-        Keyboard.enableRepeatEvents(false);
-    }
-    
-    @Override
 	protected void actionPerformed(GuiButton button) throws IOException {
 		if (button.enabled && !this.tbClosed ) {
 			if (button.id == 0) {
-				this.mc.displayGuiScreen(parent);
+				this.transition(parent);
 			}
 		}
 	}
@@ -105,12 +101,12 @@ public class GuiPackStructures extends GuiScreen {
 			this.drawString(fontRenderer, str.size[0]+"x"+str.size[1]+"x"+str.size[2], x+150, slotTop+5, 16777215);
 			this.drawString(fontRenderer, str.genTasks+" tasks", x+270, slotTop+5, 16777215);
 			if (this.drawButton(mc, x+249, slotTop-1, 17, 17, true, this.isHovering, "...")) {
-				if (CDefaultPackage.openGenTasks(str.name)) {
-					tbClosed = true;
+				if (ServerPackage.sendOpenGenTasks(str.name)) {
+					tbClosed = true; expectTransition();
 				}
 			}
 			if (this.drawButton(mc, x+343, slotTop-1, 17, 17, !StructurePackInfo.active.read_only, this.isHovering, "X")) {
-				if (!CDefaultPackage.packGuiAction(5, str.name, "")) {return false;}
+				if (!ServerPackage.sendPackAction(5, str.name, "")) {return false;}
 				return StructurePackInfo.structures.remove(slotIdx)!=null;
 			}
 			return false;

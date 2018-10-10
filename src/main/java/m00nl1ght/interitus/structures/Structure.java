@@ -208,6 +208,7 @@ public class Structure {
 	}
     
 	public boolean nearOccurence(BlockPos pos, int maxDistSqr) {
+		if (maxDistSqr<=0) {return false;}
 		for (StructureData str1 : this.instances) {
 			int a = str1.pos.getX() - pos.getX(), b = str1.pos.getZ() - pos.getZ();
 			if (a*a+b*b<maxDistSqr) {return true;}
@@ -392,6 +393,15 @@ public class Structure {
 			struct=n;
 			return this;
 		}
+		
+		@Override
+    	public String toString() {
+			String str = "{ ";
+			for (StructureData d : struct) {
+				str+=d.toString()+" ";
+			}
+    		return str+"}";
+    	}
     	
     }
 

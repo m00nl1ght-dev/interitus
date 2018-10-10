@@ -1,20 +1,23 @@
 package m00nl1ght.interitus.client.gui;
 
 import java.io.IOException;
+
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 
-import m00nl1ght.interitus.network.CDefaultPackage;
+import m00nl1ght.interitus.network.ServerPackage;
 import m00nl1ght.interitus.structures.StructurePackInfo;
 import m00nl1ght.interitus.structures.StructurePackInfo.PackInfo;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.GuiButton;
-import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.renderer.Tessellator;
 
-public class GuiStructurePacks extends GuiScreen {
+public class GuiStructurePacks extends GuiEditor {
 	
+	public GuiStructurePacks() {
+		super(GuiEditor.PACK_EDITOR);
+	}
+
 	private GuiButton closeButton, addButton;
 	private PackList list;
 	private boolean saved = false;
@@ -30,18 +33,12 @@ public class GuiStructurePacks extends GuiScreen {
 	}
 
 	@Override
-	public void onGuiClosed() {
-		Keyboard.enableRepeatEvents(false);
-	}
-
-	@Override
 	protected void actionPerformed(GuiButton button) throws IOException {
 		if (button.enabled) {
 			if (button.id == 0) {
-				CDefaultPackage.packGuiAction(0, "", "");
-				this.mc.displayGuiScreen(null);
+				this.close();
 			} else if (button.id == 1) {
-				this.mc.displayGuiScreen(new GuiCreatePack(null, this));
+				this.transition(new GuiCreatePack(null, this));
 			}
 		}
 	}
@@ -71,24 +68,24 @@ public class GuiStructurePacks extends GuiScreen {
 		getFontRenderer().drawString("v"+pack.version, x + 150 - 7, y + 5, 16777215);
 		getFontRenderer().drawString(pack.description, x + 15 - 7, y + 20, 16777215);
 		if (this.list.drawButton(mc, x+310-7, y-1, 50, 19, true, true, "Reload")) {
-			if (CDefaultPackage.packGuiAction(1, pack.name, "")) {
-				Minecraft.getMinecraft().displayGuiScreen(null);
+			if (ServerPackage.sendPackAction(1, pack.name, "")) {
+				this.closeSilent();
 				return false;
 			}
 		}
 		if (this.list.drawButton(mc, x+260-7, y-1, 50, 19, !pack.read_only && !saved, true, "Save")) {
-			if (CDefaultPackage.packGuiAction(4, "", "")) {
-				Minecraft.getMinecraft().displayGuiScreen(null);
+			if (ServerPackage.sendPackAction(4, "", "")) {
 				this.saved=true;
+				this.closeSilent();
 				return false;
 			}
 		}
 		if (this.list.drawButton(mc, x+260-7, y+18, 50, 18, true, true, "Edit")) {
-			Minecraft.getMinecraft().displayGuiScreen(new GuiEditStructurePack(this));
+			this.transition(new GuiEditStructurePack(this));
 			return false;
 		}
 		if (this.list.drawButton(mc, x+310-7, y+18, 50, 18, true, true, "Copy")) {
-			Minecraft.getMinecraft().displayGuiScreen(new GuiCreatePack(pack, this));
+			this.transition(new GuiCreatePack(pack, this));
 			return false;
 		}
 		return false;
@@ -101,17 +98,17 @@ public class GuiStructurePacks extends GuiScreen {
 		getFontRenderer().drawString("v"+pack.version, x + 150, y + 5, 16777215);
 		getFontRenderer().drawString(pack.description, x + 15, y + 20, 16777215);
 		if (this.list.drawButton(mc, x+310, y-2, 50, 19, true, isHovering, "Load")) {
-			if (CDefaultPackage.packGuiAction(1, pack.name, "")) {
-				Minecraft.getMinecraft().displayGuiScreen(null);
+			if (ServerPackage.sendPackAction(1, pack.name, "")) {
+				this.closeSilent();
 				return false;
 			}
 		}
 		if (this.list.drawButton(mc, x+260, y+17, 50, 18, !isDefault, isHovering, "Delete")) {
 			this.toBeDeleted = pack;
-			Minecraft.getMinecraft().displayGuiScreen(new GuiConfirm(this, "Do you really want to delete the pack <"+pack.name+">?", "", "Cancel", "Confirm", this::confirmCallback));
+			this.transition(new GuiConfirm(this, GuiEditor.PACK_EDITOR, "Do you really want to delete the pack <"+pack.name+">?", "", "Cancel", "Confirm", this::confirmCallback));
 		}
 		if (this.list.drawButton(mc, x+310, y+17, 50, 18, true, isHovering, "Copy")) {
-			Minecraft.getMinecraft().displayGuiScreen(new GuiCreatePack(pack, this));
+			this.transition(new GuiCreatePack(pack, this));
 			return false;
 		}
 		return false;
@@ -119,7 +116,7 @@ public class GuiStructurePacks extends GuiScreen {
 	
 	public boolean confirmCallback(int i) {
 		if (i==1 && toBeDeleted!=null) {
-			if (CDefaultPackage.packGuiAction(2, toBeDeleted.name, "")) {
+			if (ServerPackage.sendPackAction(2, toBeDeleted.name, "")) {
 				StructurePackInfo.packs.remove(toBeDeleted);
 			}
 		}

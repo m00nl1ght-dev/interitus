@@ -60,19 +60,13 @@ public class ItemStructureDataTool extends Item {
 		}
 		if (player.isSneaking()) {
 			TileEntityAdvStructure te = getTileEntity(player, stack);
-			if (te.editData(player)) {
+			if (te.usedBy(player, true)) {
 				return EnumActionResult.SUCCESS;
 			} else {
 				return EnumActionResult.FAIL;
 			}
 		} else {
 			// TODO UI list to choose condition type
-//			ConditionType mode = this.getMode(stack, ConditionType.inGround);
-//			int i = mode.ordinal()+1;
-//			if (i >= ConditionType.values().length) {i=0;}
-//			mode = ConditionType.values()[i];
-//			this.setMode(stack, mode);
-//			player.sendStatusMessage(new TextComponentString("Condition Type: "+mode.name()), true);
 			return EnumActionResult.SUCCESS;
 		}
     }
@@ -88,7 +82,7 @@ public class ItemStructureDataTool extends Item {
 		if (te==null) {return;}
 		ConditionType type = this.getMode(stack);
 		if (type==null) {
-			//TODO show UI to choose condition type
+			player.sendStatusMessage(new TextComponentString("No condition type selected. Right click to select one."), false);
 			return;
 		}
 		te.getConditions().add(new Condition(type, pos, this.getNegated(stack)));

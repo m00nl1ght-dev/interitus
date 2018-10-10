@@ -156,7 +156,7 @@ public abstract class WorldGenTask {
 			if (structure.nearOccurence(posCache, minDistance)) {gen.gRange++; return false;}
 			// 1 find suitable position
 			if (!gen.getStructurePositionMap().findSuitablePosition(this, posCache, Rotation.NONE)) {gen.gNoPos++; return false;}
-			Chunk chunk = gen.world.getChunkFromChunkCoords(x, z);
+			Chunk chunk = gen.world.getChunkFromChunkCoords(posCache.chunkX(), posCache.chunkZ());
 			int h = chunk.getHeightValue(posCache.inChunkX(), posCache.inChunkZ());
 			if (h<=0) {gen.gNoPos++; return false;}
 			posCache.setY(randomY(gen.random, h - this.hBase, this.hRange));

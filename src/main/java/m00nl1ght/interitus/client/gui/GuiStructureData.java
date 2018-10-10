@@ -10,7 +10,7 @@ import org.lwjgl.input.Mouse;
 
 import m00nl1ght.interitus.block.tileentity.TileEntityAdvStructure;
 import m00nl1ght.interitus.block.tileentity.TileEntityAdvStructure.LootEntryPrimer;
-import m00nl1ght.interitus.network.CDefaultPackage;
+import m00nl1ght.interitus.network.ServerPackage;
 import m00nl1ght.interitus.structures.Condition;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.GuiButton;
@@ -18,7 +18,7 @@ import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.util.math.BlockPos;
 
-public class GuiStructureData extends GuiScreen {
+public class GuiStructureData extends GuiEditor {
 
 	private final DecimalFormat decimalFormat = new DecimalFormat("0.0###");
 	protected final TileEntityAdvStructure tileStructure;
@@ -29,15 +29,14 @@ public class GuiStructureData extends GuiScreen {
 	private boolean state = false;
 
 	public GuiStructureData(TileEntityAdvStructure te, GuiScreen parent) {
+		super(() -> {ServerPackage.sendStructUpdate(te, 0);});
 		this.tileStructure = te;
 		this.parent = parent;
 		this.decimalFormat.setDecimalFormatSymbols(new DecimalFormatSymbols(Locale.US));
 	}
 
 	@Override
-	public void updateScreen() {
-
-	}
+	public void updateScreen() {}
 
 	@Override
 	public void initGui() {
@@ -58,16 +57,14 @@ public class GuiStructureData extends GuiScreen {
 	public void onGuiClosed() {
 		Keyboard.enableRepeatEvents(false);
 		this.tileStructure.setAcceptUpdates(true);
+		this.onCloseEditor();
 	}
 
 	@Override
 	protected void actionPerformed(GuiButton button) throws IOException {
 		if (button.enabled) {
 			if (button.id == 0) {
-				if (this.parent==null) {
-					if (!CDefaultPackage.sendStructUpdatePacket(this.tileStructure, 0)) {return;}
-				}
-				this.mc.displayGuiScreen(parent);
+				this.transition(parent);
 			} else if (button.id == 3) {
 				this.setState(false);
 			} else if (button.id == 4) {
@@ -183,7 +180,7 @@ public class GuiStructureData extends GuiScreen {
 			getFontRenderer().drawString("@ x " + entry.pos.getX() + " y " + entry.pos.getY() + " z " + entry.pos.getZ(), x + 140, slotTop + 5, 16777215);
 			getFontRenderer().drawString(entry.gens().size() + " gens", x + 280, slotTop + 5, 16777215);
 			if (this.drawButton(mc, x+325, slotTop-1, 17, 17, true, this.isHovering, "...")) {
-				mc.displayGuiScreen(new GuiEditLootEntry(tileStructure, GuiStructureData.this, entry));
+				transition(new GuiEditLootEntry(tileStructure, GuiStructureData.this, entry));
 			}
 			if (this.drawButton(mc, x+343, slotTop-1, 17, 17, true, this.isHovering, "X")) {
 				return tileStructure.getLoot().remove(slotIdx)!=null;

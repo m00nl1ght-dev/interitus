@@ -5,21 +5,21 @@ import java.io.IOException;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 
-import m00nl1ght.interitus.network.CDefaultPackage;
+import m00nl1ght.interitus.network.ServerPackage;
 import m00nl1ght.interitus.structures.StructurePackInfo;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.renderer.Tessellator;
 
-public class GuiPackLootLists extends GuiScreen {
+public class GuiPackLootLists extends GuiEditor {
 	
 	private GuiButton closeButton;
 	private LootListsList list;
 	private final GuiScreen parent;
 	
 	public GuiPackLootLists(GuiScreen parent) {
-        this.parent = parent;
+        super(GuiEditor.PACK_EDITOR); this.parent = parent;
     }
 	
 	@Override
@@ -32,15 +32,10 @@ public class GuiPackLootLists extends GuiScreen {
 	}
     
     @Override
-    public void onGuiClosed() {
-        Keyboard.enableRepeatEvents(false);
-    }
-    
-    @Override
 	protected void actionPerformed(GuiButton button) throws IOException {
 		if (button.enabled) {
 			if (button.id == 0) {
-				this.mc.displayGuiScreen(parent);
+				this.transition(parent);
 			}
 		}
 	}
@@ -97,7 +92,7 @@ public class GuiPackLootLists extends GuiScreen {
 				//TODO loot list editor
 			}
 			if (this.drawButton(mc, x+343, slotTop-1, 17, 17, !StructurePackInfo.active.read_only, this.isHovering, "X")) {
-				if (!CDefaultPackage.packGuiAction(8, StructurePackInfo.lootlists.get(slotIdx), "")) {return false;}
+				if (!ServerPackage.sendPackAction(8, StructurePackInfo.lootlists.get(slotIdx), "")) {return false;}
 				return StructurePackInfo.lootlists.remove(slotIdx)!=null;
 			}
 			return false;

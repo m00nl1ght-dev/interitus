@@ -105,12 +105,13 @@ public abstract class InteritusChunkGenerator implements IChunkGenerator, IDebug
 		}
 	}
 	
-	public void finishPendingStructures() {
+	public int finishPendingStructures() {
 		Interitus.logger.info("Finishing all pending structures, this may take a moment ...");
 		this.createStruct = false;
-		this.structures.finishPending();
+		int i = this.structures.finishPending();
 		this.createStruct = true;
 		Interitus.logger.info("Finished pending structures.");
+		return i;
 	}
 
 	public Chunk getChunkFromCache(int x, int z, boolean remove) {
@@ -173,8 +174,13 @@ public abstract class InteritusChunkGenerator implements IChunkGenerator, IDebug
 	@Override
 	public void debugMsg(ICommandSender sender) {
 		InteritusProfiler.send(sender, "> DIM"+this.world.provider.getDimension()+" > "+this.toString());
-		InteritusProfiler.send(sender, "struct [all: "+gAll+" ok: "+gDone+" range: "+gRange+" cond: "+gCond+" vStr: "+gNoPos+"]");
+		InteritusProfiler.send(sender, "struct [all: "+gAll+" ok: "+gDone+" range: "+gRange+" cond: "+gCond+" noPos: "+gNoPos+"]");
 		InteritusProfiler.send(sender, "chunks cached: "+chunkCache.size()+" pending: "+structures.chunkCount());
+	}
+	
+	@Override
+	public void resetStats() {
+		gAll=0; gDone=0; gRange=0; gCond=0; gNoPos=0;
 	}
 
 }

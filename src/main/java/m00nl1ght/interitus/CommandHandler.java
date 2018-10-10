@@ -6,6 +6,7 @@ import java.util.List;
 import com.google.common.collect.Lists;
 
 import m00nl1ght.interitus.block.BlockAdvStructure;
+import m00nl1ght.interitus.network.ClientPackage;
 import m00nl1ght.interitus.structures.LootList;
 import m00nl1ght.interitus.structures.StructurePack;
 import m00nl1ght.interitus.util.Toolkit;
@@ -14,6 +15,7 @@ import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommand;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.TextComponentString;
@@ -78,9 +80,23 @@ public class CommandHandler implements ICommand {
 			return;
 		}
 		
+		if (args[0].equals("finishgen")) {
+			int i = StructurePack.get().finishPendingStructures(player.getEntityWorld().provider.getDimension());
+			if (i>=0) {
+				sender.sendMessage(new TextComponentString("Finished "+i+" structure chunks in dimension "+player.getEntityWorld().provider.getDimension()+"."));
+			} else {
+				sender.sendMessage(new TextComponentString("Failed to finish structure chunks in dimension "+player.getEntityWorld().provider.getDimension()+"."));
+			}
+			return;
+		}
+		
 		if (args[0].equals("pack")) {
-			if(args.length == 1) { 
-				StructurePack.playerTryEdit(player);
+			if(args.length == 1) {
+				if (StructurePack.canPlayerEdit(player, true, true)) {
+					if (!ClientPackage.sendStructurePackGui((EntityPlayerMP) player)) {
+						StructurePack.finishedEditing(player); // in case somthing goes wrong while sending the packet
+					}
+				}
 				return; 
 	        }
 			switch (args[1]) {

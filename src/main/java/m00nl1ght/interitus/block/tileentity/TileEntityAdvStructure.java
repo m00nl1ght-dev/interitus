@@ -14,7 +14,7 @@ import m00nl1ght.interitus.Interitus;
 import m00nl1ght.interitus.block.BlockAdvStructure;
 import m00nl1ght.interitus.item.ItemStructureDataTool;
 import m00nl1ght.interitus.item.ModItem;
-import m00nl1ght.interitus.network.SDefaultPackage;
+import m00nl1ght.interitus.network.ClientPackage;
 import m00nl1ght.interitus.structures.Condition;
 import m00nl1ght.interitus.structures.Structure;
 import m00nl1ght.interitus.structures.Structure.StructureData;
@@ -43,6 +43,7 @@ import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.world.World;
 import net.minecraft.world.gen.structure.StructureBoundingBox;
@@ -111,72 +112,56 @@ public class TileEntityAdvStructure extends TileEntity {
         return this.writeToNBT(new NBTTagCompound());
     }
 
-	public boolean usedBy(EntityPlayer player) {
+	public boolean usedBy(EntityPlayer player, boolean dataScreen) {
+		if (player.getEntityWorld().isRemote) {return true;}
 		if (!player.canUseCommandBlock()) {
-			if (!player.getEntityWorld().isRemote) {
-				Toolkit.sendMessageToPlayer(player, "You don't have permission to use this.");
-			}
+			Toolkit.sendMessageToPlayer(player, "You don't have permission to use this.");
 			return false;
-		} else {
-			if (!player.getEntityWorld().isRemote) {
-				if (editing==null || editing==player || !Toolkit.isPlayerOnServer(player)) {
-					this.editing = player;
-					SDefaultPackage.sendStructureBlockGui((EntityPlayerMP)player, this);
-				} else {
-					Toolkit.sendMessageToPlayer(player, player.getDisplayNameString()+" is currently using this.");
-					return false;
-				}
+		} else if (this.canPlayerEdit(player, true, true)) {
+			if (!ClientPackage.sendStructureBlockGui((EntityPlayerMP)player, this, dataScreen)) {
+				this.finishedEditing(player); // in case packet fails to send
 			}
 			return true;
-		}
+		} else {return false;}
 	}
 	
 	public boolean editLootData(EntityPlayer player, BlockPos pos) {
+		if (player.getEntityWorld().isRemote) {return true;}
 		if (!player.canUseCommandBlock()) {
-			if (!player.getEntityWorld().isRemote) {
-				Toolkit.sendMessageToPlayer(player, "You don't have permission to use this.");
-			}
+			Toolkit.sendMessageToPlayer(player, "You don't have permission to use this.");
 			return false;
-		} else {
-			if (!player.getEntityWorld().isRemote) {
-				if (editing==null || editing==player || !Toolkit.isPlayerOnServer(player)) {
-					this.editing = player;
-					SDefaultPackage.sendStructureLootGui((EntityPlayerMP)player, this, pos);
-				} else {
-					Toolkit.sendMessageToPlayer(player, player.getDisplayNameString()+" is currently editing this structure block.");
-					return false;
-				}
+		} else if (this.canPlayerEdit(player, true, true)) {
+			if (!ClientPackage.sendStructureLootGui((EntityPlayerMP)player, this, pos)) {
+				this.finishedEditing(player); // in case packet fails to send
 			}
 			return true;
-		}
+		} else {return false;}		
 	}
-
-	public boolean editData(EntityPlayer player) {
-		if (!player.canUseCommandBlock()) {
-			if (!player.getEntityWorld().isRemote) {
-				Toolkit.sendMessageToPlayer(player, "You don't have permission to use this.");
-			}
+	
+	public boolean canPlayerEdit(EntityPlayer player, boolean notify, boolean setEditing) {
+		if (!Toolkit.isPlayerOnServer(player)) {
+			if (editing==player) {editing=null;}
 			return false;
-		} else {
-			if (!player.getEntityWorld().isRemote) {
-				if (editing==null || editing==player || !Toolkit.isPlayerOnServer(player)) {
-					this.editing = player;
-					SDefaultPackage.sendStructureDataGui((EntityPlayerMP)player, this);
-				} else {
-					Toolkit.sendMessageToPlayer(player, player.getDisplayNameString()+" is currently editing this structure block.");
-					return false;
-				}
-			}
+		}
+		if (editing == null || editing == player || !Toolkit.isPlayerOnServer(editing) || !player.canUseCommandBlock()) {
+			editing = setEditing?player:null;
 			return true;
 		}
+		if (notify) player.sendMessage(new TextComponentString("You can't do that right now, because another player ("+editing.getName()+") is currently editing this structure block."));
+		return false;
 	}
 	
-	public void setEditingPlayer(EntityPlayer player) {
-		this.editing = player;
+	public String getEditingPlayer() {
+		return editing==null?"null":editing.getName();
 	}
 	
-	public void resetEditingPlayer() {
-		this.editing = null;
+	public void finishedEditing(EntityPlayer player) {
+		if (editing==null) {
+			Interitus.logger.error("Editing State Error: "+player.getName()+" finished editing the structure block at "+this.pos+", but the editing flag was already null!");
+		} else if (editing!=player) {
+			Interitus.logger.error("Editing State Error: "+player.getName()+" finished editing the structure block at "+this.pos+", but the editing flag was set to a different player: "+editing.getName());
+		}
+		editing=null;
 	}
 	
 	@Override

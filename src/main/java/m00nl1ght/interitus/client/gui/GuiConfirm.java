@@ -8,15 +8,15 @@ import org.lwjgl.input.Keyboard;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;
 
-public class GuiConfirm extends GuiScreen {
+public class GuiConfirm extends GuiEditor {
 	
 	private GuiButton button1, button2;
 	private GuiScreen parent;
 	private String text1, text2, opt1, opt2;
 	private Function<Integer, Boolean> func;
 	
-	public GuiConfirm(GuiScreen parent, String text1, String text2, String opt1, String opt2, Function<Integer, Boolean> func) {
-		this.parent=parent; this.text1=text1; this.text2=text2; this.opt1=opt1; this.opt2=opt2; this.func=func;
+	public GuiConfirm(GuiScreen parent, Runnable editorCB, String text1, String text2, String opt1, String opt2, Function<Integer, Boolean> func) {
+		super(editorCB); this.parent=parent; this.text1=text1; this.text2=text2; this.opt1=opt1; this.opt2=opt2; this.func=func;
 	}
 	
 	@Override
@@ -28,20 +28,15 @@ public class GuiConfirm extends GuiScreen {
 	}
 
 	@Override
-	public void onGuiClosed() {
-		Keyboard.enableRepeatEvents(false);
-	}
-
-	@Override
 	protected void actionPerformed(GuiButton button) throws IOException {
 		if (button.enabled) {
 			if (button.id == 0) {
 				if (func.apply(0)) {
-					this.mc.displayGuiScreen(parent);
+					this.transition(parent);
 				}
 			} else if (button.id == 1) {
 				if (func.apply(1)) {
-					this.mc.displayGuiScreen(parent);
+					this.transition(parent);
 				}
 			}
 		}

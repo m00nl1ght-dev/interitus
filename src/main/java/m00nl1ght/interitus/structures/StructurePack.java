@@ -18,8 +18,8 @@ import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 import com.google.common.collect.Maps;
+
 import m00nl1ght.interitus.Interitus;
-import m00nl1ght.interitus.network.SDefaultPackage;
 import m00nl1ght.interitus.util.IDebugObject;
 import m00nl1ght.interitus.util.InteritusProfiler;
 import m00nl1ght.interitus.util.Toolkit;
@@ -28,11 +28,11 @@ import m00nl1ght.interitus.world.capabilities.ICapabilityWorldDataStorage;
 import m00nl1ght.interitus.world.capabilities.WorldDataStorageProvider;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.nbt.CompressedStreamTools;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.text.TextComponentString;
 import net.minecraft.world.WorldServer;
 import net.minecraft.world.biome.Biome;
 import net.minecraftforge.common.DimensionManager;
@@ -44,9 +44,9 @@ public class StructurePack implements IDebugObject {
 	static final Map<Integer, InteritusChunkGenerator> genList = Maps.<Integer, InteritusChunkGenerator>newHashMap();
 	static final StructurePack emptyPack = new DefaultPack();
 	static StructurePack current = emptyPack; // @Nonnull
+	public static EntityPlayer editing = null;
 	static final HashMap<String, StructurePack> packs = new HashMap<String, StructurePack>();
 	public static final FilenameFilter MCSP_FILTER = new MCSPFilter();
-	private static EntityPlayer editing = null;
 	
 	final Map<String, Structure> structures = Maps.<String, Structure>newHashMap();
 	final Map<String, LootList> loot = new HashMap<String, LootList>();
@@ -63,36 +63,32 @@ public class StructurePack implements IDebugObject {
 		this.name = name;
 	}
 
-	public static boolean playerTryEdit(EntityPlayer player) {
-		if (!player.canUseCommandBlock()) {
-			if (!player.getEntityWorld().isRemote) {
-				Toolkit.sendMessageToPlayer(player, "You don't have permission to do that.");
-			}
+	public static boolean canPlayerEdit(EntityPlayer player, boolean notify, boolean setEditing) {
+		if (!Toolkit.isPlayerOnServer(player)) {
+			if (editing==player) {editing=null;}
 			return false;
-		} else {
-			if (!player.getEntityWorld().isRemote) {
-				if (editing == null || editing == player || !Toolkit.isPlayerOnServer(player)) {
-					editing = player;
-					SDefaultPackage.sendStructurePackGui((EntityPlayerMP) player);
-				} else {
-					Toolkit.sendMessageToPlayer(player, player.getDisplayNameString() + " is currently editing the active structure pack. Please wait.");
-					return false;
-				}
-			}
+		}
+		//Interitus.logger.info("+++ editing check = "+(editing==null?"null":editing.getName())+" (noiffy: "+notify+", set: "+setEditing+")");
+		if (editing == null || editing == player || !Toolkit.isPlayerOnServer(editing) || !editing.canUseCommandBlock()) {
+			if (setEditing) editing = player;
 			return true;
 		}
+		if (notify) player.sendMessage(new TextComponentString("You can't do that right now, because another player ("+editing.getName()+") is currently editing the active structure pack."));
+		return false;
 	}
 	
-	public static void resetEditingPlayer() {
+	public static String getEditingPlayer() {
+		return editing==null?"null":editing.getName();
+	}
+	
+	public static void finishedEditing(EntityPlayer player) {
+		if (editing==null) {
+			Interitus.logger.error("Editing State Error: "+player.getName()+" finished editing the structure pack, but the editing flag was already null!");
+		} else if (editing!=player) {
+			Interitus.logger.error("Editing State Error: "+player.getName()+" finished editing the structure pack, but the editing flag was set to a different player: "+editing.getName());
+		}
+		//Interitus.logger.info("+++ editing reset (from "+(editing==null?"null":editing.getName())+")");
 		editing=null;
-	}
-	
-	public static EntityPlayer getEditingPlayer() {
-		return editing;
-	}
-	
-	public static boolean canEdit(EntityPlayer player) {
-		return editing==null || editing.getName().equals(player.getName());
 	}
 	
 	void preload() throws IOException {
@@ -572,6 +568,12 @@ public class StructurePack implements IDebugObject {
 		for (InteritusChunkGenerator gen : genList.values()) {
 			gen.resetStats();
 		}
+	}
+	
+	public static int finishPendingStructures(int dimension) {
+		InteritusChunkGenerator gen = genList.get(dimension);
+		if (gen==null) {return -1;}
+		return gen.finishPendingStructures();
 	}
 	
 	private static class MCSPFilter implements FilenameFilter {

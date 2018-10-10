@@ -5,19 +5,18 @@ import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.util.Locale;
 
-import net.minecraft.client.gui.FontRenderer;
-import net.minecraft.client.gui.GuiButton;
-import net.minecraft.client.gui.GuiScreen;
-import net.minecraft.client.renderer.Tessellator;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 
 import m00nl1ght.interitus.block.tileentity.TileEntityAdvStructure;
 import m00nl1ght.interitus.block.tileentity.TileEntityAdvStructure.LootEntryPrimer;
 import m00nl1ght.interitus.block.tileentity.TileEntityAdvStructure.LootGenPrimer;
-import m00nl1ght.interitus.network.CDefaultPackage;
+import m00nl1ght.interitus.network.ServerPackage;
+import net.minecraft.client.gui.FontRenderer;
+import net.minecraft.client.gui.GuiButton;
+import net.minecraft.client.renderer.Tessellator;
 
-public class GuiEditLootEntry extends GuiScreen {
+public class GuiEditLootEntry extends GuiEditor {
 	
 	private final DecimalFormat decimalFormat = new DecimalFormat("0.0###");
 	protected final TileEntityAdvStructure tileStructure;
@@ -27,6 +26,7 @@ public class GuiEditLootEntry extends GuiScreen {
 	private final LootEntryPrimer primer;
 	
 	public GuiEditLootEntry(TileEntityAdvStructure te, GuiStructureData parent, LootEntryPrimer primer) {
+		super(() -> {ServerPackage.sendStructUpdate(te, 0);});
         this.tileStructure = te; this.parent = parent; this.primer = primer;
         this.decimalFormat.setDecimalFormatSymbols(new DecimalFormatSymbols(Locale.US));
     }
@@ -45,6 +45,7 @@ public class GuiEditLootEntry extends GuiScreen {
     public void onGuiClosed() {
         Keyboard.enableRepeatEvents(false);
         this.tileStructure.setAcceptUpdates(true);
+        this.onCloseEditor();
     }
     
     @Override
@@ -53,10 +54,8 @@ public class GuiEditLootEntry extends GuiScreen {
 			if (button.id == 0) {
 				if (parent!=null) {
 					parent.setState(true);
-				} else {
-					if (!CDefaultPackage.sendStructUpdatePacket(this.tileStructure, 0)) {return;}
 				}
-				this.mc.displayGuiScreen(parent);
+				this.transition(parent);
 			}
 		}
 	}
@@ -107,7 +106,7 @@ public class GuiEditLootEntry extends GuiScreen {
 			if (this.drawButton(mc, x+343, relativeY-1, 17, 17, primer.gens().size()<16, true, "+")) {
 				LootGenPrimer p = new LootGenPrimer(1, "undefined");
 				primer.gens().add(p);
-				mc.displayGuiScreen(new GuiEditLootGen(tileStructure, GuiEditLootEntry.this, p));
+				transition(new GuiEditLootGen(tileStructure, GuiEditLootEntry.this, p));
 			}
 		}
 
@@ -118,7 +117,7 @@ public class GuiEditLootEntry extends GuiScreen {
 			getFontRenderer().drawString(gen.list(), x+15, slotTop+5, 16777215);
 			this.drawCenteredString(fontRenderer, ""+gen.amount(), x+210, slotTop+5, 16777215);
 			if (this.drawButton(mc, x+120, slotTop-1, 17, 17, true, this.isHovering, "...")) {
-				mc.displayGuiScreen(new GuiEditLootGen(tileStructure, GuiEditLootEntry.this, gen));
+				transition(new GuiEditLootGen(tileStructure, GuiEditLootEntry.this, gen));
 			}
 			if (this.drawButton(mc, x+180, slotTop-1, 17, 17, gen.amount()>0, this.isHovering, "-")) {
 				gen.setAmount(gen.amount()-1);

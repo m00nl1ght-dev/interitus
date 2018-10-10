@@ -7,16 +7,16 @@ import java.util.Locale;
 
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.GuiButton;
-import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.renderer.Tessellator;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 
 import m00nl1ght.interitus.block.tileentity.TileEntityAdvStructure;
 import m00nl1ght.interitus.block.tileentity.TileEntityAdvStructure.LootGenPrimer;
+import m00nl1ght.interitus.network.ServerPackage;
 import m00nl1ght.interitus.structures.StructurePackInfo;
 
-public class GuiEditLootGen extends GuiScreen {
+public class GuiEditLootGen extends GuiEditor {
 	
 	private final DecimalFormat decimalFormat = new DecimalFormat("0.0###");
 	protected final TileEntityAdvStructure tileStructure;
@@ -26,6 +26,7 @@ public class GuiEditLootGen extends GuiScreen {
 	private final LootGenPrimer primer;
 	
 	public GuiEditLootGen(TileEntityAdvStructure te, GuiEditLootEntry parent, LootGenPrimer primer) {
+		super(() -> {ServerPackage.sendStructUpdate(te, 0);});
         this.tileStructure = te; this.parent = parent; this.primer = primer;
         this.decimalFormat.setDecimalFormatSymbols(new DecimalFormatSymbols(Locale.US));
     }
@@ -49,6 +50,7 @@ public class GuiEditLootGen extends GuiScreen {
     public void onGuiClosed() {
         Keyboard.enableRepeatEvents(false);
         this.tileStructure.setAcceptUpdates(true);
+        this.onCloseEditor();
     }
     
     @Override
@@ -58,7 +60,7 @@ public class GuiEditLootGen extends GuiScreen {
 				if (this.list.isSelectionValid()) {
 					this.primer.setList(StructurePackInfo.lootlists.get(this.list.selectedIndex));
 				}
-				this.mc.displayGuiScreen(parent);
+				this.transition(parent);
 			}
 		}
 	}

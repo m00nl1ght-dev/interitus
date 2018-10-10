@@ -123,8 +123,8 @@ public abstract class ConditionTypeClient {
 			type_dirty = false;
 			return create(typeDD.getText(), this);
 		}
-		fontRenderer.drawStringWithShadow("Negate", x + 135, y + 23, 16777215);
-		if (GuiUtils.drawCheckbox(x + 120, y + 20, 11, 11, this.negated, mX, mY, clicked)) {
+		fontRenderer.drawStringWithShadow("Negate", x + 135, y + 18, 16777215);
+		if (GuiUtils.drawCheckbox(x + 120, y + 15, 11, 11, this.negated, mX, mY, clicked && !GuiDropdown.mState)) {
 			this.negated = !this.negated;
 		}
 		return this;

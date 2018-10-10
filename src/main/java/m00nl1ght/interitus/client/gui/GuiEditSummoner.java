@@ -1,30 +1,20 @@
 package m00nl1ght.interitus.client.gui;
 
-import io.netty.buffer.Unpooled;
-import m00nl1ght.interitus.Interitus;
-import m00nl1ght.interitus.block.tileentity.TileEntitySummoner;
-import m00nl1ght.interitus.network.CDefaultPackage;
-import m00nl1ght.interitus.network.ModNetwork;
-
 import java.io.IOException;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
-import java.util.List;
 import java.util.Locale;
 
 import org.lwjgl.input.Keyboard;
 
-import com.google.common.collect.Lists;
-
+import m00nl1ght.interitus.block.tileentity.TileEntitySummoner;
+import m00nl1ght.interitus.network.ServerPackage;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.GuiTextField;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.ChatAllowedCharacters;
-import net.minecraft.util.Mirror;
-import net.minecraft.util.Rotation;
-import net.minecraft.util.math.BlockPos;
 
 public class GuiEditSummoner extends GuiScreen {
 	
@@ -104,31 +94,23 @@ public class GuiEditSummoner extends GuiScreen {
 				//-> revert the changes
 				this.mc.displayGuiScreen((GuiScreen) null);
 			} else if (button.id == 0) { //ok
-				if (this.sendToServer()) {
+				if (ServerPackage.sendSummonerUpdate(this)) {
 					this.mc.displayGuiScreen((GuiScreen) null);
 				}
 			}
 		}
 	}
 	
-	private boolean sendToServer() {
-		try {
-			PacketBuffer packetbuffer = new PacketBuffer(Unpooled.buffer());
-			this.tileStructure.writeCoordinates(packetbuffer);
-			packetbuffer.writeString(this.nameEdit.getText());
-			packetbuffer.writeFloat(this.parseFloat(this.pRangeEdit.getText(), 1F, 256F, 16F));
-			packetbuffer.writeInt(this.parseInt(this.maxMobEdit.getText(), 1, 1024, 4));
-			packetbuffer.writeInt(this.parseInt(this.delayBaseEdit.getText(), 10, 5000, 100));
-			packetbuffer.writeInt(this.parseInt(this.delayRangeEdit.getText(), 0, 5000, 100));
-			packetbuffer.writeFloat(this.parseFloat(this.rangeHEdit.getText(), 1F, 32F, 8F));
-			packetbuffer.writeFloat(this.parseFloat(this.rangeVNEdit.getText(), 1F, 16F, 4F));
-			packetbuffer.writeFloat(this.parseFloat(this.rangeVPEdit.getText(), 1F, 16F, 4F));
-			ModNetwork.INSTANCE.sendToServer(new CDefaultPackage("Summoner", packetbuffer));
-			return true;
-		} catch (Exception exception) {
-			Interitus.logger.warn("Could not send summoner block info", (Throwable) exception);
-			return false;
-		}
+	public void writeToBuffer(PacketBuffer buffer) {
+		this.tileStructure.writeCoordinates(buffer);
+		buffer.writeString(this.nameEdit.getText());
+		buffer.writeFloat(this.parseFloat(this.pRangeEdit.getText(), 1F, 256F, 16F));
+		buffer.writeInt(this.parseInt(this.maxMobEdit.getText(), 1, 1024, 4));
+		buffer.writeInt(this.parseInt(this.delayBaseEdit.getText(), 10, 5000, 100));
+		buffer.writeInt(this.parseInt(this.delayRangeEdit.getText(), 0, 5000, 100));
+		buffer.writeFloat(this.parseFloat(this.rangeHEdit.getText(), 1F, 32F, 8F));
+		buffer.writeFloat(this.parseFloat(this.rangeVNEdit.getText(), 1F, 16F, 4F));
+		buffer.writeFloat(this.parseFloat(this.rangeVPEdit.getText(), 1F, 16F, 4F));
 	}
 	
 	private int parseInt(String string, int min, int max, int def) {

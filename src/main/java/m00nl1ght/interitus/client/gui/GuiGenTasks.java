@@ -7,7 +7,7 @@ import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 
 import m00nl1ght.interitus.client.GenTaskClient;
-import m00nl1ght.interitus.network.CDefaultPackage;
+import m00nl1ght.interitus.network.ServerPackage;
 import m00nl1ght.interitus.structures.StructurePackInfo;
 import m00nl1ght.interitus.structures.StructurePackInfo.StructureInfo;
 import net.minecraft.client.gui.FontRenderer;
@@ -17,7 +17,7 @@ import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 
-public class GuiGenTasks extends GuiScreen {
+public class GuiGenTasks extends GuiEditor {
 	
 	private GuiButton closeButton, addButton;
 	private GenTaskList list;
@@ -27,7 +27,8 @@ public class GuiGenTasks extends GuiScreen {
 	private final boolean read_only;
 	
 	public GuiGenTasks(GuiScreen currentScreen, String struct, NBTTagCompound nbt) {
-        this.parent = currentScreen; this.read_only = StructurePackInfo.active.read_only; this.struct = struct;
+        super(GuiEditor.PACK_EDITOR);
+		this.parent = currentScreen; this.read_only = StructurePackInfo.active.read_only; this.struct = struct;
         NBTTagList list = nbt.getTagList("u", 10);
         for (int i = 0; i < list.tagCount(); i++) {
         	tasks.add(GenTaskClient.build(list.getCompoundTagAt(i)));
@@ -54,17 +55,18 @@ public class GuiGenTasks extends GuiScreen {
     public void onGuiClosed() {
         Keyboard.enableRepeatEvents(false);
         GuiDropdown.close();
+        this.onCloseEditor();
     }
     
     @Override
 	protected void actionPerformed(GuiButton button) throws IOException {
 		if (button.enabled && !GuiDropdown.isOpen()) {
 			if (button.id == 0) {
-				if (read_only || CDefaultPackage.updateGenTasks(getUpdateTag(), struct)) {
+				if (read_only || ServerPackage.sendUpdateGenTasks(getUpdateTag(), struct)) {
 					for (StructureInfo str : StructurePackInfo.structures) {
 						if (str.name.equals(struct)) {str.genTasks=tasks.size(); break;}
 					}
-					this.mc.displayGuiScreen(parent);
+					this.transition(parent);
 				}
 			} else if (button.id == 1) {
 				tasks.add(new GenTaskClient.DefaultOnGroundTaskC().init(getFontRenderer()));

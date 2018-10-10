@@ -4,21 +4,21 @@ import java.io.IOException;
 
 import org.lwjgl.input.Keyboard;
 
-import m00nl1ght.interitus.network.CDefaultPackage;
+import m00nl1ght.interitus.network.ServerPackage;
 import m00nl1ght.interitus.structures.StructurePackInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.GuiTextField;
 
-public class GuiEditStructurePack extends GuiScreen {
+public class GuiEditStructurePack extends GuiEditor {
 	
 	private final GuiScreen parent;
 	private GuiButton doneButton, structuresButton, lootButton, condButton, signButton;
 	private GuiTextField nameField;
 	
 	public GuiEditStructurePack(GuiScreen parent) {
-		this.parent=parent;
+		super(GuiEditor.PACK_EDITOR); this.parent=parent;
 	}
 	
 	@Override
@@ -43,41 +43,36 @@ public class GuiEditStructurePack extends GuiScreen {
 	}
 
 	@Override
-	public void onGuiClosed() {
-		Keyboard.enableRepeatEvents(false);
-	}
-
-	@Override
 	protected void actionPerformed(GuiButton button) throws IOException {
 		if (button.enabled) {
 			if (button.id == 0) {
 				sendDescription();
-				this.mc.displayGuiScreen(parent);
+				this.transition(parent);
 			} else if (button.id == 1) {
 				sendDescription();
-				this.mc.displayGuiScreen(new GuiPackStructures(this));
+				this.transition(new GuiPackStructures(this));
 			} else if (button.id == 2) {
 				sendDescription();
-				this.mc.displayGuiScreen(new GuiPackLootLists(this));
+				this.transition(new GuiPackLootLists(this));
 			} else if (button.id == 3) {
 				sendDescription();
-				this.mc.displayGuiScreen(new GuiConfirm(this, "Do you really want to sign the pack <"+StructurePackInfo.active.name+">?", "A signed pack can no longer be edited.", "Cancel", "Confirm", this::confirmCallback));
+				this.transition(new GuiConfirm(this, GuiEditor.PACK_EDITOR, "Do you really want to sign the pack <"+StructurePackInfo.active.name+">?", "A signed pack can no longer be edited.", "Cancel", "Confirm", this::confirmCallback));
 			} else if (button.id == 4) {
 				sendDescription();
-				this.mc.displayGuiScreen(new GuiPackConditions(this));
+				this.transition(new GuiPackConditions(this));
 			}
 		}
 	}
 	
 	private void sendDescription() {
-		if (!StructurePackInfo.active.description.equals(nameField.getText()) && CDefaultPackage.packGuiAction(6, nameField.getText(), "")) {
+		if (!StructurePackInfo.active.description.equals(nameField.getText()) && ServerPackage.sendPackAction(6, nameField.getText(), "")) {
 			StructurePackInfo.active.description = nameField.getText();
 		}
 	}
 	
 	public boolean confirmCallback(int i) {
 		if (i==1) {
-			if (CDefaultPackage.packGuiAction(7, "", "")) {
+			if (ServerPackage.sendPackAction(7, "", "")) {
 				this.signButton.enabled = false;
 				this.nameField.setEnabled(false);
 				StructurePackInfo.active.read_only = true;

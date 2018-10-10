@@ -6,14 +6,14 @@ import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 
 import m00nl1ght.interitus.client.ConditionTypeClient;
-import m00nl1ght.interitus.network.CDefaultPackage;
+import m00nl1ght.interitus.network.ServerPackage;
 import m00nl1ght.interitus.structures.StructurePackInfo;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.GuiTextField;
 import net.minecraft.nbt.NBTTagCompound;
 
-public class GuiEditCondType extends GuiScreen {
+public class GuiEditCondType extends GuiEditor {
 	
 	private final GuiScreen parent;
 	private ConditionTypeClient type;
@@ -23,6 +23,7 @@ public class GuiEditCondType extends GuiScreen {
 	private String warning = "";
 
 	public GuiEditCondType(GuiScreen parent, String type, NBTTagCompound tag) {
+		super(GuiEditor.PACK_EDITOR);
 		this.parent = parent;
 		if (type.isEmpty() || tag==null) { // -> new cond type
 			this.type = new ConditionTypeClient.ConditionMaterialSetClient();
@@ -56,6 +57,7 @@ public class GuiEditCondType extends GuiScreen {
 	public void onGuiClosed() {
 		Keyboard.enableRepeatEvents(false);
 		GuiDropdown.close();
+		this.onCloseEditor();
 	}
 
 	@Override
@@ -76,10 +78,10 @@ public class GuiEditCondType extends GuiScreen {
 					}
 					StructurePackInfo.condtypes.add(name);
 				}
-				CDefaultPackage.updateCondType(ConditionTypeClient.save(type), name);
-				this.mc.displayGuiScreen(parent);
+				ServerPackage.sendUpdateCondType(ConditionTypeClient.save(type), name);
+				this.transition(parent);
 			} else if (button.id == 1) {
-				this.mc.displayGuiScreen(parent);
+				this.transition(parent);
 			}
 		}
 	}
@@ -113,7 +115,7 @@ public class GuiEditCondType extends GuiScreen {
 		this.drawString(this.fontRenderer, warning.isEmpty()?"Name":warning, this.width / 2 - 152, 38, 16777215);
 		this.nameField.drawTextBox();
 		
-		this.type = this.type.drawGui(mouseX, mouseY, mBtn && !GuiDropdown.mState && !GuiDropdown.isOpen(), this.fontRenderer);
+		this.type = this.type.drawGui(mouseX, mouseY, mBtn && !GuiDropdown.isOpen(), this.fontRenderer);
 		
 		super.drawScreen(mouseX, mouseY, partialTicks);
 		GuiDropdown.drawDropdown(mouseX, mouseY, mBtn);

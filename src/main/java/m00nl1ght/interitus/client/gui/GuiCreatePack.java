@@ -4,14 +4,14 @@ import java.io.IOException;
 
 import org.lwjgl.input.Keyboard;
 
-import m00nl1ght.interitus.network.CDefaultPackage;
+import m00nl1ght.interitus.network.ServerPackage;
 import m00nl1ght.interitus.structures.StructurePackInfo;
 import m00nl1ght.interitus.structures.StructurePackInfo.PackInfo;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.GuiTextField;
 
-public class GuiCreatePack extends GuiScreen {
+public class GuiCreatePack extends GuiEditor {
 	
 	private GuiButton cancelButton, doneButton;
 	private GuiTextField nameField;
@@ -20,7 +20,7 @@ public class GuiCreatePack extends GuiScreen {
 	private String info = "";
 	
 	public GuiCreatePack(PackInfo from, GuiScreen parent) {
-		this.from=from; this.parent=parent;
+		super(GuiEditor.PACK_EDITOR); this.from=from; this.parent=parent;
 	}
 	
 	@Override
@@ -40,15 +40,10 @@ public class GuiCreatePack extends GuiScreen {
 	}
 
 	@Override
-	public void onGuiClosed() {
-		Keyboard.enableRepeatEvents(false);
-	}
-
-	@Override
 	protected void actionPerformed(GuiButton button) throws IOException {
 		if (button.enabled) {
 			if (button.id == 0) {
-				this.mc.displayGuiScreen(parent);
+				this.transition(parent);
 			} else if (button.id == 1) {
 				String name = this.nameField.getText();
 				if (name.isEmpty()) {
@@ -59,9 +54,9 @@ public class GuiCreatePack extends GuiScreen {
 					info="Invalid name: The structure pack <"+name+"> already exists.";
 					return;
 				}
-				if (CDefaultPackage.packGuiAction(3, name, from==null?"":from.name)) {
+				if (ServerPackage.sendPackAction(3, name, from==null?"":from.name)) {
 					StructurePackInfo.packs.add(new PackInfo(name, from));
-					this.mc.displayGuiScreen(parent);
+					this.transition(parent);
 					info="";
 					return;
 				}
