@@ -25,7 +25,7 @@ public class InteritusProfiler implements IDebugObject {
 	
 	@Override
 	public void debugMsg(ICommandSender sender) {
-		this.send(sender, "##### ONELASTDAY PROFILER ######");
+		this.send(sender, "##### INTERITUS PROFILER ######");
 		StructurePack.get().debugMsg(sender);
 		if (!profilerData.isEmpty()) {
 			this.send(sender, "-----------------------------");

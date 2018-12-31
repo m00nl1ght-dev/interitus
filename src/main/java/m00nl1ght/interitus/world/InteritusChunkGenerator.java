@@ -176,6 +176,7 @@ public abstract class InteritusChunkGenerator implements IChunkGenerator, IDebug
 		InteritusProfiler.send(sender, "> DIM"+this.world.provider.getDimension()+" > "+this.toString());
 		InteritusProfiler.send(sender, "struct [all: "+gAll+" ok: "+gDone+" range: "+gRange+" cond: "+gCond+" noPos: "+gNoPos+"]");
 		InteritusProfiler.send(sender, "chunks cached: "+chunkCache.size()+" pending: "+structures.chunkCount());
+		this.structures.printPending(sender);
 	}
 	
 	@Override

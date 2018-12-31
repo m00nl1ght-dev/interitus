@@ -1,5 +1,6 @@
 package m00nl1ght.interitus.structures;
 
+import java.util.ArrayList;
 import java.util.Map.Entry;
 
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
@@ -9,11 +10,13 @@ import m00nl1ght.interitus.structures.Structure.StructureData;
 import m00nl1ght.interitus.util.Toolkit;
 import m00nl1ght.interitus.util.VarBlockPos;
 import m00nl1ght.interitus.world.InteritusChunkGenerator;
+import net.minecraft.command.ICommandSender;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.nbt.NBTTagLong;
 import net.minecraft.util.Rotation;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.text.TextComponentString;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.IChunkProvider;
@@ -23,7 +26,7 @@ public class StructurePositionMap {
 
 	private final Long2ObjectOpenHashMap<IStructureData> chunks = new Long2ObjectOpenHashMap<IStructureData>(256);
 	private final InteritusChunkGenerator gen;
-	private boolean finishing = false;
+	private ArrayList<Long> finishing = null;
 	
 	public StructurePositionMap(InteritusChunkGenerator gen) {
 		this.gen=gen;
@@ -43,7 +46,7 @@ public class StructurePositionMap {
 	}
 	
 	public boolean findSuitablePosition(WorldGenTask task, VarBlockPos entry_pos, Rotation rotation) {
-		if (finishing) {return false;}
+		if (finishing!=null) {return false;}
 		task.getStructure().getSize(VarBlockPos.PUBLIC_CACHE, rotation);
 		VarBlockPos.PUBLIC_CACHE.varAdd(entry_pos).varAdd(-1, -1, -1);
 		int xmin = entry_pos.getX() >> 4, xmax = VarBlockPos.PUBLIC_CACHE.getX() >> 4;
@@ -57,18 +60,16 @@ public class StructurePositionMap {
 		if (sx<=0 || sz<=0) {return false;}
 		if (sx==1 && sz==1) {return true;}
 		int ox = sx==1?0:1, oz = sz==1?0:1; // offset to try
-		boolean flagX = sx==1, flagZ = sz==1, hitX = false, hitZ = false; // offset flags -> hit blocked chunk or border?
+		boolean flagX = sx==1, flagZ = sz==1; // offset flags -> hit blocked chunk or border?
 		IChunkProvider provider = gen.world.getChunkProvider();
 		
 		while (true) { // ox 1 oz 1
 			if (!flagZ) for (int i = 0; i < (flagX?ox+1:ox); i++) {
-				if (this.isChunkNotSuitable(provider, task, xmin + i, zmin + oz)) {hitZ = true; break;}
+				if (this.isChunkNotSuitable(provider, task, xmin + i, zmin + oz)) {flagZ = true; oz--; break;}
 			}
 			if (!flagX) for (int i = 0; i < (flagZ?oz+1:oz); i++) {
-				if (this.isChunkNotSuitable(provider, task, xmin + ox, zmin + i)) {hitX = true; break;}
+				if (this.isChunkNotSuitable(provider, task, xmin + ox, zmin + i)) {flagX = true; ox--; break;}
 			}
-			if (hitX) {flagX = true; ox--; hitX = false;}
-			if (hitZ) {flagZ = true; oz--; hitZ = false;}
 			if (!flagX && !flagZ) {
 				if (this.isChunkNotSuitable(provider, task, xmin + ox, zmin + oz)) {
 					if (sx>sz) {
@@ -117,12 +118,12 @@ public class StructurePositionMap {
 	}
 	
 	public void create(StructureData data) {
-		if (finishing) {throw new IllegalStateException("Finishing pending structures");}
+		if (finishing!=null) {throw new IllegalStateException("Finishing pending structures");}
 		data.str.getSize(VarBlockPos.PUBLIC_CACHE, data.rotation);
 		VarBlockPos.PUBLIC_CACHE.varAdd(data.pos).varAdd(-1, -1, -1); 
 		int xmin = data.pos.getX() >> 4, xmax = VarBlockPos.PUBLIC_CACHE.getX() >> 4;
 		int zmin = data.pos.getZ() >> 4, zmax = VarBlockPos.PUBLIC_CACHE.getZ() >> 4;
-		if (xmax - xmin < 0 || zmax - zmin < 0) {return;}
+		if (xmax - xmin < 0 || zmax - zmin < 0) {throw new RuntimeException("something went terribly wrong");}
 		data.str.instances.add(data);
 		for (int x = xmin; x <= xmax; x++) {
 			for (int z = zmin; z <= zmax; z++) {
@@ -133,46 +134,70 @@ public class StructurePositionMap {
 		if (Interitus.config.debugWorldgen) Toolkit.serverBroadcastMsg("("+data.str.name+") created structure at "+data.pos.toString()+" ("+(xmax-xmin+1)*(zmax-zmin+1)+" chunks)");
 	}
 	
-	public boolean place(Chunk chunk) {
-		return this.place(chunk, chunks.remove(Toolkit.intPairToLong(chunk.x, chunk.z)));
-	}
-	
 	public boolean place(int x, int z) {
-		return this.place(gen.world.getChunkFromChunkCoords(x, z), chunks.remove(Toolkit.intPairToLong(x, z)));
+		return this.place(gen.world.getChunkFromChunkCoords(x, z));
 	}
 	
-	private boolean place(Chunk chunk, IStructureData data) {
-		if (data!=null) {
-			StructureData single = data.getSingle();
-			if (single!=null) {
-				single.str.placeInChunk(chunk, single);
-				return true;
+	private boolean place(Chunk chunk) {
+		IStructureData data;
+		if (finishing==null) {
+			data = chunks.remove(Toolkit.intPairToLong(chunk.x, chunk.z));
+			if (data==null) {return false;}
+		} else {
+			data = chunks.get(Toolkit.intPairToLong(chunk.x, chunk.z));
+			if (data==null) {return false;}
+			finishing.add(Toolkit.intPairToLong(chunk.x, chunk.z));
+		}
+		StructureData single = data.getSingle();
+		if (single!=null) {
+			single.str.placeInChunk(chunk, single);
+			return true;
+		}
+		StructureData[] multi = data.getMulti();
+		if (multi!=null && multi.length>0) {
+			for (StructureData data0 : multi) {
+				data0.str.placeInChunk(chunk, data0);
 			}
-			StructureData[] multi = data.getMulti();
-			if (multi!=null && multi.length>0) {
-				for (StructureData data0 : multi) {
-					data0.str.placeInChunk(chunk, data0);
-				}
-				return true;
-			}
+			return true;
 		}
 		return false;
 	}
 	
 	public int finishPending() {
-		finishing = true;
+		finishing = new ArrayList<Long>();
 		int i = chunks.size();
 		IChunkProvider provider = gen.world.getChunkProvider();
 		for (Entry<Long, IStructureData> entry : chunks.entrySet()) {
 			int x = Toolkit.longToIntPairA(entry.getKey()), z = Toolkit.longToIntPairB(entry.getKey());
+			if (finishing.remove(entry.getKey())) {continue;}
 			if (Interitus.config.debugWorldgen && provider.isChunkGeneratedAt(x, z) && provider.provideChunk(x, z).isTerrainPopulated()) {
 				Toolkit.serverBroadcastMsg("WARN: chunk has pending structure but is already populated: x "+x+" z "+z+" s "+entry.getValue());
+				continue;
 			}
-			this.place(gen.world.getChunkFromChunkCoords(x, z), entry.getValue());
+			Chunk chunk = gen.world.getChunkFromChunkCoords(x, z);
+			StructureData single = entry.getValue().getSingle();
+			if (single!=null) {
+				single.str.placeInChunk(chunk, single);
+			} else {
+				StructureData[] multi = entry.getValue().getMulti();
+				if (multi!=null && multi.length>0) {
+					for (StructureData data0 : multi) {
+						data0.str.placeInChunk(chunk, data0);
+					}
+				}
+			}
 		}
 		chunks.clear();
-		finishing = false;
+		finishing = null;
 		return i;
+	}
+	
+
+	public void printPending(ICommandSender sender) {
+		for (Entry<Long, IStructureData> entry : chunks.entrySet()) {
+			long l = entry.getKey();
+			sender.sendMessage(new TextComponentString("["+Toolkit.longToIntPairA(l)+"/"+Toolkit.longToIntPairB(l)+"->"+entry.getValue()+"]"));;
+		}
 	}
 	
 	public int chunkCount() {
@@ -194,7 +219,7 @@ public class StructurePositionMap {
 	}
 	
 	public void readFromNBT(NBTTagCompound nbt) {
-		if (finishing) {throw new IllegalStateException("Finishing pending structures");}
+		if (finishing!=null) {throw new IllegalStateException("Finishing pending structures");}
 		chunks.clear();
 		for (String key : nbt.getKeySet()) {
 			Structure struct = StructurePack.getStructure(key);

@@ -319,7 +319,8 @@ public class Structure {
     	
     	@Override
     	public String toString() {
-    		return str.name+"@"+pos+" ("+mirror.name()+", "+rotation.name()+")";
+    		return str.name+"@"+pos;
+    		//return str.name+"@"+pos+" ("+mirror.name()+", "+rotation.name()+")"; shortened
     	}
 
 		public int getTransformByte() {

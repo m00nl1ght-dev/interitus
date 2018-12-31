@@ -224,7 +224,7 @@ public class StructurePack implements IDebugObject {
 		NBTTagCompound mappingsTag = this.mappings.save();
 		this.nbtToZip(mappingsTag, zip, data, "mappings");
 		
-		data.close(); // not shure about this
+		data.close();
 		zip.close();
 		mappings.reset();
 		return true;

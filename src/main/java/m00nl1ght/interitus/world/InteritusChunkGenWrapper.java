@@ -28,7 +28,7 @@ public class InteritusChunkGenWrapper extends InteritusChunkGenerator {
 	public void populate(int x, int z) {
 		if (populating) {
 			Interitus.logger.warn("The wrapped chunk generator " + wrapped.getClass().getSimpleName() + " for dimension " + world.provider.getDimension() + " caused cascading world gen lag at x " + x + " z " + z);
-			if (Interitus.config.debugCascadingLag) {
+			if (Interitus.config.debugCascadingLag) { // ^^ TODO add info about the mod that caused this (disclaimer)
 				Interitus.logger.debug("Stacktrace for cascading gen lag: ");
 				for (StackTraceElement ste : Thread.currentThread().getStackTrace()) {
 					Interitus.logger.debug(ste);
